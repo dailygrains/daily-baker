@@ -71,12 +71,10 @@ EOF
 git add README.md
 git commit -m "Initial commit: Add README"
 
-# Create GitHub repository (using GitHub CLI)
-gh repo create daily-baker --public --source=. --remote=origin --push
+# Create GitHub repository (using GitHub CLI) - ALREADY DONE!
+gh repo create dailygrains/daily-baker --public --source=. --remote=origin --push
 
-# Or create manually at github.com/new and then:
-# git remote add origin https://github.com/YOUR_USERNAME/daily-baker.git
-# git push -u origin main
+# Repository created at: https://github.com/dailygrains/daily-baker
 ```
 
 ### Step 2: Setup GitHub Project & Milestones

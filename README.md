@@ -90,7 +90,7 @@ Daily Baker is an internal operations management tool designed for small microba
 
 **Current Phase:** Foundation (Phase 1)
 
-See [GitHub Issues](https://github.com/YOUR_USERNAME/daily-baker/issues) for current progress.
+See [GitHub Issues](https://github.com/dailygrains/daily-baker/issues) for current progress.
 
 ---
 
@@ -109,7 +109,7 @@ See [GitHub Issues](https://github.com/YOUR_USERNAME/daily-baker/issues) for cur
 
 ```bash
 # Clone the repository
-git clone https://github.com/YOUR_USERNAME/daily-baker.git
+git clone https://github.com/dailygrains/daily-baker.git
 cd daily-baker
 
 # Install dependencies

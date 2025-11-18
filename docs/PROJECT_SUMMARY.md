@@ -413,11 +413,11 @@ If you have a team of 4:
 
 ## 🔗 Important Links
 
-**Once you create the GitHub repository, update these:**
+**Repository Links:**
 
-- GitHub Repo: `https://github.com/YOUR_USERNAME/daily-baker`
-- Issues: `https://github.com/YOUR_USERNAME/daily-baker/issues`
-- Project Board: `https://github.com/YOUR_USERNAME/daily-baker/projects`
+- GitHub Repo: `https://github.com/dailygrains/daily-baker`
+- Issues: `https://github.com/dailygrains/daily-baker/issues`
+- Project Board: `https://github.com/dailygrains/daily-baker/projects`
 - Staging: Will be created after Vercel setup
 - Production: Will be created after deployment
 
