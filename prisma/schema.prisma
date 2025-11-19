@@ -32,14 +32,15 @@ model Bakery {
   website     String?
 
   // Relations
-  users       User[]
-  recipes     Recipe[]
-  ingredients Ingredient[]
-  vendors     Vendor[]
-  equipment   Equipment[]
-  bakeSheets  BakeSheet[]
-  roles       Role[]
-  invitations Invitation[]
+  users        User[]
+  recipes      Recipe[]
+  ingredients  Ingredient[]
+  vendors      Vendor[]
+  equipment    Equipment[]
+  bakeSheets   BakeSheet[]
+  roles        Role[]
+  invitations  Invitation[]
+  activityLogs ActivityLog[]
 
   @@index([isActive])
   @@map("bakeries")
@@ -63,6 +64,7 @@ model User {
   inventoryTransactions InventoryTransaction[]
   completedBakeSheets   BakeSheet[]            @relation("CompletedBy")
   sentInvitations       Invitation[]           @relation("InvitationCreator")
+  activityLogs          ActivityLog[]
 
   @@index([isPlatformAdmin])
   @@index([bakeryId])
@@ -352,4 +354,41 @@ model UnitConversion {
   @@unique([fromUnit, toUnit])
   @@index([category])
   @@map("unit_conversions")
+}
+
+// ============================================================================
+// ACTIVITY LOG SYSTEM
+// ============================================================================
+
+model ActivityLog {
+  id          String       @id @default(cuid())
+  bakeryId    String?
+  bakery      Bakery?      @relation(fields: [bakeryId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action      ActivityType
+  entityType  String // "bakery", "user", "recipe", etc.
+  entityId    String? // ID of the affected entity
+  entityName  String? // Name/identifier of the affected entity
+  description String       @db.Text // Human-readable description
+  metadata    Json? // Additional context (e.g., changed fields)
+  createdAt   DateTime     @default(now())
+
+  @@index([bakeryId])
+  @@index([userId])
+  @@index([action])
+  @@index([entityType])
+  @@index([createdAt])
+  @@map("activity_logs")
+}
+
+enum ActivityType {
+  CREATE
+  UPDATE
+  DELETE
+  INVITE
+  ASSIGN
+  REVOKE
+  LOGIN
+  LOGOUT
 }

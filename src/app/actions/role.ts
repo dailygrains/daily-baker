@@ -3,6 +3,7 @@
 import { db } from '@/lib/db';
 import { getCurrentUser } from '@/lib/clerk';
 import { revalidatePath } from 'next/cache';
+import { createActivityLog } from './activity-log';
 
 type PermissionsObject = Record<string, boolean>;
 
@@ -29,6 +30,21 @@ export async function createRole(data: {
         description: data.description || null,
         permissions: data.permissions,
       },
+      include: {
+        bakery: true,
+      },
+    });
+
+    // Log the activity
+    await createActivityLog({
+      userId: currentUser.id,
+      action: 'CREATE',
+      entityType: 'role',
+      entityId: role.id,
+      entityName: role.name,
+      description: `Created role "${role.name}" for bakery "${role.bakery.name}"`,
+      metadata: { roleId: role.id, bakeryId: role.bakeryId },
+      bakeryId: role.bakeryId,
     });
 
     revalidatePath(`/admin/bakeries/${data.bakeryId}/roles`);
@@ -67,6 +83,21 @@ export async function updateRole(data: {
     const role = await db.role.update({
       where: { id },
       data: updateData,
+      include: {
+        bakery: true,
+      },
+    });
+
+    // Log the activity
+    await createActivityLog({
+      userId: currentUser.id,
+      action: 'UPDATE',
+      entityType: 'role',
+      entityId: role.id,
+      entityName: role.name,
+      description: `Updated role "${role.name}" for bakery "${role.bakery.name}"`,
+      metadata: { roleId: role.id, updatedFields: Object.keys(updateData) },
+      bakeryId: role.bakeryId,
     });
 
     revalidatePath(`/admin/bakeries/${role.bakeryId}/roles`);
@@ -102,6 +133,7 @@ export async function deleteRole(id: string) {
         _count: {
           select: { users: true },
         },
+        bakery: true,
       },
     });
 
@@ -121,6 +153,18 @@ export async function deleteRole(id: string) {
 
     await db.role.delete({
       where: { id },
+    });
+
+    // Log the activity
+    await createActivityLog({
+      userId: currentUser.id,
+      action: 'DELETE',
+      entityType: 'role',
+      entityId: role.id,
+      entityName: role.name,
+      description: `Deleted role "${role.name}" from bakery "${role.bakery.name}"`,
+      metadata: { roleId: role.id, bakeryId: role.bakeryId },
+      bakeryId: role.bakeryId,
     });
 
     revalidatePath(`/admin/bakeries/${role.bakeryId}/roles`);

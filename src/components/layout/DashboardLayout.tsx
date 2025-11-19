@@ -11,7 +11,8 @@ import {
   ChevronLeft,
   Menu,
   Wheat,
-  Mail
+  Mail,
+  Activity
 } from 'lucide-react';
 import { ReactNode } from 'react';
 
@@ -147,6 +148,12 @@ export function DashboardLayout({
                       Team Members
                     </Link>
                   </li>
+                  <li>
+                    <Link href="/dashboard/activity" className="gap-3">
+                      <Activity className="h-5 w-5" />
+                      Activity
+                    </Link>
+                  </li>
                 </>
               )}
 
@@ -172,6 +179,12 @@ export function DashboardLayout({
                     <Link href="/admin/invitations" className="gap-3">
                       <Mail className="h-5 w-5" />
                       Invitations
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/admin/activity" className="gap-3">
+                      <Activity className="h-5 w-5" />
+                      Activity Logs
                     </Link>
                   </li>
                 </>

@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { getCurrentUser } from '@/lib/clerk';
 import { revalidatePath } from 'next/cache';
 import { randomBytes } from 'crypto';
+import { createActivityLog } from './activity-log';
 
 export async function createInvitation(data: {
   email: string;
@@ -73,6 +74,25 @@ export async function createInvitation(data: {
           },
         },
       },
+    });
+
+    // Log the activity
+    await createActivityLog({
+      userId: currentUser.id,
+      action: 'INVITE',
+      entityType: 'invitation',
+      entityId: invitation.id,
+      entityName: invitation.email,
+      description: invitation.bakery
+        ? `Invited ${invitation.email} to bakery "${invitation.bakery.name}"`
+        : `Invited ${invitation.email} to platform`,
+      metadata: {
+        invitationId: invitation.id,
+        email: invitation.email,
+        bakeryId: invitation.bakeryId,
+        roleId: invitation.roleId,
+      },
+      bakeryId: invitation.bakeryId,
     });
 
     revalidatePath('/admin/invitations');
@@ -156,6 +176,21 @@ export async function revokeInvitation(id: string) {
       data: {
         status: 'REVOKED',
       },
+      include: {
+        bakery: true,
+      },
+    });
+
+    // Log the activity
+    await createActivityLog({
+      userId: currentUser.id,
+      action: 'REVOKE',
+      entityType: 'invitation',
+      entityId: invitation.id,
+      entityName: invitation.email,
+      description: `Revoked invitation for ${invitation.email}`,
+      metadata: { invitationId: invitation.id, email: invitation.email },
+      bakeryId: invitation.bakeryId,
     });
 
     revalidatePath('/admin/invitations');

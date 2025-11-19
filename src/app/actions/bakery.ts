@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { getCurrentUser } from '@/lib/clerk';
 import { createBakerySchema, updateBakerySchema } from '@/lib/validations/bakery';
 import { revalidatePath } from 'next/cache';
+import { createActivityLog } from './activity-log';
 
 export async function createBakery(data: unknown) {
   try {
@@ -21,6 +22,17 @@ export async function createBakery(data: unknown) {
 
     const bakery = await db.bakery.create({
       data: validatedData,
+    });
+
+    // Log the activity
+    await createActivityLog({
+      userId: user.id,
+      action: 'CREATE',
+      entityType: 'bakery',
+      entityId: bakery.id,
+      entityName: bakery.name,
+      description: `Created bakery "${bakery.name}"`,
+      metadata: { bakeryId: bakery.id },
     });
 
     revalidatePath('/admin/bakeries');
@@ -55,6 +67,18 @@ export async function updateBakery(data: unknown) {
     const bakery = await db.bakery.update({
       where: { id },
       data: updateData,
+    });
+
+    // Log the activity
+    await createActivityLog({
+      userId: user.id,
+      action: 'UPDATE',
+      entityType: 'bakery',
+      entityId: bakery.id,
+      entityName: bakery.name,
+      description: `Updated bakery "${bakery.name}"`,
+      metadata: { bakeryId: bakery.id, updatedFields: Object.keys(updateData) },
+      bakeryId: bakery.id,
     });
 
     revalidatePath('/admin/bakeries');
@@ -110,6 +134,17 @@ export async function deleteBakery(id: string) {
 
     await db.bakery.delete({
       where: { id },
+    });
+
+    // Log the activity
+    await createActivityLog({
+      userId: user.id,
+      action: 'DELETE',
+      entityType: 'bakery',
+      entityId: bakery.id,
+      entityName: bakery.name,
+      description: `Deleted bakery "${bakery.name}"`,
+      metadata: { bakeryId: bakery.id },
     });
 
     revalidatePath('/admin/bakeries');
