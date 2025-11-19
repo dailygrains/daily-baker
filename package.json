@@ -11,6 +11,7 @@
     "lint:fix": "eslint --fix",
     "type-check": "tsc --noEmit",
     "check": "npm run type-check && npm run lint",
+    "postinstall": "prisma generate",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:migrate:reset": "prisma migrate reset",

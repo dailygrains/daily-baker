@@ -1,0 +1,53 @@
+# Dependencies
+node_modules
+
+# Testing
+coverage
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+__tests__
+__mocks__
+
+# Development files
+.env
+.env.local
+.env.development
+
+# Documentation
+docs
+*.md
+!README.md
+
+# Git
+.git
+.gitignore
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Temporary files
+.tmp
+tmp
+temp
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Local database
+*.db
+*.sqlite
+
+# Prisma
+prisma/migrations/*
+!prisma/migrations/migration_lock.toml
