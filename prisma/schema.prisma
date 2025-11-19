@@ -1,5 +1,5 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// Daily Baker - Multi-Tenant Bakery Management System
+// Database Schema with Two-Tier Permission System
 
 generator client {
   provider = "prisma-client-js"
@@ -10,4 +10,306 @@ datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_DATABASE_URL")
+}
+
+// ============================================================================
+// MULTI-TENANCY & PLATFORM ADMINISTRATION
+// ============================================================================
+
+model Bakery {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  isActive  Boolean  @default(true) // Soft deletion
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  users       User[]
+  recipes     Recipe[]
+  ingredients Ingredient[]
+  vendors     Vendor[]
+  equipment   Equipment[]
+  bakeSheets  BakeSheet[]
+  roles       Role[]
+
+  @@index([isActive])
+  @@map("bakeries")
+}
+
+model User {
+  id              String    @id @default(cuid())
+  clerkId         String    @unique
+  email           String
+  name            String?
+  isPlatformAdmin Boolean   @default(false) // Super-admin access
+  bakeryId        String?
+  bakery          Bakery?   @relation(fields: [bakeryId], references: [id], onDelete: SetNull)
+  roleId          String?
+  role            Role?     @relation(fields: [roleId], references: [id], onDelete: SetNull)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  lastLoginAt     DateTime?
+
+  // Relations
+  inventoryTransactions InventoryTransaction[]
+  completedBakeSheets   BakeSheet[]            @relation("CompletedBy")
+
+  @@index([isPlatformAdmin])
+  @@index([bakeryId])
+  @@index([clerkId])
+  @@map("users")
+}
+
+model Role {
+  id          String   @id @default(cuid())
+  bakeryId    String
+  bakery      Bakery   @relation(fields: [bakeryId], references: [id], onDelete: Cascade)
+  name        String // "Head Baker", "Inventory Manager", etc.
+  description String?
+  permissions Json // { "recipes.read": true, "recipes.write": true, ... }
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  users User[]
+
+  @@unique([bakeryId, name])
+  @@index([bakeryId])
+  @@map("roles")
+}
+
+// ============================================================================
+// RECIPE SYSTEM (MULTI-STEP)
+// ============================================================================
+
+model Recipe {
+  id          String   @id @default(cuid())
+  bakeryId    String
+  bakery      Bakery   @relation(fields: [bakeryId], references: [id], onDelete: Cascade)
+  name        String
+  description String?  @db.Text
+  yield       String // "10 loaves", "24 rolls"
+  totalCost   Decimal  @default(0) @db.Decimal(10, 2) // Computed from sections
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  sections   RecipeSection[]
+  bakeSheets BakeSheet[]
+
+  @@index([bakeryId])
+  @@index([name])
+  @@map("recipes")
+}
+
+model RecipeSection {
+  id           String   @id @default(cuid())
+  recipeId     String
+  recipe       Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  name         String // "Poolish", "Dough", "Final Mix"
+  order        Int // Display order
+  instructions String   @db.Text // MDX content
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  ingredients RecipeSectionIngredient[]
+
+  @@index([recipeId])
+  @@index([order])
+  @@map("recipe_sections")
+}
+
+model RecipeSectionIngredient {
+  id           String        @id @default(cuid())
+  sectionId    String
+  section      RecipeSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  ingredientId String
+  ingredient   Ingredient    @relation(fields: [ingredientId], references: [id], onDelete: Restrict)
+  quantity     Decimal       @db.Decimal(10, 3)
+  unit         String // "g", "ml", "kg", "lbs"
+
+  @@index([sectionId])
+  @@index([ingredientId])
+  @@map("recipe_section_ingredients")
+}
+
+// ============================================================================
+// INGREDIENT & INVENTORY SYSTEM
+// ============================================================================
+
+model Ingredient {
+  id          String   @id @default(cuid())
+  bakeryId    String
+  bakery      Bakery   @relation(fields: [bakeryId], references: [id], onDelete: Cascade)
+  name        String
+  currentQty  Decimal  @default(0) @db.Decimal(10, 3)
+  unit        String // "g", "ml", "kg"
+  costPerUnit Decimal  @db.Decimal(10, 2) // For recipe costing
+  vendorId    String?
+  vendor      Vendor?  @relation(fields: [vendorId], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  transactions InventoryTransaction[]
+  recipeUses   RecipeSectionIngredient[]
+
+  @@index([bakeryId])
+  @@index([name])
+  @@index([vendorId])
+  @@map("ingredients")
+}
+
+model InventoryTransaction {
+  id           String          @id @default(cuid())
+  ingredientId String
+  ingredient   Ingredient      @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+  type         TransactionType
+  quantity     Decimal         @db.Decimal(10, 3)
+  unit         String
+  notes        String?         @db.Text
+  bakeSheetId  String?
+  bakeSheet    BakeSheet?      @relation(fields: [bakeSheetId], references: [id], onDelete: SetNull)
+  createdBy    String
+  creator      User            @relation(fields: [createdBy], references: [id], onDelete: Restrict)
+  createdAt    DateTime        @default(now())
+
+  @@index([ingredientId])
+  @@index([type])
+  @@index([bakeSheetId])
+  @@index([createdBy])
+  @@index([createdAt])
+  @@map("inventory_transactions")
+}
+
+enum TransactionType {
+  RECEIVE
+  USE
+  ADJUST
+  WASTE
+}
+
+// ============================================================================
+// VENDOR SYSTEM
+// ============================================================================
+
+model Vendor {
+  id        String   @id @default(cuid())
+  bakeryId  String
+  bakery    Bakery   @relation(fields: [bakeryId], references: [id], onDelete: Cascade)
+  name      String
+  phone     String?
+  email     String?
+  website   String?
+  notes     String?  @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  contacts    VendorContact[]
+  ingredients Ingredient[]
+  equipment   Equipment[]
+
+  @@index([bakeryId])
+  @@index([name])
+  @@map("vendors")
+}
+
+model VendorContact {
+  id       String  @id @default(cuid())
+  vendorId String
+  vendor   Vendor  @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  name     String
+  title    String?
+  phone    String?
+  email    String?
+  notes    String? @db.Text
+
+  @@index([vendorId])
+  @@map("vendor_contacts")
+}
+
+// ============================================================================
+// EQUIPMENT SYSTEM
+// ============================================================================
+
+model Equipment {
+  id            String          @id @default(cuid())
+  bakeryId      String
+  bakery        Bakery          @relation(fields: [bakeryId], references: [id], onDelete: Cascade)
+  name          String
+  status        EquipmentStatus @default(CONSIDERING)
+  vendorId      String?
+  vendor        Vendor?         @relation(fields: [vendorId], references: [id], onDelete: SetNull)
+  purchaseDate  DateTime?
+  cost          Decimal?        @db.Decimal(10, 2)
+  quantity      Int             @default(1)
+  serialNumber  String?
+  notes         String?         @db.Text
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@index([bakeryId])
+  @@index([status])
+  @@index([vendorId])
+  @@map("equipment")
+}
+
+enum EquipmentStatus {
+  CONSIDERING
+  ORDERED
+  RECEIVED
+  IN_USE
+  MAINTENANCE
+  RETIRED
+}
+
+// ============================================================================
+// BAKE SHEET SYSTEM
+// ============================================================================
+
+model BakeSheet {
+  id          String    @id @default(cuid())
+  bakeryId    String
+  bakery      Bakery    @relation(fields: [bakeryId], references: [id], onDelete: Cascade)
+  recipeId    String
+  recipe      Recipe    @relation(fields: [recipeId], references: [id], onDelete: Restrict)
+  scale       Decimal   @db.Decimal(5, 2) // Multiplier (1.0 = recipe as-is, 2.0 = double)
+  quantity    String // "25 loaves"
+  completed   Boolean   @default(false)
+  completedAt DateTime?
+  completedBy String?
+  completer   User?     @relation("CompletedBy", fields: [completedBy], references: [id], onDelete: SetNull)
+  notes       String?   @db.Text
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  transactions InventoryTransaction[]
+
+  @@index([bakeryId])
+  @@index([recipeId])
+  @@index([completed])
+  @@index([createdAt])
+  @@map("bake_sheets")
+}
+
+// ============================================================================
+// UNIT CONVERSION SYSTEM
+// ============================================================================
+
+model UnitConversion {
+  id        String   @id @default(cuid())
+  fromUnit  String // "lbs"
+  toUnit    String // "g"
+  factor    Decimal  @db.Decimal(15, 6) // 453.592 (1 lb = 453.592g)
+  category  String // "weight", "volume"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([fromUnit, toUnit])
+  @@index([category])
+  @@map("unit_conversions")
 }
