@@ -10,7 +10,8 @@ import {
   Settings,
   ChevronLeft,
   Menu,
-  Wheat
+  Wheat,
+  Mail
 } from 'lucide-react';
 import { ReactNode } from 'react';
 
@@ -165,6 +166,12 @@ export function DashboardLayout({
                     <Link href="/admin/users" className="gap-3">
                       <Users className="h-5 w-5" />
                       All Users
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/admin/invitations" className="gap-3">
+                      <Mail className="h-5 w-5" />
+                      Invitations
                     </Link>
                   </li>
                 </>

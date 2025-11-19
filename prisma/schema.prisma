@@ -24,6 +24,13 @@ model Bakery {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // Contact information
+  description String?
+  address     String?
+  phone       String?
+  email       String?
+  website     String?
+
   // Relations
   users       User[]
   recipes     Recipe[]
@@ -32,6 +39,7 @@ model Bakery {
   equipment   Equipment[]
   bakeSheets  BakeSheet[]
   roles       Role[]
+  invitations Invitation[]
 
   @@index([isActive])
   @@map("bakeries")
@@ -54,11 +62,42 @@ model User {
   // Relations
   inventoryTransactions InventoryTransaction[]
   completedBakeSheets   BakeSheet[]            @relation("CompletedBy")
+  sentInvitations       Invitation[]           @relation("InvitationCreator")
 
   @@index([isPlatformAdmin])
   @@index([bakeryId])
   @@index([clerkId])
   @@map("users")
+}
+
+model Invitation {
+  id         String           @id @default(cuid())
+  email      String
+  bakeryId   String?
+  bakery     Bakery?          @relation(fields: [bakeryId], references: [id], onDelete: SetNull)
+  roleId     String?
+  role       Role?            @relation(fields: [roleId], references: [id], onDelete: SetNull)
+  status     InvitationStatus @default(PENDING)
+  token      String           @unique
+  expiresAt  DateTime
+  createdBy  String
+  creator    User             @relation("InvitationCreator", fields: [createdBy], references: [id], onDelete: Restrict)
+  acceptedAt DateTime?
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  @@index([email])
+  @@index([status])
+  @@index([token])
+  @@index([createdBy])
+  @@map("invitations")
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  REVOKED
 }
 
 model Role {
@@ -72,7 +111,8 @@ model Role {
   updatedAt   DateTime @updatedAt
 
   // Relations
-  users User[]
+  users       User[]
+  invitations Invitation[]
 
   @@unique([bakeryId, name])
   @@index([bakeryId])
