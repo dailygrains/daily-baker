@@ -1,0 +1,31 @@
+# Docker Compose for Local Daily Baker Development
+# Provides isolated PostgreSQL database for Prisma operations
+# Usage: docker-compose -f docker-compose.local.yml up -d
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: daily-baker-local-postgres
+    restart: unless-stopped
+    environment:
+      # Database configuration
+      POSTGRES_DB: daily_baker
+      POSTGRES_USER: daily_baker_user
+      POSTGRES_PASSWORD: local_dev_password
+      # Performance tuning for local development
+      POSTGRES_SHARED_PRELOAD_LIBRARIES: 'pg_stat_statements'
+    ports:
+      - "5434:5432"
+    volumes:
+      # Persistent data storage
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U daily_baker_user -d daily_baker"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  postgres_data:
+    name: daily_baker_local_postgres_data
