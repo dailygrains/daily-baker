@@ -343,9 +343,9 @@ CLERK_SECRET_KEY=sk_test_xxxxx_replace_with_your_key
 
 ### "Authentication required" on Public Pages
 
-**Cause**: Middleware protecting all routes
+**Cause**: Proxy protecting all routes
 
-**Fix**: Check `src/middleware.ts` - public routes should include:
+**Fix**: Check `src/proxy.ts` - public routes should include:
 ```typescript
 const isPublicRoute = createRouteMatcher([
   '/',
@@ -353,6 +353,8 @@ const isPublicRoute = createRouteMatcher([
   '/sign-up(.*)',
 ]);
 ```
+
+**Note**: Next.js 16 renamed `middleware.ts` to `proxy.ts`
 
 ### OAuth Redirect URI Mismatch
 
