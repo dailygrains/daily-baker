@@ -8,9 +8,10 @@ import type { Bakery } from '@prisma/client';
 interface BakeryFormProps {
   bakery?: Bakery;
   mode: 'create' | 'edit';
+  redirectPath?: string;
 }
 
-export function BakeryForm({ bakery, mode }: BakeryFormProps) {
+export function BakeryForm({ bakery, mode, redirectPath = '/admin/bakeries' }: BakeryFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -36,7 +37,7 @@ export function BakeryForm({ bakery, mode }: BakeryFormProps) {
       : await updateBakery(data);
 
     if (result.success) {
-      router.push('/admin/bakeries');
+      router.push(redirectPath);
       router.refresh();
     } else {
       setError(result.error || 'An error occurred');
