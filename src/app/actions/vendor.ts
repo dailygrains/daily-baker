@@ -295,7 +295,7 @@ export async function getVendorById(id: string) {
             id: true,
             name: true,
             status: true,
-            purchasePrice: true,
+            cost: true,
           },
           orderBy: {
             name: 'asc',

@@ -218,7 +218,7 @@ export default async function VendorDetailPage({
                     <tr>
                       <th>Name</th>
                       <th>Status</th>
-                      <th>Purchase Price</th>
+                      <th>Cost</th>
                       <th>Actions</th>
                     </tr>
                   </thead>
@@ -237,8 +237,8 @@ export default async function VendorDetailPage({
                           <span className="badge badge-info">{item.status}</span>
                         </td>
                         <td>
-                          {item.purchasePrice
-                            ? `$${Number(item.purchasePrice).toFixed(2)}`
+                          {item.cost
+                            ? `$${Number(item.cost).toFixed(2)}`
                             : '-'}
                         </td>
                         <td>
