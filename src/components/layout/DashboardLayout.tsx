@@ -12,7 +12,9 @@ import {
   Menu,
   Wheat,
   Mail,
-  Activity
+  Activity,
+  BarChart3,
+  Wrench
 } from 'lucide-react';
 import { ReactNode } from 'react';
 
@@ -124,6 +126,12 @@ export function DashboardLayout({
                 <span>Inventory</span>
               </li>
               <li>
+                <Link href="/dashboard/inventory" className="gap-3">
+                  <BarChart3 className="h-5 w-5" />
+                  Inventory Overview
+                </Link>
+              </li>
+              <li>
                 <Link href="/dashboard/ingredients" className="gap-3">
                   <Package className="h-5 w-5" />
                   Ingredients
@@ -133,6 +141,12 @@ export function DashboardLayout({
                 <Link href="/dashboard/vendors" className="gap-3">
                   <ShoppingCart className="h-5 w-5" />
                   Vendors
+                </Link>
+              </li>
+              <li>
+                <Link href="/dashboard/equipment" className="gap-3">
+                  <Wrench className="h-5 w-5" />
+                  Equipment
                 </Link>
               </li>
 
