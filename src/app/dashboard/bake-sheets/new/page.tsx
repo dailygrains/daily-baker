@@ -1,0 +1,54 @@
+import { getCurrentUser } from '@/lib/clerk';
+import { redirect } from 'next/navigation';
+import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { BakeSheetForm } from '@/components/bakeSheets/BakeSheetForm';
+import { db } from '@/lib/db';
+
+export default async function NewBakeSheetPage() {
+  const user = await getCurrentUser();
+
+  if (!user) {
+    redirect('/sign-in');
+  }
+
+  if (!user.bakeryId) {
+    redirect('/dashboard');
+  }
+
+  // Fetch recipes for the form
+  const recipes = await db.recipe.findMany({
+    where: { bakeryId: user.bakeryId },
+    select: {
+      id: true,
+      name: true,
+      totalCost: true,
+    },
+    orderBy: {
+      name: 'asc',
+    },
+  });
+
+  // Convert Decimal to number for client component
+  const recipesForForm = recipes.map((recipe) => ({
+    ...recipe,
+    totalCost: recipe.totalCost ? Number(recipe.totalCost) : null,
+  }));
+
+  return (
+    <DashboardLayout isPlatformAdmin={user.isPlatformAdmin}>
+      <div className="max-w-2xl mx-auto space-y-6">
+        <PageHeader
+          title="New Bake Sheet"
+          description="Create a production run for a recipe"
+        />
+
+        <div className="card bg-base-100 shadow-xl">
+          <div className="card-body">
+            <BakeSheetForm bakeryId={user.bakeryId} recipes={recipesForForm} />
+          </div>
+        </div>
+      </div>
+    </DashboardLayout>
+  );
+}
