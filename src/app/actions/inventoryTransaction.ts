@@ -9,6 +9,7 @@ import {
   type CreateInventoryTransactionInput,
 } from '@/lib/validations/inventoryTransaction';
 import { createActivityLog } from './activity';
+import { convertUnits } from '@/lib/unitConversion';
 
 /**
  * Create an inventory transaction and update ingredient quantity
@@ -55,8 +56,27 @@ export async function createInventoryTransaction(
       };
     }
 
+    // Convert quantity to ingredient's unit if necessary
+    let adjustedQuantity = validatedData.quantity;
+    if (validatedData.unit !== ingredient.unit) {
+      const converted = await convertUnits(
+        validatedData.quantity,
+        validatedData.unit,
+        ingredient.unit
+      );
+
+      if (converted === null) {
+        return {
+          success: false,
+          error: `Cannot convert from ${validatedData.unit} to ${ingredient.unit}. Please add this conversion or use ${ingredient.unit}.`,
+        };
+      }
+
+      adjustedQuantity = converted;
+    }
+
     // Calculate quantity delta based on transaction type
-    let quantityDelta = new Decimal(validatedData.quantity);
+    let quantityDelta = new Decimal(adjustedQuantity);
 
     switch (validatedData.type) {
       case 'RECEIVE':

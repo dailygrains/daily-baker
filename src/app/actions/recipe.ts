@@ -11,6 +11,7 @@ import {
 } from '@/lib/validations/recipe';
 import { revalidatePath } from 'next/cache';
 import { Decimal } from '@prisma/client/runtime/library';
+import { convertUnits } from '@/lib/unitConversion';
 
 /**
  * Calculate total cost of a recipe based on ingredients
@@ -35,9 +36,28 @@ async function calculateRecipeCost(
       });
 
       if (ingredient) {
-        // Simple cost calculation (assumes units match)
-        // TODO: Add unit conversion in future
-        const cost = Number(ingredient.costPerUnit) * ing.quantity;
+        // Convert quantity to ingredient's unit if necessary
+        let adjustedQuantity = ing.quantity;
+        if (ing.unit !== ingredient.unit) {
+          const converted = await convertUnits(
+            ing.quantity,
+            ing.unit,
+            ingredient.unit
+          );
+
+          if (converted !== null) {
+            adjustedQuantity = converted;
+          } else {
+            // If conversion fails, log warning and use original quantity
+            // This allows recipes to be created even without conversions
+            console.warn(
+              `Cannot convert from ${ing.unit} to ${ingredient.unit} for ingredient cost calculation`
+            );
+          }
+        }
+
+        // Calculate cost: costPerUnit is in ingredient's unit, so we use the adjusted quantity
+        const cost = Number(ingredient.costPerUnit) * adjustedQuantity;
         totalCost += cost;
       }
     }
