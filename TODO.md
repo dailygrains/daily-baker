@@ -161,6 +161,9 @@
     - [x] Frontend: Create ingredient selector
     - [x] Frontend: Display cost breakdown
     - [x] Integration: Activity logging
+  - **Future Enhancement** (See #37):
+    - [ ] Autocomplete ingredient selector with create-if-not-exists
+    - [ ] Autocomplete preparation field with create-if-not-exists
 
 - [x] **#20: Ingredient Catalog** 🔴 🔀
   - Status: ✅ Complete
@@ -239,10 +242,12 @@
     - [x] Frontend: Create transaction form (instead of modals)
     - [x] Integration: Activity logging
 
-- [ ] **#24: Bake Sheet Management** 🟠 🔀
-  - Status: 🚧 In Progress (Backend complete, frontend in progress)
+- [x] **#24: Bake Sheet Management** 🟠 🔀
+  - Status: ✅ Complete
   - Effort: 12 hours
   - Dependencies: #19 (recipes), #23 (inventory)
+  - Completed: Full bake sheet management with automatic inventory deduction
+  - Files: 6 new files, 1,409 lines
   - Tasks:
     - [x] Backend: Create bake sheet server actions
     - [x] Backend: Implement completion workflow
@@ -250,11 +255,11 @@
     - [x] Backend: Create USE transactions on completion
     - [x] Backend: Validate sufficient inventory before completion
     - [x] Frontend: Create bake sheet list page
-    - [ ] Frontend: Create bake sheet detail page
-    - [ ] Frontend: Create bake sheet forms with recipe selector
-    - [ ] Frontend: Display calculated ingredient quantities
-    - [ ] Frontend: Add "Mark Completed" button
-    - [ ] Frontend: Display cost calculations
+    - [x] Frontend: Create bake sheet detail page
+    - [x] Frontend: Create bake sheet forms with recipe selector
+    - [x] Frontend: Display calculated ingredient quantities
+    - [x] Frontend: Add "Mark Completed" button
+    - [x] Frontend: Display cost calculations
     - [x] Integration: Activity logging
 
 - [ ] **#25: MDX Editor Integration** 🟠
@@ -416,6 +421,22 @@
   - Effort: 6 hours
   - Dependencies: Various features
 
+- [ ] **#37: Recipe Ingredient & Preparation Autocomplete** 🟢
+  - Status: ⏳ Pending
+  - Effort: 8 hours
+  - Dependencies: #19 (recipes), #20 (ingredients)
+  - Tasks:
+    - [ ] Backend: Create ingredient search API endpoint
+    - [ ] Backend: Create preparation search API endpoint
+    - [ ] Backend: Create/update ingredient from autocomplete
+    - [ ] Backend: Create/update preparation from autocomplete
+    - [ ] Frontend: Replace ingredient selector with autocomplete (select existing or create new)
+    - [ ] Frontend: Add preparation text field with autocomplete (not textarea)
+    - [ ] Frontend: Implement bakery-scoped search for both fields
+    - [ ] Frontend: Add visual indicator for "create new" vs "select existing"
+    - [ ] Integration: Store preparations as bakery-specific data
+    - [ ] Integration: Link preparations to recipe ingredients
+
 ---
 
 ## Current Sprint (Week 3 - Phase 3)
@@ -443,17 +464,17 @@ Priority items to complete this week:
 ## Progress Tracking
 
 ### Overall Progress
-- **Total Issues:** 33 core + 3 optional = 36 total
-- **Completed:** 23 core issues (Phases 1, 2, 3 + #23)
-- **In Progress:** 1 (#24)
-- **Pending:** 9 core + 3 optional = 12 total
+- **Total Issues:** 33 core + 4 optional = 37 total
+- **Completed:** 24 core issues (Phases 1, 2, 3 + #23, #24)
+- **In Progress:** 0
+- **Pending:** 9 core + 4 optional = 13 total
 - **Blocked:** 0
 
 ### By Phase
 - **Phase 1:** 10/10 complete (100%) ✅
 - **Phase 2:** 8/8 complete (100%) ✅
 - **Phase 3:** 4/4 complete (100%) ✅
-- **Phase 4:** 1/4 complete (25%) 🚧
+- **Phase 4:** 2/4 complete (50%) 🚧
 - **Phase 5:** 0/7 pending (0%)
 
 ### Phase Completion Details
@@ -496,4 +517,4 @@ Priority items to complete this week:
 
 **Last Updated:** 2025-11-20
 **Next Update:** After completing Phase 4 issues
-**Recent Milestone:** ✅ Issue #23 Complete - Transaction-based inventory system implemented with automatic quantity tracking
+**Recent Milestone:** ✅ Issues #23 & #24 Complete - Transaction-based inventory and bake sheet management with automatic ingredient deduction
