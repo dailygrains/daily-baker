@@ -25,3 +25,49 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
 }
+
+/* MDX Editor Styling */
+.mdx-editor-wrapper {
+  @apply border border-base-300 rounded-lg overflow-hidden bg-base-100;
+}
+
+.mdx-editor-wrapper ._toolbarRoot_p96os_1 {
+  @apply bg-base-200 border-b border-base-300;
+}
+
+.mdx-editor-wrapper ._editorRoot_p96os_1 {
+  @apply bg-base-100;
+}
+
+.mdx-editor-wrapper ._contentEditable_p96os_179 {
+  @apply text-base-content p-4;
+  min-height: 200px;
+}
+
+.mdx-editor-wrapper ._button_p96os_69 {
+  @apply hover:bg-base-300 transition-colors;
+}
+
+.mdx-editor-wrapper ._selectTrigger_p96os_156 {
+  @apply bg-base-100 border-base-300;
+}
+
+.mdx-editor-wrapper code {
+  @apply bg-base-200 px-1 py-0.5 rounded text-sm;
+}
+
+.mdx-editor-wrapper pre {
+  @apply bg-base-200 p-4 rounded-lg overflow-x-auto my-2;
+}
+
+.mdx-editor-wrapper table {
+  @apply table table-zebra w-full my-2;
+}
+
+.mdx-editor-wrapper th {
+  @apply bg-base-200;
+}
+
+.mdx-editor-wrapper a {
+  @apply link link-primary;
+}

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createRecipe, updateRecipe } from '@/app/actions/recipe';
 import { Plus, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
+import { MDXEditor } from '@/components/ui/MDXEditor';
 import type { Recipe, RecipeSection, RecipeSectionIngredient, Ingredient } from '@prisma/client';
 
 type RecipeWithSections = Recipe & {
@@ -291,14 +292,13 @@ export function RecipeForm({ bakeryId, recipe, availableIngredients }: RecipeFor
                     <label className="label">
                       <span className="label-text">Instructions</span>
                     </label>
-                    <textarea
-                      className="textarea textarea-bordered h-32"
-                      value={section.instructions}
-                      onChange={(e) =>
-                        updateSection(sectionIndex, 'instructions', e.target.value)
+                    <MDXEditor
+                      markdown={section.instructions}
+                      onChange={(markdown) =>
+                        updateSection(sectionIndex, 'instructions', markdown)
                       }
                       placeholder="Step-by-step instructions for this section..."
-                      maxLength={10000}
+                      className="min-h-[200px]"
                     />
                   </div>
 

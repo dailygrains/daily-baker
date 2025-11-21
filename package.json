@@ -23,7 +23,7 @@
     "@aws-sdk/client-ses": "^3.934.0",
     "@aws-sdk/s3-request-presigner": "^3.934.0",
     "@clerk/nextjs": "^6.35.2",
-    "@mdxeditor/editor": "^3.49.2",
+    "@mdxeditor/editor": "^3.49.3",
     "@prisma/client": "^6.19.0",
     "@sentry/nextjs": "^10.25.0",
     "@tanstack/react-query": "^5.90.10",
