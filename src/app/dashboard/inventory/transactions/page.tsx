@@ -33,7 +33,7 @@ export default async function InventoryTransactionsPage() {
     );
   }
 
-  const transactions = transactionsResult.data;
+  const transactions = transactionsResult.data || [];
 
   // Get transaction type badge class
   const getTransactionTypeBadgeClass = (type: string) => {
@@ -72,7 +72,7 @@ export default async function InventoryTransactionsPage() {
         <PageHeader
           title="Inventory Transactions"
           description="Complete history of all inventory transactions"
-          action={
+          actions={
             <Link
               href="/dashboard/inventory/transactions/new"
               className="btn btn-primary btn-sm"
@@ -142,7 +142,7 @@ export default async function InventoryTransactionsPage() {
                           {transaction.notes || '-'}
                         </td>
                         <td className="text-sm text-base-content/70">
-                          {transaction.user.name || transaction.user.email}
+                          {transaction.creator.name || transaction.creator.email}
                         </td>
                         <td className="text-sm text-base-content/70">
                           {formatDistanceToNow(new Date(transaction.createdAt), {

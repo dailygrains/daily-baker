@@ -30,7 +30,7 @@ export default async function BakeSheetsPage() {
     );
   }
 
-  const bakeSheets = bakeSheetsResult.data;
+  const bakeSheets = bakeSheetsResult.data || [];
 
   // Separate pending and completed
   const pendingBakeSheets = bakeSheets.filter((bs) => !bs.completed);
@@ -42,7 +42,7 @@ export default async function BakeSheetsPage() {
         <PageHeader
           title="Bake Sheets"
           description="Manage production runs and track ingredient usage"
-          action={
+          actions={
             <Link
               href="/dashboard/bake-sheets/new"
               className="btn btn-primary btn-sm"

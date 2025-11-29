@@ -40,7 +40,7 @@ export default async function RecipesPage() {
         <PageHeader
           title="Recipes"
           description="Manage your bakery recipes and costing"
-          action={
+          actions={
             <Link href="/dashboard/recipes/new" className="btn btn-primary">
               <Plus className="h-4 w-4" />
               Add Recipe

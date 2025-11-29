@@ -18,7 +18,11 @@ export default async function NewBakeryPage() {
   }
 
   return (
-    <DashboardLayout isPlatformAdmin={true}>
+    <DashboardLayout
+      userName={user.name || undefined}
+      userEmail={user.email}
+      isPlatformAdmin={true}
+    >
       <PageHeader
         title="Create New Bakery"
         description="Add a new bakery to the platform"

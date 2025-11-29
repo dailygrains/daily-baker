@@ -1,12 +1,10 @@
 import { getCurrentUser } from '@/lib/clerk';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { UserAssignmentForm } from '@/components/user/UserAssignmentForm';
+import { UserEditPageContent } from '@/components/user/UserEditPageContent';
 import { getUserById, getAllRoles } from '@/app/actions/user';
 import { getAllBakeries } from '@/app/actions/bakery';
 import { redirect } from 'next/navigation';
-import { ArrowLeft } from 'lucide-react';
-import Link from 'next/link';
 
 export default async function EditUserPage({
   params,
@@ -33,7 +31,11 @@ export default async function EditUserPage({
 
   if (!userResult.success || !userResult.data) {
     return (
-      <DashboardLayout isPlatformAdmin={true}>
+      <DashboardLayout
+        userName={currentUser.name || undefined}
+        userEmail={currentUser.email}
+        isPlatformAdmin={true}
+      >
         <PageHeader title="Edit User" />
         <div className="alert alert-error">
           <span>{userResult.error || 'User not found'}</span>
@@ -47,19 +49,11 @@ export default async function EditUserPage({
   const roles = rolesResult.success ? rolesResult.data || [] : [];
 
   return (
-    <DashboardLayout isPlatformAdmin={true}>
-      <PageHeader
-        title={`Edit User: ${user.name || user.email}`}
-        description="Manage user bakery and role assignments"
-        actions={
-          <Link href="/admin/users" className="btn btn-ghost">
-            <ArrowLeft className="h-5 w-5 mr-2" />
-            Back to Users
-          </Link>
-        }
-      />
-
-      <UserAssignmentForm user={user} bakeries={bakeries} roles={roles} />
-    </DashboardLayout>
+    <UserEditPageContent
+      user={user}
+      bakeries={bakeries}
+      roles={roles}
+      isPlatformAdmin={currentUser.isPlatformAdmin}
+    />
   );
 }

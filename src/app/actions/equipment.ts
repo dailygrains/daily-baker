@@ -280,7 +280,6 @@ export async function getEquipmentById(id: string) {
           select: {
             id: true,
             name: true,
-            contactName: true,
             email: true,
             phone: true,
           },

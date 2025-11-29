@@ -21,6 +21,10 @@ export async function createBakeSheet(data: CreateBakeSheetInput) {
   try {
     const currentUser = await getCurrentUser();
 
+    if (!currentUser) {
+      return { success: false, error: 'Unauthorized: You must be logged in' };
+    }
+
     // Validate input
     const validatedData = createBakeSheetSchema.parse(data);
 
@@ -105,6 +109,10 @@ export async function getBakeSheetsByBakery(bakeryId: string) {
   try {
     const currentUser = await getCurrentUser();
 
+    if (!currentUser) {
+      return { success: false, error: 'Unauthorized: You must be logged in' };
+    }
+
     // Verify user belongs to the bakery
     if (currentUser.bakeryId !== bakeryId) {
       return {
@@ -153,6 +161,10 @@ export async function getBakeSheetsByBakery(bakeryId: string) {
 export async function getBakeSheetById(id: string) {
   try {
     const currentUser = await getCurrentUser();
+
+    if (!currentUser) {
+      return { success: false, error: 'Unauthorized: You must be logged in' };
+    }
 
     const bakeSheet = await db.bakeSheet.findUnique({
       where: { id },
@@ -235,6 +247,10 @@ export async function updateBakeSheet(data: UpdateBakeSheetInput) {
   try {
     const currentUser = await getCurrentUser();
 
+    if (!currentUser) {
+      return { success: false, error: 'Unauthorized: You must be logged in' };
+    }
+
     // Validate input
     const validatedData = updateBakeSheetSchema.parse(data);
 
@@ -268,7 +284,11 @@ export async function updateBakeSheet(data: UpdateBakeSheetInput) {
     }
 
     // Prepare update data
-    const updateData: any = {};
+    const updateData: {
+      scale?: Decimal;
+      quantity?: string;
+      notes?: string | null;
+    } = {};
     if (validatedData.scale !== undefined) {
       updateData.scale = new Decimal(validatedData.scale);
     }
@@ -319,6 +339,10 @@ export async function updateBakeSheet(data: UpdateBakeSheetInput) {
 export async function completeBakeSheet(data: CompleteBakeSheetInput) {
   try {
     const currentUser = await getCurrentUser();
+
+    if (!currentUser) {
+      return { success: false, error: 'Unauthorized: You must be logged in' };
+    }
 
     // Validate input
     const validatedData = completeBakeSheetSchema.parse(data);
@@ -425,8 +449,8 @@ export async function completeBakeSheet(data: CompleteBakeSheetInput) {
             quantity: new Decimal(usage.quantity),
             unit: usage.unit,
             notes: `Used for bake sheet: ${bakeSheet.quantity} of ${bakeSheet.recipe.name}`,
-            bakeryId: bakeSheet.bakeryId,
-            userId: currentUser.id,
+            bakeSheetId: bakeSheet.id,
+            createdBy: currentUser!.id,
           },
         });
 
@@ -492,6 +516,10 @@ export async function completeBakeSheet(data: CompleteBakeSheetInput) {
 export async function deleteBakeSheet(id: string) {
   try {
     const currentUser = await getCurrentUser();
+
+    if (!currentUser) {
+      return { success: false, error: 'Unauthorized: You must be logged in' };
+    }
 
     // Get bake sheet
     const bakeSheet = await db.bakeSheet.findUnique({

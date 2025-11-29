@@ -2,7 +2,7 @@
 
 import { db } from '@/lib/db';
 import { getCurrentUser } from '@/lib/clerk';
-import { ActivityType } from '@prisma/client';
+import { ActivityType } from '@/generated/prisma';
 import { revalidatePath } from 'next/cache';
 
 /**
@@ -29,7 +29,7 @@ export async function createActivityLog(data: {
         entityId: data.entityId || null,
         entityName: data.entityName || null,
         description: data.description,
-        metadata: data.metadata || null,
+        metadata: (data.metadata as Record<string, unknown>) || null,
       },
     });
 

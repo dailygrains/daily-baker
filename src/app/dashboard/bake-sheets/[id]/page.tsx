@@ -41,7 +41,7 @@ export default async function BakeSheetDetailPage({
         <PageHeader
           title={`${bakeSheet.quantity} of ${bakeSheet.recipe.name}`}
           description={`Bake sheet details${bakeSheet.completed ? ' (Completed)' : ''}`}
-          action={
+          actions={
             !bakeSheet.completed && (
               <CompleteBakeSheetButton bakeSheetId={id} />
             )

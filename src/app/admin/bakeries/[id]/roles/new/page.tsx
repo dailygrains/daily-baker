@@ -27,7 +27,11 @@ export default async function NewRolePage({
 
   if (!bakeryResult.success || !bakeryResult.data) {
     return (
-      <DashboardLayout isPlatformAdmin={true}>
+      <DashboardLayout
+        userName={user.name || undefined}
+        userEmail={user.email}
+        isPlatformAdmin={true}
+      >
         <PageHeader title="Create Role" />
         <div className="alert alert-error">
           <span>{bakeryResult.error || 'Bakery not found'}</span>
@@ -39,7 +43,11 @@ export default async function NewRolePage({
   const bakery = bakeryResult.data;
 
   return (
-    <DashboardLayout isPlatformAdmin={true}>
+    <DashboardLayout
+      userName={user.name || undefined}
+      userEmail={user.email}
+      isPlatformAdmin={true}
+    >
       <PageHeader
         title={`Create Role for ${bakery.name}`}
         description="Define a new role with specific permissions"

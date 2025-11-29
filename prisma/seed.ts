@@ -1,5 +1,4 @@
-import { PrismaClient, EquipmentStatus, TransactionType } from '@/generated/prisma';
-import { hash } from 'bcryptjs';
+import { PrismaClient, EquipmentStatus, TransactionType } from '../src/generated/prisma';
 
 const prisma = new PrismaClient();
 
@@ -34,15 +33,10 @@ async function main() {
     data: {
       name: 'Artisan Sourdough Co.',
       slug: 'artisan-sourdough',
-      address: '123 Main Street',
-      city: 'Portland',
-      state: 'OR',
-      zipCode: '97201',
-      country: 'USA',
+      address: '123 Main Street, Portland, OR 97201',
       phone: '(503) 555-0100',
       email: 'hello@artisansourdough.com',
       website: 'https://artisansourdough.com',
-      timezone: 'America/Los_Angeles',
       isActive: true,
     },
   });
@@ -51,15 +45,10 @@ async function main() {
     data: {
       name: 'Sweet Treats Pastry Shop',
       slug: 'sweet-treats',
-      address: '456 Oak Avenue',
-      city: 'Austin',
-      state: 'TX',
-      zipCode: '78701',
-      country: 'USA',
+      address: '456 Oak Avenue, Austin, TX 78701',
       phone: '(512) 555-0200',
       email: 'info@sweettreats.com',
       website: 'https://sweettreats.com',
-      timezone: 'America/Chicago',
       isActive: true,
     },
   });
@@ -68,15 +57,10 @@ async function main() {
     data: {
       name: 'Rustic Loaves Bakery',
       slug: 'rustic-loaves',
-      address: '789 Elm Boulevard',
-      city: 'Brooklyn',
-      state: 'NY',
-      zipCode: '11201',
-      country: 'USA',
+      address: '789 Elm Boulevard, Brooklyn, NY 11201',
       phone: '(718) 555-0300',
       email: 'contact@rusticloaves.com',
       website: 'https://rusticloaves.com',
-      timezone: 'America/New_York',
       isActive: true,
     },
   });
@@ -178,10 +162,14 @@ async function main() {
       clerkId: 'user_artisan_owner',
       email: 'owner@artisansourdough.com',
       name: 'Sarah Johnson',
-      bakeryId: artisanBakery.id,
       roleId: artisanOwnerRole.id,
       isPlatformAdmin: false,
       lastLoginAt: new Date(),
+      bakeries: {
+        create: {
+          bakeryId: artisanBakery.id,
+        },
+      },
     },
   });
 
@@ -190,10 +178,14 @@ async function main() {
       clerkId: 'user_artisan_manager',
       email: 'manager@artisansourdough.com',
       name: 'Michael Chen',
-      bakeryId: artisanBakery.id,
       roleId: artisanManagerRole.id,
       isPlatformAdmin: false,
       lastLoginAt: new Date(),
+      bakeries: {
+        create: {
+          bakeryId: artisanBakery.id,
+        },
+      },
     },
   });
 
@@ -202,10 +194,14 @@ async function main() {
       clerkId: 'user_artisan_baker',
       email: 'baker@artisansourdough.com',
       name: 'Emma Rodriguez',
-      bakeryId: artisanBakery.id,
       roleId: artisanBakerRole.id,
       isPlatformAdmin: false,
       lastLoginAt: new Date(),
+      bakeries: {
+        create: {
+          bakeryId: artisanBakery.id,
+        },
+      },
     },
   });
 
@@ -215,10 +211,14 @@ async function main() {
       clerkId: 'user_sweetreats_owner',
       email: 'owner@sweettreats.com',
       name: 'David Martinez',
-      bakeryId: sweetTreats.id,
       roleId: sweetTreatsOwnerRole.id,
       isPlatformAdmin: false,
       lastLoginAt: new Date(),
+      bakeries: {
+        create: {
+          bakeryId: sweetTreats.id,
+        },
+      },
     },
   });
 
@@ -232,22 +232,22 @@ async function main() {
   await prisma.unitConversion.createMany({
     data: [
       // Weight conversions
-      { fromUnit: 'kg', toUnit: 'g', factor: 1000 },
-      { fromUnit: 'g', toUnit: 'kg', factor: 0.001 },
-      { fromUnit: 'lb', toUnit: 'oz', factor: 16 },
-      { fromUnit: 'oz', toUnit: 'lb', factor: 0.0625 },
-      { fromUnit: 'kg', toUnit: 'lb', factor: 2.20462 },
-      { fromUnit: 'lb', toUnit: 'kg', factor: 0.453592 },
+      { fromUnit: 'kg', toUnit: 'g', factor: 1000, category: 'weight' },
+      { fromUnit: 'g', toUnit: 'kg', factor: 0.001, category: 'weight' },
+      { fromUnit: 'lb', toUnit: 'oz', factor: 16, category: 'weight' },
+      { fromUnit: 'oz', toUnit: 'lb', factor: 0.0625, category: 'weight' },
+      { fromUnit: 'kg', toUnit: 'lb', factor: 2.20462, category: 'weight' },
+      { fromUnit: 'lb', toUnit: 'kg', factor: 0.453592, category: 'weight' },
 
       // Volume conversions
-      { fromUnit: 'L', toUnit: 'mL', factor: 1000 },
-      { fromUnit: 'mL', toUnit: 'L', factor: 0.001 },
-      { fromUnit: 'gal', toUnit: 'qt', factor: 4 },
-      { fromUnit: 'qt', toUnit: 'gal', factor: 0.25 },
-      { fromUnit: 'cup', toUnit: 'mL', factor: 236.588 },
-      { fromUnit: 'mL', toUnit: 'cup', factor: 0.00422675 },
-      { fromUnit: 'tbsp', toUnit: 'mL', factor: 14.7868 },
-      { fromUnit: 'tsp', toUnit: 'mL', factor: 4.92892 },
+      { fromUnit: 'L', toUnit: 'mL', factor: 1000, category: 'volume' },
+      { fromUnit: 'mL', toUnit: 'L', factor: 0.001, category: 'volume' },
+      { fromUnit: 'gal', toUnit: 'qt', factor: 4, category: 'volume' },
+      { fromUnit: 'qt', toUnit: 'gal', factor: 0.25, category: 'volume' },
+      { fromUnit: 'cup', toUnit: 'mL', factor: 236.588, category: 'volume' },
+      { fromUnit: 'mL', toUnit: 'cup', factor: 0.00422675, category: 'volume' },
+      { fromUnit: 'tbsp', toUnit: 'mL', factor: 14.7868, category: 'volume' },
+      { fromUnit: 'tsp', toUnit: 'mL', factor: 4.92892, category: 'volume' },
     ],
   });
 
@@ -262,16 +262,10 @@ async function main() {
     data: {
       bakeryId: artisanBakery.id,
       name: 'Northwest Grain Suppliers',
-      type: 'Ingredients',
       email: 'orders@nwgrain.com',
       phone: '(503) 555-1000',
-      address: '1000 Warehouse Road',
-      city: 'Portland',
-      state: 'OR',
-      zipCode: '97210',
       website: 'https://nwgrain.com',
       notes: 'Primary flour supplier - organic and conventional',
-      isActive: true,
       contacts: {
         create: [
           {
@@ -279,7 +273,6 @@ async function main() {
             title: 'Sales Representative',
             email: 'tom@nwgrain.com',
             phone: '(503) 555-1001',
-            isPrimary: true,
           },
         ],
       },
@@ -290,16 +283,10 @@ async function main() {
     data: {
       bakeryId: artisanBakery.id,
       name: 'Valley Fresh Dairy',
-      type: 'Dairy',
       email: 'orders@valleydairy.com',
       phone: '(503) 555-2000',
-      address: '500 Farm Lane',
-      city: 'Eugene',
-      state: 'OR',
-      zipCode: '97401',
       website: 'https://valleydairy.com',
       notes: 'Organic butter and milk',
-      isActive: true,
       contacts: {
         create: [
           {
@@ -307,7 +294,6 @@ async function main() {
             title: 'Account Manager',
             email: 'lisa@valleydairy.com',
             phone: '(503) 555-2001',
-            isPrimary: true,
           },
         ],
       },
@@ -325,15 +311,10 @@ async function main() {
     data: {
       bakeryId: artisanBakery.id,
       name: 'Bread Flour (Organic)',
-      category: 'Flour',
-      currentQuantity: 250,
+      currentQty: 250,
       unit: 'kg',
-      minQuantity: 50,
-      maxQuantity: 500,
-      cost: 2.50,
-      costUnit: 'kg',
+      costPerUnit: 2.50,
       vendorId: flourVendor.id,
-      notes: 'High-protein organic bread flour',
     },
   });
 
@@ -341,13 +322,9 @@ async function main() {
     data: {
       bakeryId: artisanBakery.id,
       name: 'Whole Wheat Flour',
-      category: 'Flour',
-      currentQuantity: 100,
+      currentQty: 100,
       unit: 'kg',
-      minQuantity: 25,
-      maxQuantity: 200,
-      cost: 3.00,
-      costUnit: 'kg',
+      costPerUnit: 3.00,
       vendorId: flourVendor.id,
     },
   });
@@ -356,13 +333,9 @@ async function main() {
     data: {
       bakeryId: artisanBakery.id,
       name: 'Rye Flour',
-      category: 'Flour',
-      currentQuantity: 50,
+      currentQty: 50,
       unit: 'kg',
-      minQuantity: 10,
-      maxQuantity: 100,
-      cost: 3.50,
-      costUnit: 'kg',
+      costPerUnit: 3.50,
       vendorId: flourVendor.id,
     },
   });
@@ -371,13 +344,9 @@ async function main() {
     data: {
       bakeryId: artisanBakery.id,
       name: 'Sea Salt',
-      category: 'Salt',
-      currentQuantity: 20,
+      currentQty: 20,
       unit: 'kg',
-      minQuantity: 5,
-      maxQuantity: 50,
-      cost: 8.00,
-      costUnit: 'kg',
+      costPerUnit: 8.00,
       vendorId: flourVendor.id,
     },
   });
@@ -386,14 +355,9 @@ async function main() {
     data: {
       bakeryId: artisanBakery.id,
       name: 'Filtered Water',
-      category: 'Water',
-      currentQuantity: 500,
+      currentQty: 500,
       unit: 'L',
-      minQuantity: 100,
-      maxQuantity: 1000,
-      cost: 0.01,
-      costUnit: 'L',
-      notes: 'Municipal water, filtered',
+      costPerUnit: 0.01,
     },
   });
 
@@ -401,13 +365,9 @@ async function main() {
     data: {
       bakeryId: artisanBakery.id,
       name: 'Active Dry Yeast',
-      category: 'Leavening',
-      currentQuantity: 5,
+      currentQty: 5,
       unit: 'kg',
-      minQuantity: 1,
-      maxQuantity: 10,
-      cost: 15.00,
-      costUnit: 'kg',
+      costPerUnit: 15.00,
       vendorId: flourVendor.id,
     },
   });
@@ -416,15 +376,10 @@ async function main() {
     data: {
       bakeryId: artisanBakery.id,
       name: 'Unsalted Butter (Organic)',
-      category: 'Dairy',
-      currentQuantity: 30,
+      currentQty: 30,
       unit: 'kg',
-      minQuantity: 10,
-      maxQuantity: 50,
-      cost: 12.00,
-      costUnit: 'kg',
+      costPerUnit: 12.00,
       vendorId: dairyVendor.id,
-      notes: 'Organic, 82% butterfat',
     },
   });
 
@@ -432,13 +387,9 @@ async function main() {
     data: {
       bakeryId: artisanBakery.id,
       name: 'Whole Milk',
-      category: 'Dairy',
-      currentQuantity: 40,
+      currentQty: 40,
       unit: 'L',
-      minQuantity: 10,
-      maxQuantity: 100,
-      cost: 2.00,
-      costUnit: 'L',
+      costPerUnit: 2.00,
       vendorId: dairyVendor.id,
     },
   });
@@ -447,13 +398,9 @@ async function main() {
     data: {
       bakeryId: artisanBakery.id,
       name: 'Large Eggs (Organic)',
-      category: 'Eggs',
-      currentQuantity: 600,
+      currentQty: 600,
       unit: 'unit',
-      minQuantity: 100,
-      maxQuantity: 1000,
-      cost: 0.50,
-      costUnit: 'unit',
+      costPerUnit: 0.50,
       vendorId: dairyVendor.id,
     },
   });
@@ -462,13 +409,9 @@ async function main() {
     data: {
       bakeryId: artisanBakery.id,
       name: 'Granulated Sugar',
-      category: 'Sugar',
-      currentQuantity: 75,
+      currentQty: 75,
       unit: 'kg',
-      minQuantity: 20,
-      maxQuantity: 150,
-      cost: 2.00,
-      costUnit: 'kg',
+      costPerUnit: 2.00,
       vendorId: flourVendor.id,
     },
   });
@@ -485,81 +428,62 @@ async function main() {
       {
         bakeryId: artisanBakery.id,
         name: 'Spiral Mixer (80L)',
-        category: 'Mixers',
-        manufacturer: 'Hobart',
-        model: 'HL800',
-        serialNumber: 'HB-2023-001',
-        status: EquipmentStatus.OPERATIONAL,
+        status: EquipmentStatus.IN_USE,
         purchaseDate: new Date('2023-01-15'),
-        purchaseCost: 8500.00,
-        location: 'Main Production',
-        notes: 'Primary dough mixer - handles up to 50kg flour',
+        cost: 8500.00,
+        quantity: 1,
+        serialNumber: 'HB-2023-001',
+        notes: 'Hobart HL800 - Primary dough mixer - handles up to 50kg flour',
       },
       {
         bakeryId: artisanBakery.id,
         name: 'Deck Oven (3-deck)',
-        category: 'Ovens',
-        manufacturer: 'Blodgett',
-        model: 'DeckMaster-3',
-        serialNumber: 'BL-2022-045',
-        status: EquipmentStatus.OPERATIONAL,
+        status: EquipmentStatus.IN_USE,
         purchaseDate: new Date('2022-06-10'),
-        purchaseCost: 15000.00,
-        location: 'Baking Area',
-        maintenanceSchedule: 'Quarterly professional cleaning',
-        notes: 'Steam injection capable - primary bread oven',
+        cost: 15000.00,
+        quantity: 1,
+        serialNumber: 'BL-2022-045',
+        notes: 'Blodgett DeckMaster-3 - Steam injection capable - primary bread oven',
       },
       {
         bakeryId: artisanBakery.id,
         name: 'Proofing Cabinet (Full-size)',
-        category: 'Proofing',
-        manufacturer: 'Bakers Pride',
-        model: 'ProofMaster-2000',
-        serialNumber: 'BP-2023-012',
-        status: EquipmentStatus.OPERATIONAL,
+        status: EquipmentStatus.IN_USE,
         purchaseDate: new Date('2023-03-20'),
-        purchaseCost: 3200.00,
-        location: 'Proofing Room',
-        maintenanceSchedule: 'Monthly inspection',
+        cost: 3200.00,
+        quantity: 1,
+        serialNumber: 'BP-2023-012',
+        notes: 'Bakers Pride ProofMaster-2000',
       },
       {
         bakeryId: artisanBakery.id,
         name: 'Dough Sheeter',
-        category: 'Sheeters',
-        manufacturer: 'Somerset',
-        model: 'CDR-2000',
-        serialNumber: 'SM-2021-089',
-        status: EquipmentStatus.OPERATIONAL,
+        status: EquipmentStatus.IN_USE,
         purchaseDate: new Date('2021-11-05'),
-        purchaseCost: 2800.00,
-        location: 'Lamination Station',
+        cost: 2800.00,
+        quantity: 1,
+        serialNumber: 'SM-2021-089',
+        notes: 'Somerset CDR-2000',
       },
       {
         bakeryId: artisanBakery.id,
         name: 'Walk-in Refrigerator',
-        category: 'Refrigeration',
-        manufacturer: 'Kolpak',
-        model: 'WalkIn-1012',
-        serialNumber: 'KP-2020-034',
-        status: EquipmentStatus.OPERATIONAL,
+        status: EquipmentStatus.IN_USE,
         purchaseDate: new Date('2020-08-15'),
-        purchaseCost: 12000.00,
-        location: 'Cold Storage',
-        maintenanceSchedule: 'Bi-annual professional service',
-        notes: '10ft x 12ft, temperature: 34-38°F',
+        cost: 12000.00,
+        quantity: 1,
+        serialNumber: 'KP-2020-034',
+        notes: 'Kolpak WalkIn-1012 - 10ft x 12ft, temperature: 34-38°F',
       },
       {
         bakeryId: artisanBakery.id,
         name: 'Stand Mixer (20qt)',
-        category: 'Mixers',
-        manufacturer: 'KitchenAid',
-        model: 'Commercial-20',
-        serialNumber: 'KA-2023-067',
         status: EquipmentStatus.MAINTENANCE,
         purchaseDate: new Date('2023-07-12'),
-        purchaseCost: 1200.00,
-        location: 'Pastry Station',
-        notes: 'Motor needs replacement - scheduled for next week',
+        cost: 1200.00,
+        quantity: 1,
+        serialNumber: 'KA-2023-067',
+        notes: 'KitchenAid Commercial-20 - Motor needs replacement - scheduled for next week',
       },
     ],
   });
@@ -577,16 +501,8 @@ async function main() {
       bakeryId: artisanBakery.id,
       name: 'Classic Sourdough Bread',
       description: 'Our signature naturally leavened sourdough bread with a crispy crust and open crumb structure.',
-      category: 'Bread',
-      yieldQuantity: 2,
-      yieldUnit: 'loaves',
-      prepTimeMinutes: 60,
-      cookTimeMinutes: 45,
-      totalTimeMinutes: 1545, // Including fermentation time (24 hours)
-      difficulty: 'Medium',
-      instructions: '# Classic Sourdough Bread\n\n## Overview\nThis recipe produces two artisan sourdough loaves with a crispy crust and complex flavor.\n\n## Steps\n\n### 1. Prepare Levain (Night Before)\n- Mix sourdough starter with flour and water\n- Let ferment overnight at room temperature\n- Should be bubbly and doubled in size\n\n### 2. Autolyse\n- Mix bread flour and water\n- Rest for 30-60 minutes\n- This develops gluten without kneading\n\n### 3. Mix Dough\n- Add levain and salt to autolyse\n- Mix until well incorporated\n- Perform stretch and folds\n\n### 4. Bulk Fermentation\n- Let dough rise for 4-6 hours at 75°F\n- Perform stretch and folds every 30 minutes (first 2 hours)\n- Dough should increase by 50% in volume\n\n### 5. Shape\n- Divide dough into two portions\n- Pre-shape into rounds\n- Rest 20 minutes\n- Final shape into batards or boules\n\n### 6. Final Proof\n- Place in bannetons seam-side up\n- Refrigerate overnight (12-18 hours)\n- Or proof at room temp for 3-4 hours\n\n### 7. Bake\n- Preheat oven to 475°F with Dutch oven inside\n- Score loaves\n- Bake covered for 20 minutes\n- Uncover and bake 25 more minutes until deep golden\n- Internal temperature should reach 205°F\n\n### 8. Cool\n- Cool on rack for at least 1 hour before slicing\n- Crust will continue to crisp as it cools',
-      isPublished: true,
-      createdById: artisanOwner.id,
+      yield: '2 loaves',
+      totalCost: 0,
     },
   });
 
@@ -595,20 +511,19 @@ async function main() {
     data: {
       recipeId: sourdoughRecipe.id,
       name: 'Levain (Sourdough Starter)',
-      orderIndex: 0,
+      order: 0,
+      instructions: '# Levain\n\nMix sourdough starter with flour and water. Let ferment overnight at room temperature until bubbly and doubled in size.',
       ingredients: {
         create: [
           {
             ingredientId: breadFlour.id,
             quantity: 100,
             unit: 'g',
-            notes: 'For levain',
           },
           {
             ingredientId: water.id,
             quantity: 100,
             unit: 'mL',
-            notes: 'Room temperature',
           },
         ],
       },
@@ -619,7 +534,8 @@ async function main() {
     data: {
       recipeId: sourdoughRecipe.id,
       name: 'Main Dough',
-      orderIndex: 1,
+      order: 1,
+      instructions: '# Main Dough\n\n## Autolyse\nMix bread flour and water. Rest for 30-60 minutes.\n\n## Mix\nAdd levain and salt. Mix until well incorporated. Perform stretch and folds.\n\n## Bulk Fermentation\nLet dough rise for 4-6 hours at 75°F. Perform stretch and folds every 30 minutes for first 2 hours.\n\n## Shape & Proof\nDivide into two portions. Pre-shape, rest 20 minutes, then final shape. Refrigerate overnight (12-18 hours) or proof at room temp for 3-4 hours.\n\n## Bake\nPreheat oven to 475°F with Dutch oven inside. Score loaves. Bake covered for 20 minutes, then uncovered for 25 minutes until deep golden.',
       ingredients: {
         create: [
           {
@@ -631,7 +547,6 @@ async function main() {
             ingredientId: water.id,
             quantity: 630,
             unit: 'mL',
-            notes: 'Adjust hydration as needed',
           },
           {
             ingredientId: salt.id,
@@ -649,16 +564,8 @@ async function main() {
       bakeryId: artisanBakery.id,
       name: 'Honey Whole Wheat Bread',
       description: 'Hearty whole wheat bread with a touch of honey for natural sweetness.',
-      category: 'Bread',
-      yieldQuantity: 2,
-      yieldUnit: 'loaves',
-      prepTimeMinutes: 30,
-      cookTimeMinutes: 40,
-      totalTimeMinutes: 210,
-      difficulty: 'Easy',
-      instructions: '# Honey Whole Wheat Bread\n\n## A wholesome, naturally sweet bread perfect for sandwiches and toast.\n\n### Mixing\n1. Combine warm water and yeast, let proof 5 minutes\n2. Add honey, salt, and butter\n3. Mix in whole wheat flour and bread flour\n4. Knead for 10 minutes until smooth\n\n### First Rise\n1. Place in oiled bowl\n2. Cover and let rise 60 minutes\n\n### Shape and Second Rise\n1. Divide into two loaves\n2. Shape and place in greased pans\n3. Let rise 45 minutes\n\n### Bake\n1. Preheat oven to 350°F\n2. Bake 40 minutes until golden\n3. Internal temp should reach 190°F',
-      isPublished: true,
-      createdById: artisanOwner.id,
+      yield: '2 loaves',
+      totalCost: 0,
     },
   });
 
@@ -666,7 +573,8 @@ async function main() {
     data: {
       recipeId: wholeWheatRecipe.id,
       name: 'Ingredients',
-      orderIndex: 0,
+      order: 0,
+      instructions: '# Honey Whole Wheat Bread\n\n## Mixing\nCombine warm water and yeast, let proof 5 minutes. Add honey, salt, and butter. Mix in whole wheat flour and bread flour. Knead for 10 minutes until smooth.\n\n## First Rise\nPlace in oiled bowl. Cover and let rise 60 minutes.\n\n## Shape and Second Rise\nDivide into two loaves. Shape and place in greased pans. Let rise 45 minutes.\n\n## Bake\nPreheat oven to 350°F. Bake 40 minutes until golden. Internal temp should reach 190°F.',
       ingredients: {
         create: [
           {
@@ -683,13 +591,11 @@ async function main() {
             ingredientId: water.id,
             quantity: 650,
             unit: 'mL',
-            notes: 'Warm (105-115°F)',
           },
           {
             ingredientId: yeast.id,
             quantity: 14,
             unit: 'g',
-            notes: '2 packets',
           },
           {
             ingredientId: salt.id,
@@ -700,13 +606,11 @@ async function main() {
             ingredientId: butter.id,
             quantity: 50,
             unit: 'g',
-            notes: 'Melted',
           },
           {
             ingredientId: sugar.id,
             quantity: 75,
             unit: 'g',
-            notes: 'Honey can be substituted',
           },
         ],
       },
@@ -719,16 +623,8 @@ async function main() {
       bakeryId: artisanBakery.id,
       name: 'Butter Croissants',
       description: 'Flaky, buttery croissants with hundreds of delicate layers.',
-      category: 'Pastry',
-      yieldQuantity: 24,
-      yieldUnit: 'croissants',
-      prepTimeMinutes: 180,
-      cookTimeMinutes: 20,
-      totalTimeMinutes: 1200, // Includes overnight rest
-      difficulty: 'Hard',
-      instructions: '# Butter Croissants\n\n## Master the art of laminated dough\n\n### Day 1: Dough\n1. Make dough with flour, milk, yeast, sugar, salt\n2. Refrigerate overnight\n\n### Day 2: Lamination\n1. Roll out butter block\n2. Encase butter in dough\n3. Perform 3 sets of letter folds\n4. Rest between folds\n\n### Shaping\n1. Roll dough to 5mm thickness\n2. Cut triangles\n3. Roll from wide end to point\n4. Curve into crescent shape\n\n### Proofing and Baking\n1. Proof 2-3 hours until puffy\n2. Egg wash\n3. Bake at 375°F for 20 minutes until golden',
-      isPublished: true,
-      createdById: artisanOwner.id,
+      yield: '24 croissants',
+      totalCost: 0,
     },
   });
 
@@ -736,7 +632,8 @@ async function main() {
     data: {
       recipeId: croissantRecipe.id,
       name: 'Dough',
-      orderIndex: 0,
+      order: 0,
+      instructions: '# Day 1: Dough\n\nMake dough with flour, milk, yeast, sugar, salt. Refrigerate overnight.',
       ingredients: {
         create: [
           {
@@ -748,7 +645,6 @@ async function main() {
             ingredientId: milk.id,
             quantity: 500,
             unit: 'mL',
-            notes: 'Cold',
           },
           {
             ingredientId: yeast.id,
@@ -769,7 +665,6 @@ async function main() {
             ingredientId: butter.id,
             quantity: 100,
             unit: 'g',
-            notes: 'For dough',
           },
         ],
       },
@@ -780,14 +675,14 @@ async function main() {
     data: {
       recipeId: croissantRecipe.id,
       name: 'Butter Block (for lamination)',
-      orderIndex: 1,
+      order: 1,
+      instructions: '# Day 2: Lamination\n\nRoll out butter block. Encase butter in dough. Perform 3 sets of letter folds. Rest between folds.',
       ingredients: {
         create: [
           {
             ingredientId: butter.id,
             quantity: 600,
             unit: 'g',
-            notes: 'European style, 82% butterfat',
           },
         ],
       },
@@ -798,7 +693,8 @@ async function main() {
     data: {
       recipeId: croissantRecipe.id,
       name: 'Egg Wash',
-      orderIndex: 2,
+      order: 2,
+      instructions: '# Shaping and Baking\n\nRoll dough to 5mm thickness. Cut triangles. Roll from wide end to point. Curve into crescent shape. Proof 2-3 hours until puffy. Egg wash. Bake at 375°F for 20 minutes until golden.',
       ingredients: {
         create: [
           {
@@ -827,26 +723,22 @@ async function main() {
   await prisma.inventoryTransaction.create({
     data: {
       ingredientId: breadFlour.id,
-      bakeryId: artisanBakery.id,
-      type: TransactionType.PURCHASE,
+      type: TransactionType.RECEIVE,
       quantity: 250,
       unit: 'kg',
-      cost: 625.00,
       notes: 'Weekly flour delivery from Northwest Grain',
-      createdById: artisanManager.id,
+      createdBy: artisanManager.id,
     },
   });
 
   await prisma.inventoryTransaction.create({
     data: {
       ingredientId: butter.id,
-      bakeryId: artisanBakery.id,
-      type: TransactionType.PURCHASE,
+      type: TransactionType.RECEIVE,
       quantity: 30,
       unit: 'kg',
-      cost: 360.00,
       notes: 'Monthly butter order from Valley Fresh Dairy',
-      createdById: artisanManager.id,
+      createdBy: artisanManager.id,
     },
   });
 
@@ -854,12 +746,11 @@ async function main() {
   await prisma.inventoryTransaction.create({
     data: {
       ingredientId: breadFlour.id,
-      bakeryId: artisanBakery.id,
-      type: TransactionType.USAGE,
+      type: TransactionType.USE,
       quantity: 50,
       unit: 'kg',
       notes: 'Used in sourdough production - Week 1',
-      createdById: artisanBaker.id,
+      createdBy: artisanBaker.id,
     },
   });
 
@@ -867,12 +758,11 @@ async function main() {
   await prisma.inventoryTransaction.create({
     data: {
       ingredientId: wholeWheatFlour.id,
-      bakeryId: artisanBakery.id,
-      type: TransactionType.ADJUSTMENT,
+      type: TransactionType.ADJUST,
       quantity: -5,
       unit: 'kg',
       notes: 'Inventory count adjustment - damaged bag',
-      createdById: artisanManager.id,
+      createdBy: artisanManager.id,
     },
   });
 
@@ -888,14 +778,12 @@ async function main() {
     data: {
       recipeId: sourdoughRecipe.id,
       bakeryId: artisanBakery.id,
-      scheduledDate: new Date('2025-01-16'),
-      quantity: 50,
-      unit: 'loaves',
-      status: 'completed',
-      notes: 'Morning production batch',
-      assignedToId: artisanBaker.id,
+      scale: 25,
+      quantity: '50 loaves',
+      completed: true,
       completedAt: new Date('2025-01-16T14:30:00'),
-      completedById: artisanBaker.id,
+      completedBy: artisanBaker.id,
+      notes: 'Morning production batch',
     },
   });
 
@@ -904,12 +792,10 @@ async function main() {
     data: {
       recipeId: wholeWheatRecipe.id,
       bakeryId: artisanBakery.id,
-      scheduledDate: new Date(),
-      quantity: 30,
-      unit: 'loaves',
-      status: 'in_progress',
+      scale: 15,
+      quantity: '30 loaves',
+      completed: false,
       notes: 'Today\'s whole wheat production',
-      assignedToId: artisanBaker.id,
     },
   });
 
@@ -918,12 +804,10 @@ async function main() {
     data: {
       recipeId: croissantRecipe.id,
       bakeryId: artisanBakery.id,
-      scheduledDate: new Date(Date.now() + 86400000), // Tomorrow
-      quantity: 100,
-      unit: 'croissants',
-      status: 'scheduled',
+      scale: 4.17,
+      quantity: '100 croissants',
+      completed: false,
       notes: 'Weekend pastry production',
-      assignedToId: artisanBaker.id,
     },
   });
 

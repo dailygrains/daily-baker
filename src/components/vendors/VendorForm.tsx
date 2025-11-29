@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createVendor, updateVendor } from '@/app/actions/vendor';
-import type { Vendor } from '@prisma/client';
+import type { Vendor } from '@/generated/prisma';
 
 interface VendorFormProps {
   bakeryId: string;
@@ -17,11 +17,9 @@ export function VendorForm({ bakeryId, vendor }: VendorFormProps) {
 
   const [formData, setFormData] = useState({
     name: vendor?.name ?? '',
-    contactName: vendor?.contactName ?? '',
     email: vendor?.email ?? '',
     phone: vendor?.phone ?? '',
     website: vendor?.website ?? '',
-    address: vendor?.address ?? '',
     notes: vendor?.notes ?? '',
   });
 
@@ -35,21 +33,17 @@ export function VendorForm({ bakeryId, vendor }: VendorFormProps) {
         ? await updateVendor({
             id: vendor.id,
             ...formData,
-            contactName: formData.contactName || null,
             email: formData.email || null,
             phone: formData.phone || null,
             website: formData.website || null,
-            address: formData.address || null,
             notes: formData.notes || null,
           })
         : await createVendor({
             bakeryId,
             ...formData,
-            contactName: formData.contactName || null,
             email: formData.email || null,
             phone: formData.phone || null,
             website: formData.website || null,
-            address: formData.address || null,
             notes: formData.notes || null,
           });
 
@@ -90,20 +84,6 @@ export function VendorForm({ bakeryId, vendor }: VendorFormProps) {
       </div>
 
       <div className="divider">Contact Information</div>
-
-      <div className="form-control">
-        <label className="label">
-          <span className="label-text">Contact Person</span>
-        </label>
-        <input
-          type="text"
-          className="input input-bordered"
-          value={formData.contactName}
-          onChange={(e) => setFormData({ ...formData, contactName: e.target.value })}
-          maxLength={100}
-          placeholder="e.g., John Smith"
-        />
-      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="form-control">
@@ -146,19 +126,6 @@ export function VendorForm({ bakeryId, vendor }: VendorFormProps) {
           onChange={(e) => setFormData({ ...formData, website: e.target.value })}
           maxLength={255}
           placeholder="https://www.vendor.com"
-        />
-      </div>
-
-      <div className="form-control">
-        <label className="label">
-          <span className="label-text">Address</span>
-        </label>
-        <textarea
-          className="textarea textarea-bordered h-24"
-          value={formData.address}
-          onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-          maxLength={500}
-          placeholder="Street address, city, state, postal code"
         />
       </div>
 

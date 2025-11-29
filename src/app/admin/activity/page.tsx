@@ -21,7 +21,11 @@ export default async function ActivityLogsPage() {
 
   if (!logsResult.success) {
     return (
-      <DashboardLayout isPlatformAdmin={true}>
+      <DashboardLayout
+        userName={user.name || undefined}
+        userEmail={user.email}
+        isPlatformAdmin={true}
+      >
         <PageHeader
           title="Activity Logs"
           description="Platform-wide activity monitoring"
@@ -36,7 +40,11 @@ export default async function ActivityLogsPage() {
   const { logs, total } = logsResult.data!;
 
   return (
-    <DashboardLayout isPlatformAdmin={true}>
+    <DashboardLayout
+      userName={user.name || undefined}
+      userEmail={user.email}
+      isPlatformAdmin={true}
+    >
       <PageHeader
         title="Activity Logs"
         description="Platform-wide activity monitoring"

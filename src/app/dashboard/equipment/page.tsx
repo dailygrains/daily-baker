@@ -61,7 +61,7 @@ export default async function EquipmentPage() {
         <PageHeader
           title="Equipment"
           description="Track and manage bakery equipment"
-          action={
+          actions={
             <Link href="/dashboard/equipment/new" className="btn btn-primary">
               <Plus className="h-4 w-4" />
               Add Equipment

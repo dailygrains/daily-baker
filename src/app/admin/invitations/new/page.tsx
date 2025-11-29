@@ -28,7 +28,11 @@ export default async function NewInvitationPage() {
   const roles = rolesResult.success ? rolesResult.data || [] : [];
 
   return (
-    <DashboardLayout isPlatformAdmin={true}>
+    <DashboardLayout
+      userName={user.name || undefined}
+      userEmail={user.email}
+      isPlatformAdmin={true}
+    >
       <PageHeader
         title="Send Invitation"
         description="Invite a new user to the platform"
@@ -49,7 +53,7 @@ export default async function NewInvitationPage() {
             <h3 className="font-bold">About Invitations</h3>
             <div className="text-sm">
               <p className="mt-1">Invitations are valid for 7 days. You can optionally pre-assign the user to a bakery and role.</p>
-              <p className="mt-1">After creating the invitation, you'll be able to copy the invitation link to share with the user.</p>
+              <p className="mt-1">After creating the invitation, you&apos;ll be able to copy the invitation link to share with the user.</p>
             </div>
           </div>
         </div>

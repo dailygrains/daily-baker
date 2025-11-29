@@ -27,7 +27,7 @@ export default async function IngredientsPage() {
         <PageHeader
           title="Ingredients"
           description="Manage your bakery's ingredient inventory"
-          action={
+          actions={
             <Link href="/dashboard/ingredients/new" className="btn btn-primary">
               <Plus className="h-4 w-4" />
               Add Ingredient

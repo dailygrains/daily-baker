@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createRole, updateRole } from '@/app/actions/role';
-import type { Role, Bakery } from '@prisma/client';
+import type { Role, Bakery } from '@/generated/prisma';
 
 interface RoleFormProps {
   role?: Role;

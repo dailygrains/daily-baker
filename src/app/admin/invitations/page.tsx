@@ -22,7 +22,11 @@ export default async function InvitationsPage() {
 
   if (!result.success) {
     return (
-      <DashboardLayout isPlatformAdmin={true}>
+      <DashboardLayout
+        userName={user.name || undefined}
+        userEmail={user.email}
+        isPlatformAdmin={true}
+      >
         <PageHeader
           title="Invitations"
           description="Manage user invitations"
@@ -56,7 +60,11 @@ export default async function InvitationsPage() {
   }
 
   return (
-    <DashboardLayout isPlatformAdmin={true}>
+    <DashboardLayout
+      userName={user.name || undefined}
+      userEmail={user.email}
+      isPlatformAdmin={true}
+    >
       <PageHeader
         title="Invitations"
         description="Manage user invitations to the platform"
@@ -177,7 +185,10 @@ export default async function InvitationsPage() {
                               >
                                 <Copy className="h-4 w-4" />
                               </button>
-                              <form action={revokeInvitation.bind(null, invitation.id)}>
+                              <form action={async () => {
+                                'use server';
+                                await revokeInvitation(invitation.id);
+                              }}>
                                 <button
                                   type="submit"
                                   className="btn btn-sm btn-ghost text-error"

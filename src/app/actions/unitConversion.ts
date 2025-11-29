@@ -127,7 +127,10 @@ export async function updateUnitConversion(data: UpdateUnitConversionInput) {
     }
 
     // Update the unit conversion
-    const updateData: any = {};
+    const updateData: {
+      factor?: Decimal;
+      category?: string | null;
+    } = {};
     if (validatedData.factor !== undefined) {
       updateData.factor = new Decimal(validatedData.factor);
     }

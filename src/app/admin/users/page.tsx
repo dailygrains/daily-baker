@@ -4,8 +4,8 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { redirect } from 'next/navigation';
 import { getAllUsers } from '@/app/actions/user';
-import { Users, Edit, Wheat } from 'lucide-react';
-import Link from 'next/link';
+import { Users } from 'lucide-react';
+import { UsersTable } from '@/components/user/UsersTable';
 
 export default async function UsersPage() {
   const user = await getCurrentUser();
@@ -22,7 +22,11 @@ export default async function UsersPage() {
 
   if (!result.success) {
     return (
-      <DashboardLayout isPlatformAdmin={true}>
+      <DashboardLayout
+        userName={user.name || undefined}
+        userEmail={user.email}
+        isPlatformAdmin={true}
+      >
         <PageHeader
           title="Users"
           description="Manage all users on the platform"
@@ -37,10 +41,14 @@ export default async function UsersPage() {
   const users = result.data || [];
 
   return (
-    <DashboardLayout isPlatformAdmin={true}>
+    <DashboardLayout
+      userName={user.name || undefined}
+      userEmail={user.email}
+      isPlatformAdmin={true}
+    >
       <PageHeader
         title="Users"
-        description="Manage all users on the platform"
+        sticky
       />
 
       {users.length === 0 ? (
@@ -50,100 +58,8 @@ export default async function UsersPage() {
           description="Users will appear here once they sign up."
         />
       ) : (
-        <div className="card bg-base-100 shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Email</th>
-                  <th>Bakery</th>
-                  <th>Role</th>
-                  <th>Joined</th>
-                  <th className="text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.map((u) => (
-                  <tr key={u.id} className="hover">
-                    <td>
-                      <div className="flex items-center gap-3">
-                        <div className="avatar placeholder">
-                          <div className="bg-neutral text-neutral-content rounded-full w-10">
-                            <span className="text-sm">
-                              {u.name?.charAt(0).toUpperCase() || u.email.charAt(0).toUpperCase()}
-                            </span>
-                          </div>
-                        </div>
-                        <div>
-                          <div className="font-bold">{u.name || 'Not set'}</div>
-                          {u.id === user.id && (
-                            <span className="badge badge-primary badge-sm">You</span>
-                          )}
-                        </div>
-                      </div>
-                    </td>
-                    <td>{u.email}</td>
-                    <td>
-                      {u.bakery ? (
-                        <div className="flex items-center gap-2">
-                          <Wheat className="h-4 w-4 text-primary" />
-                          <span>{u.bakery.name}</span>
-                        </div>
-                      ) : (
-                        <span className="text-base-content/40 italic">No bakery</span>
-                      )}
-                    </td>
-                    <td>
-                      {u.role ? (
-                        <span className="badge badge-outline">{u.role.name}</span>
-                      ) : (
-                        <span className="text-base-content/40 italic">No role</span>
-                      )}
-                    </td>
-                    <td>
-                      <div className="text-sm">
-                        {new Date(u.createdAt).toLocaleDateString()}
-                      </div>
-                    </td>
-                    <td className="text-right">
-                      <Link
-                        href={`/admin/users/${u.id}/edit`}
-                        className="btn btn-sm btn-ghost"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <UsersTable users={users} currentUserId={user.id} />
       )}
-
-      <div className="mt-6">
-        <div className="stats stats-vertical md:stats-horizontal shadow bg-base-100">
-          <div className="stat">
-            <div className="stat-title">Total Users</div>
-            <div className="stat-value">{users.length}</div>
-          </div>
-
-          <div className="stat">
-            <div className="stat-title">Assigned to Bakeries</div>
-            <div className="stat-value">
-              {users.filter((u) => u.bakeryId).length}
-            </div>
-          </div>
-
-          <div className="stat">
-            <div className="stat-title">With Roles</div>
-            <div className="stat-value">
-              {users.filter((u) => u.roleId).length}
-            </div>
-          </div>
-        </div>
-      </div>
     </DashboardLayout>
   );
 }

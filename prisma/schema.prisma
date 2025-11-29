@@ -32,7 +32,7 @@ model Bakery {
   website     String?
 
   // Relations
-  users        User[]
+  users        UserBakery[]
   recipes      Recipe[]
   ingredients  Ingredient[]
   vendors      Vendor[]
@@ -51,9 +51,8 @@ model User {
   clerkId         String    @unique
   email           String
   name            String?
+  imageUrl        String?
   isPlatformAdmin Boolean   @default(false) // Super-admin access
-  bakeryId        String?
-  bakery          Bakery?   @relation(fields: [bakeryId], references: [id], onDelete: SetNull)
   roleId          String?
   role            Role?     @relation(fields: [roleId], references: [id], onDelete: SetNull)
   createdAt       DateTime  @default(now())
@@ -61,15 +60,29 @@ model User {
   lastLoginAt     DateTime?
 
   // Relations
+  bakeries              UserBakery[]
   inventoryTransactions InventoryTransaction[]
   completedBakeSheets   BakeSheet[]            @relation("CompletedBy")
   sentInvitations       Invitation[]           @relation("InvitationCreator")
   activityLogs          ActivityLog[]
 
   @@index([isPlatformAdmin])
-  @@index([bakeryId])
   @@index([clerkId])
   @@map("users")
+}
+
+model UserBakery {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bakeryId  String
+  bakery    Bakery   @relation(fields: [bakeryId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, bakeryId])
+  @@index([userId])
+  @@index([bakeryId])
+  @@map("user_bakeries")
 }
 
 model Invitation {

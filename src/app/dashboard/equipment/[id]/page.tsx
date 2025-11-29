@@ -58,7 +58,7 @@ export default async function EquipmentDetailPage({
         <PageHeader
           title={equipment.name}
           description="Equipment details and information"
-          action={
+          actions={
             <Link
               href={`/dashboard/equipment/${id}/edit`}
               className="btn btn-primary btn-sm"
@@ -100,11 +100,6 @@ export default async function EquipmentDetailPage({
                     >
                       {equipment.vendor.name}
                     </Link>
-                    {equipment.vendor.contactName && (
-                      <p className="text-sm text-base-content/60">
-                        {equipment.vendor.contactName}
-                      </p>
-                    )}
                   </div>
                 )}
 
@@ -195,9 +190,6 @@ export default async function EquipmentDetailPage({
                     >
                       {equipment.vendor.name}
                     </Link>
-                    {equipment.vendor.contactName && (
-                      <p className="text-base-content/70">{equipment.vendor.contactName}</p>
-                    )}
                     {equipment.vendor.email && (
                       <a
                         href={`mailto:${equipment.vendor.email}`}

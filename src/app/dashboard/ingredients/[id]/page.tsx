@@ -41,7 +41,7 @@ export default async function IngredientDetailPage({
         <PageHeader
           title={ingredient.name}
           description="Ingredient details and transaction history"
-          action={
+          actions={
             <div className="flex gap-2">
               <Link
                 href={`/dashboard/ingredients/${id}/edit`}

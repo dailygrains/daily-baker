@@ -39,7 +39,7 @@ export default async function VendorDetailPage({
         <PageHeader
           title={vendor.name}
           description="Vendor details and linked items"
-          action={
+          actions={
             <Link
               href={`/dashboard/vendors/${id}/edit`}
               className="btn btn-primary btn-sm"
@@ -57,13 +57,6 @@ export default async function VendorDetailPage({
               <h2 className="card-title">Contact Information</h2>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                {vendor.contactName && (
-                  <div>
-                    <p className="text-sm text-base-content/70">Contact Person</p>
-                    <p className="text-lg font-semibold">{vendor.contactName}</p>
-                  </div>
-                )}
-
                 {vendor.email && (
                   <div>
                     <p className="text-sm text-base-content/70">Email</p>
@@ -105,16 +98,6 @@ export default async function VendorDetailPage({
                   </div>
                 )}
               </div>
-
-              {vendor.address && (
-                <div className="mt-4">
-                  <p className="text-sm text-base-content/70">Address</p>
-                  <div className="flex items-start gap-2 mt-1">
-                    <MapPin className="h-4 w-4 mt-1 flex-shrink-0" />
-                    <p className="whitespace-pre-line">{vendor.address}</p>
-                  </div>
-                </div>
-              )}
 
               {vendor.notes && (
                 <div className="mt-4">

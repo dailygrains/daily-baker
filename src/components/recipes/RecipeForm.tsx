@@ -1,11 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { createRecipe, updateRecipe } from '@/app/actions/recipe';
 import { Plus, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
 import { MDXEditor } from '@/components/ui/MDXEditor';
-import type { Recipe, RecipeSection, RecipeSectionIngredient, Ingredient } from '@prisma/client';
+import type { Recipe, RecipeSection, RecipeSectionIngredient, Ingredient } from '@/generated/prisma';
 
 type RecipeWithSections = Recipe & {
   sections: (RecipeSection & {
@@ -139,52 +139,60 @@ export function RecipeForm({ bakeryId, recipe, availableIngredients }: RecipeFor
     setSections(newSections);
   };
 
-  const updateSection = (index: number, field: keyof SectionFormData, value: any) => {
-    const newSections = [...sections];
-    newSections[index] = { ...newSections[index], [field]: value };
-    setSections(newSections);
-  };
-
-  const addIngredient = (sectionIndex: number) => {
-    const newSections = [...sections];
-    newSections[sectionIndex].ingredients.push({
-      ingredientId: availableIngredients[0]?.id || '',
-      quantity: 0,
-      unit: availableIngredients[0]?.unit || 'g',
+  const updateSection = useCallback((index: number, field: keyof SectionFormData, value: unknown) => {
+    setSections((prevSections) => {
+      const newSections = [...prevSections];
+      newSections[index] = { ...newSections[index], [field]: value };
+      return newSections;
     });
-    setSections(newSections);
-  };
+  }, []);
 
-  const removeIngredient = (sectionIndex: number, ingredientIndex: number) => {
-    const newSections = [...sections];
-    newSections[sectionIndex].ingredients = newSections[sectionIndex].ingredients.filter(
-      (_, i) => i !== ingredientIndex
-    );
-    setSections(newSections);
-  };
+  const addIngredient = useCallback((sectionIndex: number) => {
+    setSections((prevSections) => {
+      const newSections = [...prevSections];
+      newSections[sectionIndex].ingredients.push({
+        ingredientId: availableIngredients[0]?.id || '',
+        quantity: 0,
+        unit: availableIngredients[0]?.unit || 'g',
+      });
+      return newSections;
+    });
+  }, [availableIngredients]);
 
-  const updateIngredient = (
+  const removeIngredient = useCallback((sectionIndex: number, ingredientIndex: number) => {
+    setSections((prevSections) => {
+      const newSections = [...prevSections];
+      newSections[sectionIndex].ingredients = newSections[sectionIndex].ingredients.filter(
+        (_, i) => i !== ingredientIndex
+      );
+      return newSections;
+    });
+  }, []);
+
+  const updateIngredient = useCallback((
     sectionIndex: number,
     ingredientIndex: number,
     field: string,
-    value: any
+    value: unknown
   ) => {
-    const newSections = [...sections];
-    newSections[sectionIndex].ingredients[ingredientIndex] = {
-      ...newSections[sectionIndex].ingredients[ingredientIndex],
-      [field]: value,
-    };
+    setSections((prevSections) => {
+      const newSections = [...prevSections];
+      newSections[sectionIndex].ingredients[ingredientIndex] = {
+        ...newSections[sectionIndex].ingredients[ingredientIndex],
+        [field]: value,
+      };
 
-    // Update unit when ingredient changes
-    if (field === 'ingredientId') {
-      const ingredient = availableIngredients.find((ing) => ing.id === value);
-      if (ingredient) {
-        newSections[sectionIndex].ingredients[ingredientIndex].unit = ingredient.unit;
+      // Update unit when ingredient changes
+      if (field === 'ingredientId') {
+        const ingredient = availableIngredients.find((ing) => ing.id === value);
+        if (ingredient) {
+          newSections[sectionIndex].ingredients[ingredientIndex].unit = ingredient.unit;
+        }
       }
-    }
 
-    setSections(newSections);
-  };
+      return newSections;
+    });
+  }, [availableIngredients]);
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">

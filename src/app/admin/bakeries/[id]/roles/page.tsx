@@ -32,7 +32,11 @@ export default async function BakeryRolesPage({
 
   if (!bakeryResult.success || !bakeryResult.data) {
     return (
-      <DashboardLayout isPlatformAdmin={true}>
+      <DashboardLayout
+        userName={user.name || undefined}
+        userEmail={user.email}
+        isPlatformAdmin={true}
+      >
         <PageHeader title="Roles" />
         <div className="alert alert-error">
           <span>{bakeryResult.error || 'Bakery not found'}</span>
@@ -45,7 +49,11 @@ export default async function BakeryRolesPage({
   const roles = rolesResult.success ? rolesResult.data || [] : [];
 
   return (
-    <DashboardLayout isPlatformAdmin={true}>
+    <DashboardLayout
+      userName={user.name || undefined}
+      userEmail={user.email}
+      isPlatformAdmin={true}
+    >
       <PageHeader
         title={`Roles for ${bakery.name}`}
         description="Manage roles and permissions for this bakery"

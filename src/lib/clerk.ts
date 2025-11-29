@@ -16,7 +16,11 @@ export async function getCurrentUser() {
   let user = await prisma.user.findUnique({
     where: { clerkId: clerkUser.id },
     include: {
-      bakery: true,
+      bakeries: {
+        include: {
+          bakery: true,
+        },
+      },
       role: true,
     },
   });
@@ -28,22 +32,38 @@ export async function getCurrentUser() {
         clerkId: clerkUser.id,
         email: clerkUser.emailAddresses[0]?.emailAddress ?? '',
         name: `${clerkUser.firstName ?? ''} ${clerkUser.lastName ?? ''}`.trim() || null,
+        imageUrl: clerkUser.imageUrl,
         lastLoginAt: new Date(),
       },
       include: {
-        bakery: true,
+        bakeries: {
+          include: {
+            bakery: true,
+          },
+        },
         role: true,
       },
     });
   } else {
-    // Update last login
+    // Update last login and sync imageUrl in case it changed
     await prisma.user.update({
       where: { id: user.id },
-      data: { lastLoginAt: new Date() },
+      data: {
+        lastLoginAt: new Date(),
+        imageUrl: clerkUser.imageUrl,
+      },
     });
   }
 
-  return user;
+  // Transform user object to add convenience properties
+  // Get the first bakery (for now, assuming single bakery per user)
+  const firstBakery = user.bakeries[0];
+
+  return {
+    ...user,
+    bakery: firstBakery?.bakery,
+    bakeryId: firstBakery?.bakeryId,
+  };
 }
 
 /**
@@ -55,11 +75,18 @@ export async function isPlatformAdmin() {
 }
 
 /**
- * Get user's bakery ID (null for platform admins without assigned bakery)
+ * Get user's bakery IDs (empty array for platform admins without assigned bakeries)
  */
-export async function getUserBakeryId() {
+export async function getUserBakeryIds() {
   const user = await getCurrentUser();
-  return user?.bakeryId ?? null;
+  if (!user) return [];
+
+  const userBakeries = await prisma.userBakery.findMany({
+    where: { userId: user.id },
+    select: { bakeryId: true },
+  });
+
+  return userBakeries.map(ub => ub.bakeryId);
 }
 
 /**
@@ -85,11 +112,21 @@ export async function requirePlatformAdmin() {
 }
 
 /**
- * Require bakery association - throws if user has no bakery
+ * Require bakery association - throws if user has no bakeries (platform admins exempt)
  */
 export async function requireBakeryUser() {
   const user = await requireAuth();
-  if (!user.bakeryId) {
+
+  // Platform admins don't need bakery assignment
+  if (user.isPlatformAdmin) {
+    return user;
+  }
+
+  const bakeryCount = await prisma.userBakery.count({
+    where: { userId: user.id },
+  });
+
+  if (bakeryCount === 0) {
     throw new Error('Bakery association required');
   }
   return user;

@@ -27,7 +27,11 @@ export default async function EditRolePage({
 
   if (!roleResult.success || !roleResult.data) {
     return (
-      <DashboardLayout isPlatformAdmin={true}>
+      <DashboardLayout
+        userName={user.name || undefined}
+        userEmail={user.email}
+        isPlatformAdmin={true}
+      >
         <PageHeader title="Edit Role" />
         <div className="alert alert-error">
           <span>{roleResult.error || 'Role not found'}</span>
@@ -39,7 +43,11 @@ export default async function EditRolePage({
   const role = roleResult.data;
 
   return (
-    <DashboardLayout isPlatformAdmin={true}>
+    <DashboardLayout
+      userName={user.name || undefined}
+      userEmail={user.email}
+      isPlatformAdmin={true}
+    >
       <PageHeader
         title={`Edit ${role.name}`}
         description="Update role details and permissions"

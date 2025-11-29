@@ -4,6 +4,7 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { RecipeForm } from '@/components/recipes/RecipeForm';
 import { db } from '@/lib/db';
+import Link from 'next/link';
 
 export default async function NewRecipePage() {
   const user = await getCurrentUser();
@@ -45,9 +46,9 @@ export default async function NewRecipePage() {
                 <p className="text-base-content/70 mb-4">
                   You need to add ingredients before creating recipes
                 </p>
-                <a href="/dashboard/ingredients/new" className="btn btn-primary">
+                <Link href="/dashboard/ingredients/new" className="btn btn-primary">
                   Add Ingredients
-                </a>
+                </Link>
               </div>
             ) : (
               <RecipeForm bakeryId={user.bakeryId} availableIngredients={ingredients} />

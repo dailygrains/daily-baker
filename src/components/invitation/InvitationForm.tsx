@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createInvitation } from '@/app/actions/invitation';
-import type { Bakery, Role } from '@prisma/client';
+import type { Bakery, Role } from '@/generated/prisma';
 
 interface InvitationFormProps {
   bakeries: Bakery[];

@@ -9,7 +9,7 @@ type ActivityLogInput = {
   entityId: string;
   entityName: string;
   description: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   bakeryId?: string;
 };
 
@@ -26,7 +26,7 @@ export async function createActivityLog(data: ActivityLogInput) {
         entityId: data.entityId,
         entityName: data.entityName,
         description: data.description,
-        metadata: data.metadata || null,
+        metadata: (data.metadata as Record<string, unknown>) || null,
         bakeryId: data.bakeryId || null,
       },
     });

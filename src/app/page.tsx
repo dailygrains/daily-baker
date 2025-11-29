@@ -22,10 +22,10 @@ export default async function Home() {
           </a>
         </div>
         <div className="flex-none gap-2">
-          <SignInButton mode="redirect" redirectUrl="/dashboard">
+          <SignInButton mode="redirect" forceRedirectUrl="/dashboard">
             <button className="btn btn-ghost">Sign In</button>
           </SignInButton>
-          <SignUpButton mode="redirect" redirectUrl="/dashboard">
+          <SignUpButton mode="redirect" forceRedirectUrl="/dashboard">
             <button className="btn btn-primary">Get Started</button>
           </SignUpButton>
         </div>
@@ -43,12 +43,12 @@ export default async function Home() {
               Manage recipes, track inventory, schedule production, and streamline your bakery operations.
             </p>
             <div className="flex gap-4 justify-center">
-              <SignUpButton mode="redirect" redirectUrl="/dashboard">
+              <SignUpButton mode="redirect" forceRedirectUrl="/dashboard">
                 <button className="btn btn-primary btn-lg">
                   Start Free Trial
                 </button>
               </SignUpButton>
-              <SignInButton mode="redirect" redirectUrl="/dashboard">
+              <SignInButton mode="redirect" forceRedirectUrl="/dashboard">
                 <button className="btn btn-outline btn-lg">
                   Sign In
                 </button>
@@ -108,7 +108,7 @@ export default async function Home() {
           <p className="text-xl mb-8 opacity-90">
             Join bakeries already using Daily Baker to streamline their operations.
           </p>
-          <SignUpButton mode="redirect" redirectUrl="/dashboard">
+          <SignUpButton mode="redirect" forceRedirectUrl="/dashboard">
             <button className="btn btn-secondary btn-lg">
               Create Your Account
             </button>

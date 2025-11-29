@@ -119,9 +119,13 @@ export async function getRecentActivity() {
         name: true,
         email: true,
         createdAt: true,
-        bakery: {
+        bakeries: {
           select: {
-            name: true,
+            bakery: {
+              select: {
+                name: true,
+              },
+            },
           },
         },
       },

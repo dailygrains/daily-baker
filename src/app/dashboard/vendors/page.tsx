@@ -40,7 +40,7 @@ export default async function VendorsPage() {
         <PageHeader
           title="Vendors"
           description="Manage your suppliers and service providers"
-          action={
+          actions={
             <Link href="/dashboard/vendors/new" className="btn btn-primary">
               <Plus className="h-4 w-4" />
               Add Vendor
@@ -121,7 +121,7 @@ export default async function VendorsPage() {
                             </a>
                           )}
                         </td>
-                        <td>{vendor.contactName || '-'}</td>
+                        <td>-</td>
                         <td>
                           {vendor.email ? (
                             <a

@@ -43,7 +43,7 @@ export default async function RecipeDetailPage({
         <PageHeader
           title={recipe.name}
           description={recipe.description || 'Recipe details and instructions'}
-          action={
+          actions={
             <Link
               href={`/dashboard/recipes/${id}/edit`}
               className="btn btn-primary btn-sm"
