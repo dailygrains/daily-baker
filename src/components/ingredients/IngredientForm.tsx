@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { createIngredient, updateIngredient, assignVendorToIngredient, unassignVendorFromIngredient } from '@/app/actions/ingredient';
 import { VendorAutocomplete } from '@/components/vendor/VendorAutocomplete';
 import { X } from 'lucide-react';
-import type { Decimal } from '@prisma/client/runtime/library';
 import { useToast } from '@/contexts/ToastContext';
 
 interface Vendor {
@@ -18,9 +17,10 @@ interface IngredientFormProps {
   ingredient?: {
     id: string;
     name: string;
-    currentQty: number | string | Decimal;
-    unit: string;
-    costPerUnit: number | string | Decimal;
+    description?: string | null;
+    category?: string | null;
+    defaultUnit: string;
+    reorderLevel?: number | null;
     vendors: Array<{
       vendor: Vendor;
     }>;
@@ -52,9 +52,10 @@ export function IngredientForm({
 
   const [formData, setFormData] = useState({
     name: ingredient?.name ?? '',
-    currentQty: ingredient ? Number(ingredient.currentQty) : 0,
-    unit: ingredient?.unit ?? '',
-    costPerUnit: ingredient ? Number(ingredient.costPerUnit) : 0,
+    description: ingredient?.description ?? '',
+    category: ingredient?.category ?? '',
+    defaultUnit: ingredient?.defaultUnit ?? '',
+    reorderLevel: ingredient?.reorderLevel ?? '',
   });
 
   // Notify parent of form ref changes
@@ -88,14 +89,21 @@ export function IngredientForm({
     setError(null);
 
     try {
+      const payload = {
+        ...formData,
+        description: formData.description || undefined,
+        category: formData.category || undefined,
+        reorderLevel: formData.reorderLevel ? parseFloat(formData.reorderLevel as string) : undefined,
+      };
+
       const result = ingredient
         ? await updateIngredient({
             id: ingredient.id,
-            ...formData,
+            ...payload,
           })
         : await createIngredient({
             bakeryId,
-            ...formData,
+            ...payload,
           });
 
       if (result.success) {
@@ -197,75 +205,76 @@ export function IngredientForm({
             placeholder="e.g., All-Purpose Flour"
           />
         </fieldset>
-      </div>
-
-      <div className="space-y-0">
-        <h2 className="text-xl font-semibold">Inventory Details</h2>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-          <fieldset className="fieldset">
-            <legend className="fieldset-legend">Current Quantity *</legend>
-            <input
-              type="number"
-              step="0.001"
-              min="0"
-              className="input input-bordered w-full"
-              value={formData.currentQty}
-              onChange={(e) =>
-                setFormData({ ...formData, currentQty: parseFloat(e.target.value) || 0 })
-              }
-              required
-            />
-          </fieldset>
-
-          <fieldset className="fieldset">
-            <legend className="fieldset-legend">Unit *</legend>
-            <select
-              className="select select-bordered w-full"
-              value={formData.unit}
-              onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
-              required
-            >
-              <option value="">Select unit</option>
-              <option value="g">Grams (g)</option>
-              <option value="kg">Kilograms (kg)</option>
-              <option value="ml">Milliliters (ml)</option>
-              <option value="l">Liters (l)</option>
-              <option value="oz">Ounces (oz)</option>
-              <option value="lb">Pounds (lb)</option>
-              <option value="cup">Cups</option>
-              <option value="tbsp">Tablespoons</option>
-              <option value="tsp">Teaspoons</option>
-              <option value="unit">Units</option>
-            </select>
-          </fieldset>
-        </div>
-      </div>
-
-      <div className="space-y-0">
-        <h2 className="text-xl font-semibold">Pricing</h2>
 
         <fieldset className="fieldset">
-          <legend className="fieldset-legend">Cost per Unit *</legend>
-          <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base-content/50">
-              $
-            </span>
-            <input
-              type="number"
-              step="0.01"
-              min="0"
-              className="input input-bordered w-full pl-8"
-              value={formData.costPerUnit}
-              onChange={(e) =>
-                setFormData({ ...formData, costPerUnit: parseFloat(e.target.value) || 0 })
-              }
-              required
-              placeholder="0.00"
-            />
-          </div>
+          <legend className="fieldset-legend">Description</legend>
+          <textarea
+            className="textarea textarea-bordered w-full"
+            value={formData.description}
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            maxLength={1000}
+            rows={3}
+            placeholder="Optional description or notes about this ingredient..."
+          />
+        </fieldset>
+
+        <fieldset className="fieldset">
+          <legend className="fieldset-legend">Category</legend>
+          <input
+            type="text"
+            className="input input-bordered w-full"
+            value={formData.category}
+            onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+            maxLength={50}
+            placeholder="e.g., Flour, Dairy, Sweeteners"
+          />
           <label className="label">
-            <span className="label-text-alt">Price per single unit (e.g., per gram)</span>
+            <span className="label-text-alt">Organize ingredients by type</span>
+          </label>
+        </fieldset>
+      </div>
+
+      <div className="space-y-0">
+        <h2 className="text-xl font-semibold">Recipe & Inventory Settings</h2>
+
+        <fieldset className="fieldset">
+          <legend className="fieldset-legend">Default Unit *</legend>
+          <select
+            className="select select-bordered w-full"
+            value={formData.defaultUnit}
+            onChange={(e) => setFormData({ ...formData, defaultUnit: e.target.value })}
+            required
+          >
+            <option value="">Select default unit</option>
+            <option value="g">Grams (g)</option>
+            <option value="kg">Kilograms (kg)</option>
+            <option value="ml">Milliliters (ml)</option>
+            <option value="l">Liters (l)</option>
+            <option value="oz">Ounces (oz)</option>
+            <option value="lb">Pounds (lb)</option>
+            <option value="cup">Cups</option>
+            <option value="tbsp">Tablespoons</option>
+            <option value="tsp">Teaspoons</option>
+            <option value="unit">Units</option>
+          </select>
+          <label className="label">
+            <span className="label-text-alt">Standard unit used in recipes for this ingredient</span>
+          </label>
+        </fieldset>
+
+        <fieldset className="fieldset">
+          <legend className="fieldset-legend">Reorder Level</legend>
+          <input
+            type="number"
+            step="0.001"
+            min="0"
+            className="input input-bordered w-full"
+            value={formData.reorderLevel}
+            onChange={(e) => setFormData({ ...formData, reorderLevel: e.target.value })}
+            placeholder="e.g., 1000"
+          />
+          <label className="label">
+            <span className="label-text-alt">Alert when total inventory falls below this amount (in default units)</span>
           </label>
         </fieldset>
       </div>
@@ -284,7 +293,7 @@ export function IngredientForm({
             />
             <label className="label">
               <span className="label-text-alt">
-                Link this ingredient to multiple vendors for easier tracking
+                Link this ingredient to vendors who supply it
               </span>
             </label>
           </fieldset>

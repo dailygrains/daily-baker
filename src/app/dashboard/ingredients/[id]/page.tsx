@@ -4,7 +4,7 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { getIngredientById } from '@/app/actions/ingredient';
 import Link from 'next/link';
-import { Edit, Package, TrendingUp, DollarSign } from 'lucide-react';
+import { Edit, Package, TrendingUp, ShoppingCart } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 export default async function IngredientDetailPage({
@@ -30,10 +30,21 @@ export default async function IngredientDetailPage({
   }
 
   const ingredient = ingredientResult.data;
-  const currentQty = Number(ingredient.currentQty);
-  const costPerUnit = Number(ingredient.costPerUnit);
-  const totalValue = currentQty * costPerUnit;
-  const isLowStock = currentQty < 100;
+
+  // Calculate total inventory across all batches
+  const totalInventory = ingredient.inventoryItems.reduce(
+    (sum, item) => sum + Number(item.quantity),
+    0
+  );
+
+  // Calculate total value across all batches
+  const totalValue = ingredient.inventoryItems.reduce(
+    (sum, item) => sum + (Number(item.quantity) * (Number(item.purchasePrice) || 0)),
+    0
+  );
+
+  // Check if below reorder level
+  const needsReorder = ingredient.reorderLevel !== null && totalInventory < ingredient.reorderLevel;
 
   return (
     <DashboardLayout
@@ -65,23 +76,48 @@ export default async function IngredientDetailPage({
 
               <div className="grid grid-cols-2 gap-4 mt-4">
                 <div>
-                  <p className="text-sm text-base-content/70">Current Quantity</p>
-                  <p className={`text-2xl font-bold ${isLowStock ? 'text-warning' : ''}`}>
-                    {currentQty.toFixed(3)} {ingredient.unit}
+                  <p className="text-sm text-base-content/70">Category</p>
+                  {ingredient.category ? (
+                    <p className="text-lg font-semibold">{ingredient.category}</p>
+                  ) : (
+                    <p className="text-sm text-base-content/50 italic">No category</p>
+                  )}
+                </div>
+
+                <div>
+                  <p className="text-sm text-base-content/70">Default Unit</p>
+                  <p className="text-lg font-semibold">{ingredient.defaultUnit}</p>
+                </div>
+
+                <div>
+                  <p className="text-sm text-base-content/70">Reorder Level</p>
+                  {ingredient.reorderLevel !== null ? (
+                    <>
+                      <p className="text-lg font-semibold">
+                        {ingredient.reorderLevel} {ingredient.defaultUnit}
+                      </p>
+                      {needsReorder && (
+                        <p className="text-sm text-warning mt-1">Below reorder level</p>
+                      )}
+                    </>
+                  ) : (
+                    <p className="text-sm text-base-content/50 italic">Not set</p>
+                  )}
+                </div>
+
+                <div>
+                  <p className="text-sm text-base-content/70">Total Inventory</p>
+                  <p className={`text-2xl font-bold ${needsReorder ? 'text-warning' : ''}`}>
+                    {totalInventory.toFixed(3)} {ingredient.defaultUnit}
                   </p>
-                  {isLowStock && <p className="text-sm text-warning mt-1">Low stock</p>}
                 </div>
 
-                <div>
-                  <p className="text-sm text-base-content/70">Cost per Unit</p>
-                  <p className="text-2xl font-bold">${costPerUnit.toFixed(2)}</p>
-                  <p className="text-sm text-base-content/70 mt-1">per {ingredient.unit}</p>
-                </div>
-
-                <div>
-                  <p className="text-sm text-base-content/70">Total Value</p>
-                  <p className="text-2xl font-bold text-success">${totalValue.toFixed(2)}</p>
-                </div>
+                {ingredient.description && (
+                  <div className="col-span-2">
+                    <p className="text-sm text-base-content/70">Description</p>
+                    <p className="text-sm">{ingredient.description}</p>
+                  </div>
+                )}
 
                 <div>
                   <p className="text-sm text-base-content/70">Vendors</p>
@@ -122,78 +158,107 @@ export default async function IngredientDetailPage({
                 <div className="stat-figure text-primary">
                   <Package className="h-8 w-8" />
                 </div>
-                <div className="stat-title">Current Stock</div>
-                <div className="stat-value text-primary">{currentQty.toFixed(1)}</div>
-                <div className="stat-desc">{ingredient.unit}</div>
+                <div className="stat-title">Total Stock</div>
+                <div className="stat-value text-primary">{totalInventory.toFixed(1)}</div>
+                <div className="stat-desc">{ingredient.defaultUnit}</div>
               </div>
 
               <div className="stat">
                 <div className="stat-figure text-secondary">
-                  <DollarSign className="h-8 w-8" />
+                  <ShoppingCart className="h-8 w-8" />
                 </div>
-                <div className="stat-title">Total Value</div>
-                <div className="stat-value text-secondary">${totalValue.toFixed(2)}</div>
-                <div className="stat-desc">At current prices</div>
+                <div className="stat-title">Inventory Batches</div>
+                <div className="stat-value text-secondary">{ingredient.inventoryItems.length}</div>
+                <div className="stat-desc">Active batches</div>
               </div>
 
               <div className="stat">
                 <div className="stat-figure text-accent">
                   <TrendingUp className="h-8 w-8" />
                 </div>
-                <div className="stat-title">Transactions</div>
-                <div className="stat-value text-accent">{ingredient.transactions.length}</div>
-                <div className="stat-desc">Recent activity</div>
+                <div className="stat-title">Total Value</div>
+                <div className="stat-value text-accent">${totalValue.toFixed(2)}</div>
+                <div className="stat-desc">At purchase prices</div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Recent Transactions */}
-        {ingredient.transactions.length > 0 && (
+        {/* Inventory Batches */}
+        {ingredient.inventoryItems.length > 0 ? (
           <div>
-            <h2 className="text-xl font-semibold mb-4">Recent Transactions</h2>
+            <h2 className="text-xl font-semibold mb-4">Inventory Batches</h2>
             <div className="overflow-x-auto">
               <table className="table table-zebra">
                 <thead>
                   <tr>
-                    <th>Date</th>
-                    <th>Type</th>
+                    <th>Vendor</th>
                     <th>Quantity</th>
-                    <th>Notes</th>
+                    <th>Unit</th>
+                    <th>Purchase Price</th>
+                    <th>Batch #</th>
+                    <th>Location</th>
+                    <th>Expires</th>
+                    <th>Added</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {ingredient.transactions.map((transaction) => (
-                    <tr key={transaction.id}>
+                  {ingredient.inventoryItems.map((item) => (
+                    <tr key={item.id}>
                       <td className="align-top">
-                        {formatDistanceToNow(new Date(transaction.createdAt), {
+                        {item.vendor ? (
+                          <span className="badge badge-ghost">{item.vendor.name}</span>
+                        ) : (
+                          <span className="text-base-content/40 italic">-</span>
+                        )}
+                      </td>
+                      <td className="align-top font-semibold">
+                        {Number(item.quantity).toFixed(3)}
+                      </td>
+                      <td className="align-top">{item.unit}</td>
+                      <td className="align-top">
+                        {item.purchasePrice !== null ? (
+                          `$${Number(item.purchasePrice).toFixed(2)}`
+                        ) : (
+                          <span className="text-base-content/40 italic">-</span>
+                        )}
+                      </td>
+                      <td className="align-top">
+                        {item.batchNumber || (
+                          <span className="text-base-content/40 italic">-</span>
+                        )}
+                      </td>
+                      <td className="align-top">
+                        {item.location || (
+                          <span className="text-base-content/40 italic">-</span>
+                        )}
+                      </td>
+                      <td className="align-top">
+                        {item.expirationDate ? (
+                          formatDistanceToNow(new Date(item.expirationDate), {
+                            addSuffix: true,
+                          })
+                        ) : (
+                          <span className="text-base-content/40 italic">-</span>
+                        )}
+                      </td>
+                      <td className="align-top">
+                        {formatDistanceToNow(new Date(item.createdAt), {
                           addSuffix: true,
                         })}
                       </td>
-                      <td className="align-top">
-                        <span
-                          className={`badge ${
-                            transaction.type === 'RECEIVE'
-                              ? 'badge-success'
-                              : transaction.type === 'USE'
-                                ? 'badge-info'
-                                : transaction.type === 'ADJUST'
-                                  ? 'badge-warning'
-                                  : 'badge-error'
-                          }`}
-                        >
-                          {transaction.type}
-                        </span>
-                      </td>
-                      <td className="align-top">
-                        {Number(transaction.quantity).toFixed(3)} {transaction.unit}
-                      </td>
-                      <td className="align-top">{transaction.notes || '-'}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
+          </div>
+        ) : (
+          <div className="alert alert-info">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <span>No inventory batches yet. Add inventory items to track stock for this ingredient.</span>
           </div>
         )}
       </div>

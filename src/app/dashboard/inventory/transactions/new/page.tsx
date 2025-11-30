@@ -16,24 +16,34 @@ export default async function NewInventoryTransactionPage() {
     redirect('/dashboard');
   }
 
-  // Fetch ingredients for the form
-  const ingredients = await db.ingredient.findMany({
+  // Fetch inventory items for the form
+  const inventoryItems = await db.inventoryItem.findMany({
     where: { bakeryId: user.bakeryId },
-    select: {
-      id: true,
-      name: true,
-      unit: true,
-      currentQty: true,
+    include: {
+      ingredient: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+      vendor: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
     },
-    orderBy: {
-      name: 'asc',
-    },
+    orderBy: [
+      { ingredient: { name: 'asc' } },
+      { createdAt: 'desc' },
+    ],
   });
 
   // Convert Decimal to number for client component
-  const ingredientsForForm = ingredients.map((ingredient) => ({
-    ...ingredient,
-    currentQty: Number(ingredient.currentQty),
+  const inventoryItemsForForm = inventoryItems.map((item) => ({
+    ...item,
+    quantity: Number(item.quantity),
+    purchasePrice: item.purchasePrice ? Number(item.purchasePrice) : null,
   }));
 
   return (
@@ -45,14 +55,14 @@ export default async function NewInventoryTransactionPage() {
       <div className="max-w-2xl mx-auto space-y-6">
         <PageHeader
           title="New Inventory Transaction"
-          description="Record a change to your inventory"
+          description="Record a change to an inventory batch"
         />
 
         <div className="card bg-base-100 shadow-xl">
           <div className="card-body">
             <InventoryTransactionForm
               bakeryId={user.bakeryId}
-              ingredients={ingredientsForForm}
+              inventoryItems={inventoryItemsForForm}
             />
           </div>
         </div>

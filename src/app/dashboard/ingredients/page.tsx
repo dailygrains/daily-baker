@@ -65,22 +65,16 @@ export default async function IngredientsPage() {
             </div>
 
             <div className="stat">
-              <div className="stat-title">Low Stock Items</div>
-              <div className="stat-value text-warning">
-                {ingredients.filter((i) => Number(i.currentQty) < 100).length}
+              <div className="stat-title">With Vendors</div>
+              <div className="stat-value text-secondary">
+                {ingredients.filter((i) => i.vendors.length > 0).length}
               </div>
             </div>
 
             <div className="stat">
-              <div className="stat-title">Total Inventory Value</div>
-              <div className="stat-value text-success">
-                $
-                {ingredients
-                  .reduce(
-                    (sum, i) => sum + Number(i.currentQty) * Number(i.costPerUnit),
-                    0
-                  )
-                  .toFixed(2)}
+              <div className="stat-title">Total Inventory Batches</div>
+              <div className="stat-value text-accent">
+                {ingredients.reduce((sum, i) => sum + (i._count?.inventoryItems ?? 0), 0)}
               </div>
             </div>
           </div>

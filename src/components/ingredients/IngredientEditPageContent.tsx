@@ -6,7 +6,6 @@ import { IngredientForm } from '@/components/ingredients/IngredientForm';
 import { Save, ArrowLeft } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import Link from 'next/link';
-import type { Decimal } from '@prisma/client/runtime/library';
 
 interface Vendor {
   id: string;
@@ -18,9 +17,10 @@ interface IngredientEditPageContentProps {
   ingredient: {
     id: string;
     name: string;
-    currentQty: number | string | Decimal;
-    unit: string;
-    costPerUnit: number | string | Decimal;
+    description?: string | null;
+    category?: string | null;
+    defaultUnit: string;
+    reorderLevel?: number | null;
     vendors: Array<{
       vendor: Vendor;
     }>;

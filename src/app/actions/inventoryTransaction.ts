@@ -12,7 +12,7 @@ import { createActivityLog } from './activity';
 import { convertUnits } from '@/lib/unitConversion';
 
 /**
- * Create an inventory transaction and update ingredient quantity
+ * Create an inventory transaction and update inventory item quantity
  */
 export async function createInventoryTransaction(
   data: CreateInventoryTransactionInput
@@ -36,43 +36,44 @@ export async function createInventoryTransaction(
       };
     }
 
-    // Get the ingredient to validate and calculate new quantity
-    const ingredient = await db.ingredient.findUnique({
-      where: { id: validatedData.ingredientId },
-      select: {
-        id: true,
-        name: true,
-        currentQty: true,
-        unit: true,
-        bakeryId: true,
+    // Get the inventory item to validate and calculate new quantity
+    const inventoryItem = await db.inventoryItem.findUnique({
+      where: { id: validatedData.inventoryItemId },
+      include: {
+        ingredient: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
       },
     });
 
-    if (!ingredient) {
-      return { success: false, error: 'Ingredient not found' };
+    if (!inventoryItem) {
+      return { success: false, error: 'Inventory item not found' };
     }
 
-    // Verify ingredient belongs to the bakery
-    if (ingredient.bakeryId !== validatedData.bakeryId) {
+    // Verify inventory item belongs to the bakery
+    if (inventoryItem.bakeryId !== validatedData.bakeryId) {
       return {
         success: false,
-        error: 'Unauthorized: Ingredient does not belong to your bakery',
+        error: 'Unauthorized: Inventory item does not belong to your bakery',
       };
     }
 
-    // Convert quantity to ingredient's unit if necessary
+    // Convert quantity to inventory item's unit if necessary
     let adjustedQuantity = validatedData.quantity;
-    if (validatedData.unit !== ingredient.unit) {
+    if (validatedData.unit !== inventoryItem.unit) {
       const converted = await convertUnits(
         validatedData.quantity,
         validatedData.unit,
-        ingredient.unit
+        inventoryItem.unit
       );
 
       if (converted === null) {
         return {
           success: false,
-          error: `Cannot convert from ${validatedData.unit} to ${ingredient.unit}. Please add this conversion or use ${ingredient.unit}.`,
+          error: `Cannot convert from ${validatedData.unit} to ${inventoryItem.unit}. Please add this conversion or use ${inventoryItem.unit}.`,
         };
       }
 
@@ -98,35 +99,38 @@ export async function createInventoryTransaction(
     }
 
     // Calculate new quantity
-    const newQuantity = new Decimal(ingredient.currentQty).plus(quantityDelta);
+    const newQuantity = new Decimal(inventoryItem.quantity).plus(quantityDelta);
 
     // Validate new quantity is not negative
     if (newQuantity.isNegative()) {
       return {
         success: false,
-        error: `Insufficient inventory: ${ingredient.name} current quantity is ${ingredient.currentQty} ${ingredient.unit}`,
+        error: `Insufficient inventory: ${inventoryItem.ingredient.name} current quantity is ${inventoryItem.quantity} ${inventoryItem.unit}`,
       };
     }
 
-    // Create transaction and update ingredient in a transaction
+    // Create transaction and update inventory item in a transaction
     const transaction = await db.$transaction(async (tx) => {
       // Create the inventory transaction
       const newTransaction = await tx.inventoryTransaction.create({
         data: {
           type: validatedData.type,
-          ingredientId: validatedData.ingredientId,
+          inventoryItemId: validatedData.inventoryItemId,
           quantity: new Decimal(validatedData.quantity),
           unit: validatedData.unit,
+          unitCost: validatedData.unitCost !== undefined ? new Decimal(validatedData.unitCost) : undefined,
+          totalCost: validatedData.totalCost !== undefined ? new Decimal(validatedData.totalCost) : undefined,
           notes: validatedData.notes || null,
+          bakeSheetId: validatedData.bakeSheetId,
           createdBy: currentUser.id,
         },
       });
 
-      // Update ingredient quantity
-      await tx.ingredient.update({
-        where: { id: validatedData.ingredientId },
+      // Update inventory item quantity
+      await tx.inventoryItem.update({
+        where: { id: validatedData.inventoryItemId },
         data: {
-          currentQty: newQuantity,
+          quantity: newQuantity,
         },
       });
 
@@ -139,26 +143,33 @@ export async function createInventoryTransaction(
       action: 'CREATE',
       entityType: 'inventory_transaction',
       entityId: transaction.id,
-      entityName: `${validatedData.type} ${validatedData.quantity} ${validatedData.unit} of ${ingredient.name}`,
-      description: `Recorded ${validatedData.type.toLowerCase()} transaction for "${ingredient.name}" (${validatedData.quantity} ${validatedData.unit})`,
+      entityName: `${validatedData.type} ${validatedData.quantity} ${validatedData.unit} of ${inventoryItem.ingredient.name}`,
+      description: `Recorded ${validatedData.type.toLowerCase()} transaction for "${inventoryItem.ingredient.name}" (${validatedData.quantity} ${validatedData.unit})`,
       metadata: {
         transactionType: validatedData.type,
-        ingredientId: ingredient.id,
-        ingredientName: ingredient.name,
+        inventoryItemId: inventoryItem.id,
+        ingredientId: inventoryItem.ingredient.id,
+        ingredientName: inventoryItem.ingredient.name,
         quantity: validatedData.quantity,
         unit: validatedData.unit,
-        previousQuantity: Number(ingredient.currentQty),
+        previousQuantity: Number(inventoryItem.quantity),
         newQuantity: Number(newQuantity),
       },
       bakeryId: validatedData.bakeryId,
     });
 
     revalidatePath('/dashboard/inventory');
-    revalidatePath(`/dashboard/ingredients/${validatedData.ingredientId}`);
+    revalidatePath(`/dashboard/ingredients/${inventoryItem.ingredientId}`);
 
+    // Serialize Decimal fields for client components
     return {
       success: true,
-      data: transaction,
+      data: {
+        ...transaction,
+        quantity: transaction.quantity.toNumber(),
+        unitCost: transaction.unitCost?.toNumber() ?? null,
+        totalCost: transaction.totalCost?.toNumber() ?? null,
+      },
     };
   } catch (error) {
     console.error('Failed to create inventory transaction:', error);
@@ -177,6 +188,7 @@ export async function getInventoryTransactionsByBakery(
   bakeryId: string,
   filters?: {
     type?: string;
+    inventoryItemId?: string;
     ingredientId?: string;
     startDate?: Date;
     endDate?: Date;
@@ -191,7 +203,7 @@ export async function getInventoryTransactionsByBakery(
     }
 
     // Verify user belongs to the bakery
-    if (currentUser.bakeryId !== bakeryId) {
+    if (currentUser.bakeryId !== bakeryId && !currentUser.isPlatformAdmin) {
       return {
         success: false,
         error: 'Unauthorized: You can only view your bakery transactions',
@@ -199,12 +211,15 @@ export async function getInventoryTransactionsByBakery(
     }
 
     const where: {
-      ingredient: { bakeryId: string };
+      inventoryItem: {
+        bakeryId: string;
+        ingredientId?: string;
+      };
       type?: import('@/generated/prisma').TransactionType;
-      ingredientId?: string;
+      inventoryItemId?: string;
       createdAt?: { gte?: Date; lte?: Date };
     } = {
-      ingredient: {
+      inventoryItem: {
         bakeryId,
       },
     };
@@ -213,8 +228,11 @@ export async function getInventoryTransactionsByBakery(
     if (filters?.type) {
       where.type = filters.type as import('@/generated/prisma').TransactionType;
     }
+    if (filters?.inventoryItemId) {
+      where.inventoryItemId = filters.inventoryItemId;
+    }
     if (filters?.ingredientId) {
-      where.ingredientId = filters.ingredientId;
+      where.inventoryItem.ingredientId = filters.ingredientId;
     }
     if (filters?.startDate || filters?.endDate) {
       where.createdAt = {};
@@ -229,11 +247,20 @@ export async function getInventoryTransactionsByBakery(
     const transactions = await db.inventoryTransaction.findMany({
       where,
       include: {
-        ingredient: {
-          select: {
-            id: true,
-            name: true,
-            unit: true,
+        inventoryItem: {
+          include: {
+            ingredient: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+            vendor: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
           },
         },
         creator: {
@@ -250,7 +277,21 @@ export async function getInventoryTransactionsByBakery(
       take: filters?.limit || 100,
     });
 
-    return { success: true, data: transactions };
+    // Serialize Decimal fields for client components
+    return {
+      success: true,
+      data: transactions.map(t => ({
+        ...t,
+        quantity: t.quantity.toNumber(),
+        unitCost: t.unitCost?.toNumber() ?? null,
+        totalCost: t.totalCost?.toNumber() ?? null,
+        inventoryItem: {
+          ...t.inventoryItem,
+          quantity: t.inventoryItem.quantity.toNumber(),
+          purchasePrice: t.inventoryItem.purchasePrice?.toNumber() ?? null,
+        },
+      })),
+    };
   } catch (error) {
     console.error('Failed to fetch inventory transactions:', error);
     return {
@@ -264,7 +305,88 @@ export async function getInventoryTransactionsByBakery(
 }
 
 /**
- * Get inventory transactions for a specific ingredient
+ * Get inventory transactions for a specific inventory item
+ */
+export async function getInventoryTransactionsByInventoryItem(
+  inventoryItemId: string
+) {
+  try {
+    const currentUser = await getCurrentUser();
+
+    if (!currentUser) {
+      return { success: false, error: 'Unauthorized: You must be logged in' };
+    }
+
+    // Get inventory item to verify ownership
+    const inventoryItem = await db.inventoryItem.findUnique({
+      where: { id: inventoryItemId },
+      select: { bakeryId: true },
+    });
+
+    if (!inventoryItem) {
+      return { success: false, error: 'Inventory item not found' };
+    }
+
+    // Verify user belongs to the bakery
+    if (currentUser.bakeryId !== inventoryItem.bakeryId && !currentUser.isPlatformAdmin) {
+      return {
+        success: false,
+        error: 'Unauthorized: Inventory item does not belong to your bakery',
+      };
+    }
+
+    const transactions = await db.inventoryTransaction.findMany({
+      where: { inventoryItemId },
+      include: {
+        creator: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        bakeSheet: {
+          select: {
+            id: true,
+            quantity: true,
+            recipe: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    // Serialize Decimal fields for client components
+    return {
+      success: true,
+      data: transactions.map(t => ({
+        ...t,
+        quantity: t.quantity.toNumber(),
+        unitCost: t.unitCost?.toNumber() ?? null,
+        totalCost: t.totalCost?.toNumber() ?? null,
+      })),
+    };
+  } catch (error) {
+    console.error('Failed to fetch inventory item transactions:', error);
+    return {
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : 'Failed to fetch transactions',
+    };
+  }
+}
+
+/**
+ * Get inventory transactions for a specific ingredient (across all inventory items)
  */
 export async function getInventoryTransactionsByIngredient(
   ingredientId: string
@@ -287,7 +409,7 @@ export async function getInventoryTransactionsByIngredient(
     }
 
     // Verify user belongs to the bakery
-    if (currentUser.bakeryId !== ingredient.bakeryId) {
+    if (currentUser.bakeryId !== ingredient.bakeryId && !currentUser.isPlatformAdmin) {
       return {
         success: false,
         error: 'Unauthorized: Ingredient does not belong to your bakery',
@@ -295,8 +417,24 @@ export async function getInventoryTransactionsByIngredient(
     }
 
     const transactions = await db.inventoryTransaction.findMany({
-      where: { ingredientId },
+      where: {
+        inventoryItem: {
+          ingredientId,
+        },
+      },
       include: {
+        inventoryItem: {
+          select: {
+            id: true,
+            batchNumber: true,
+            vendor: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
         creator: {
           select: {
             id: true,
@@ -310,7 +448,16 @@ export async function getInventoryTransactionsByIngredient(
       },
     });
 
-    return { success: true, data: transactions };
+    // Serialize Decimal fields for client components
+    return {
+      success: true,
+      data: transactions.map(t => ({
+        ...t,
+        quantity: t.quantity.toNumber(),
+        unitCost: t.unitCost?.toNumber() ?? null,
+        totalCost: t.totalCost?.toNumber() ?? null,
+      })),
+    };
   } catch (error) {
     console.error('Failed to fetch ingredient transactions:', error);
     return {
@@ -339,12 +486,14 @@ export async function deleteInventoryTransaction(transactionId: string) {
     const transaction = await db.inventoryTransaction.findUnique({
       where: { id: transactionId },
       include: {
-        ingredient: {
-          select: {
-            id: true,
-            name: true,
-            currentQty: true,
-            bakeryId: true,
+        inventoryItem: {
+          include: {
+            ingredient: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
           },
         },
       },
@@ -355,7 +504,7 @@ export async function deleteInventoryTransaction(transactionId: string) {
     }
 
     // Verify user belongs to the bakery
-    if (currentUser.bakeryId !== transaction.ingredient.bakeryId) {
+    if (currentUser.bakeryId !== transaction.inventoryItem.bakeryId && !currentUser.isPlatformAdmin) {
       return {
         success: false,
         error: 'Unauthorized: Transaction does not belong to your bakery',
@@ -381,7 +530,7 @@ export async function deleteInventoryTransaction(transactionId: string) {
         break;
     }
 
-    const newQuantity = new Decimal(transaction.ingredient.currentQty).plus(
+    const newQuantity = new Decimal(transaction.inventoryItem.quantity).plus(
       quantityDelta
     );
 
@@ -389,22 +538,22 @@ export async function deleteInventoryTransaction(transactionId: string) {
     if (newQuantity.isNegative()) {
       return {
         success: false,
-        error: `Cannot delete transaction: Would result in negative inventory for ${transaction.ingredient.name}`,
+        error: `Cannot delete transaction: Would result in negative inventory for ${transaction.inventoryItem.ingredient.name}`,
       };
     }
 
-    // Delete transaction and update ingredient in a transaction
+    // Delete transaction and update inventory item in a transaction
     await db.$transaction(async (tx) => {
       // Delete the transaction
       await tx.inventoryTransaction.delete({
         where: { id: transactionId },
       });
 
-      // Update ingredient quantity
-      await tx.ingredient.update({
-        where: { id: transaction.ingredientId },
+      // Update inventory item quantity
+      await tx.inventoryItem.update({
+        where: { id: transaction.inventoryItemId },
         data: {
-          currentQty: newQuantity,
+          quantity: newQuantity,
         },
       });
     });
@@ -415,20 +564,21 @@ export async function deleteInventoryTransaction(transactionId: string) {
       action: 'DELETE',
       entityType: 'inventory_transaction',
       entityId: transaction.id,
-      entityName: `${transaction.type} transaction for ${transaction.ingredient.name}`,
-      description: `Deleted ${transaction.type.toLowerCase()} transaction for "${transaction.ingredient.name}" and reversed quantity change`,
+      entityName: `${transaction.type} transaction for ${transaction.inventoryItem.ingredient.name}`,
+      description: `Deleted ${transaction.type.toLowerCase()} transaction for "${transaction.inventoryItem.ingredient.name}" and reversed quantity change`,
       metadata: {
         transactionType: transaction.type,
-        ingredientId: transaction.ingredient.id,
-        ingredientName: transaction.ingredient.name,
+        inventoryItemId: transaction.inventoryItem.id,
+        ingredientId: transaction.inventoryItem.ingredient.id,
+        ingredientName: transaction.inventoryItem.ingredient.name,
         quantity: Number(transaction.quantity),
         unit: transaction.unit,
       },
-      bakeryId: transaction.ingredient.bakeryId,
+      bakeryId: transaction.inventoryItem.bakeryId,
     });
 
     revalidatePath('/dashboard/inventory');
-    revalidatePath(`/dashboard/ingredients/${transaction.ingredientId}`);
+    revalidatePath(`/dashboard/ingredients/${transaction.inventoryItem.ingredientId}`);
 
     return { success: true };
   } catch (error) {

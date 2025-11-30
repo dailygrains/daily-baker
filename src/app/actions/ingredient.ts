@@ -38,9 +38,10 @@ export async function createIngredient(data: CreateIngredientInput) {
       data: {
         bakeryId: validatedData.bakeryId,
         name: validatedData.name,
-        currentQty: new Decimal(validatedData.currentQty),
-        unit: validatedData.unit,
-        costPerUnit: new Decimal(validatedData.costPerUnit),
+        description: validatedData.description,
+        category: validatedData.category,
+        defaultUnit: validatedData.defaultUnit,
+        reorderLevel: validatedData.reorderLevel !== undefined ? new Decimal(validatedData.reorderLevel) : undefined,
       },
       include: {
         vendors: {
@@ -59,7 +60,7 @@ export async function createIngredient(data: CreateIngredientInput) {
       entityId: ingredient.id,
       entityName: ingredient.name,
       description: `Created ingredient "${ingredient.name}"`,
-      metadata: { ingredientId: ingredient.id, unit: ingredient.unit },
+      metadata: { ingredientId: ingredient.id, defaultUnit: ingredient.defaultUnit },
       bakeryId: ingredient.bakeryId,
     });
 
@@ -70,8 +71,7 @@ export async function createIngredient(data: CreateIngredientInput) {
       success: true,
       data: {
         ...ingredient,
-        currentQty: ingredient.currentQty.toNumber(),
-        costPerUnit: ingredient.costPerUnit.toNumber(),
+        reorderLevel: ingredient.reorderLevel?.toNumber() ?? null,
       },
     };
   } catch (error) {
@@ -121,9 +121,10 @@ export async function updateIngredient(data: UpdateIngredientInput) {
     // Convert numbers to Decimal if present
     const prismaUpdateData: Record<string, unknown> = {};
     if (updateData.name !== undefined) prismaUpdateData.name = updateData.name;
-    if (updateData.currentQty !== undefined) prismaUpdateData.currentQty = new Decimal(updateData.currentQty);
-    if (updateData.unit !== undefined) prismaUpdateData.unit = updateData.unit;
-    if (updateData.costPerUnit !== undefined) prismaUpdateData.costPerUnit = new Decimal(updateData.costPerUnit);
+    if (updateData.description !== undefined) prismaUpdateData.description = updateData.description;
+    if (updateData.category !== undefined) prismaUpdateData.category = updateData.category;
+    if (updateData.defaultUnit !== undefined) prismaUpdateData.defaultUnit = updateData.defaultUnit;
+    if (updateData.reorderLevel !== undefined) prismaUpdateData.reorderLevel = new Decimal(updateData.reorderLevel);
 
     const ingredient = await db.ingredient.update({
       where: { id },
@@ -157,8 +158,7 @@ export async function updateIngredient(data: UpdateIngredientInput) {
       success: true,
       data: {
         ...ingredient,
-        currentQty: ingredient.currentQty.toNumber(),
-        costPerUnit: ingredient.costPerUnit.toNumber(),
+        reorderLevel: ingredient.reorderLevel?.toNumber() ?? null,
       },
     };
   } catch (error) {
@@ -188,7 +188,7 @@ export async function deleteIngredient(id: string) {
         _count: {
           select: {
             recipeUses: true,
-            transactions: true,
+            inventoryItems: true,
           },
         },
       },
@@ -279,7 +279,7 @@ export async function getIngredientsByBakery(bakeryId: string) {
         },
         _count: {
           select: {
-            transactions: true,
+            inventoryItems: true,
           },
         },
       },
@@ -293,8 +293,7 @@ export async function getIngredientsByBakery(bakeryId: string) {
       success: true,
       data: ingredients.map(ingredient => ({
         ...ingredient,
-        currentQty: ingredient.currentQty.toNumber(),
-        costPerUnit: ingredient.costPerUnit.toNumber(),
+        reorderLevel: ingredient.reorderLevel?.toNumber() ?? null,
       })),
     };
   } catch (error) {
@@ -325,11 +324,13 @@ export async function getIngredientById(id: string) {
             vendor: true,
           },
         },
-        transactions: {
+        inventoryItems: {
+          include: {
+            vendor: true,
+          },
           orderBy: {
             createdAt: 'desc',
           },
-          take: 10,
         },
         _count: {
           select: {
@@ -358,8 +359,12 @@ export async function getIngredientById(id: string) {
       success: true,
       data: {
         ...ingredient,
-        currentQty: ingredient.currentQty.toNumber(),
-        costPerUnit: ingredient.costPerUnit.toNumber(),
+        reorderLevel: ingredient.reorderLevel?.toNumber() ?? null,
+        inventoryItems: ingredient.inventoryItems.map(item => ({
+          ...item,
+          quantity: item.quantity.toNumber(),
+          purchasePrice: item.purchasePrice?.toNumber() ?? null,
+        })),
       },
     };
   } catch (error) {

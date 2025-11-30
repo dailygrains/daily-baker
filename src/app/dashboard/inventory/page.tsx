@@ -4,6 +4,7 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { getIngredientsByBakery } from '@/app/actions/ingredient';
 import { getInventoryTransactionsByBakery } from '@/app/actions/inventoryTransaction';
+import { db } from '@/lib/db';
 import Link from 'next/link';
 import { Package, TrendingUp, TrendingDown, AlertTriangle } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
@@ -24,6 +25,30 @@ export default async function InventoryPage() {
     user.bakeryId,
     { limit: 10 }
   );
+
+  // Fetch inventory items to calculate actual inventory levels
+  const inventoryItems = await db.inventoryItem.findMany({
+    where: { bakeryId: user.bakeryId },
+    include: {
+      ingredient: {
+        select: {
+          id: true,
+          name: true,
+          reorderLevel: true,
+          defaultUnit: true,
+        },
+      },
+      vendor: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+    },
+    orderBy: {
+      ingredient: { name: 'asc' },
+    },
+  });
 
   if (!ingredientsResult.success) {
     return (
@@ -46,10 +71,23 @@ export default async function InventoryPage() {
 
   // Calculate stats
   const totalIngredients = ingredients.length;
-  const lowStockCount = 0; // Low stock calculation removed as minQty field doesn't exist
-  const totalValue = ingredients.reduce(
-    (sum, ing) =>
-      sum + Number(ing.currentQty) * Number(ing.costPerUnit),
+  const totalBatches = inventoryItems.length;
+
+  // Calculate low stock count (ingredients below reorder level)
+  const ingredientsWithTotals = ingredients.map((ing) => {
+    const batches = inventoryItems.filter((item) => item.ingredient.id === ing.id);
+    const totalQty = batches.reduce((sum, item) => sum + Number(item.quantity), 0);
+    return { ...ing, totalQty, batchCount: batches.length };
+  });
+
+  const lowStockCount = ingredientsWithTotals.filter(
+    (ing) => ing.reorderLevel && ing.totalQty < ing.reorderLevel
+  ).length;
+
+  // Calculate total inventory value
+  const totalValue = inventoryItems.reduce(
+    (sum, item) =>
+      sum + Number(item.quantity) * (Number(item.purchasePrice) || 0),
     0
   );
 
@@ -93,7 +131,7 @@ export default async function InventoryPage() {
       <div className="space-y-6">
         <PageHeader
           title="Inventory Management"
-          description="Track ingredient quantities and transactions"
+          description="Track ingredient inventory batches and transactions"
         />
 
         {/* Stats */}
@@ -109,7 +147,7 @@ export default async function InventoryPage() {
                 href="/dashboard/ingredients"
                 className="link link-hover"
               >
-                View all ingredients
+                {totalBatches} total batches
               </Link>
             </div>
           </div>
@@ -120,7 +158,7 @@ export default async function InventoryPage() {
             </div>
             <div className="stat-title">Low Stock Items</div>
             <div className="stat-value text-warning">{lowStockCount}</div>
-            <div className="stat-desc">Below minimum quantity</div>
+            <div className="stat-desc">Below reorder level</div>
           </div>
 
           <div className="stat">
@@ -131,7 +169,7 @@ export default async function InventoryPage() {
             <div className="stat-value text-secondary">
               ${totalValue.toFixed(2)}
             </div>
-            <div className="stat-desc">Based on current quantities</div>
+            <div className="stat-desc">At purchase prices</div>
           </div>
         </div>
 
@@ -140,7 +178,7 @@ export default async function InventoryPage() {
           <div className="card bg-base-100 shadow-xl lg:col-span-2">
             <div className="card-body">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="card-title">Current Inventory Levels</h2>
+                <h2 className="card-title">Current Inventory Batches</h2>
                 <Link
                   href="/dashboard/ingredients"
                   className="btn btn-sm btn-ghost"
@@ -149,14 +187,14 @@ export default async function InventoryPage() {
                 </Link>
               </div>
 
-              {ingredients.length === 0 ? (
+              {inventoryItems.length === 0 ? (
                 <div className="text-center py-12">
                   <Package className="h-16 w-16 mx-auto text-base-content/30 mb-4" />
                   <h3 className="text-lg font-semibold mb-2">
-                    No ingredients yet
+                    No inventory yet
                   </h3>
                   <p className="text-base-content/70 mb-4">
-                    Start by adding some ingredients to track
+                    Start by adding ingredients and inventory batches
                   </p>
                   <Link
                     href="/dashboard/ingredients/new"
@@ -171,35 +209,56 @@ export default async function InventoryPage() {
                     <thead>
                       <tr>
                         <th>Ingredient</th>
-                        <th>Current Quantity</th>
-                        <th>Min Quantity</th>
+                        <th>Vendor</th>
+                        <th>Quantity</th>
+                        <th>Batch / Location</th>
                         <th>Value</th>
-                        <th>Status</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {ingredients.map((ingredient) => {
-                        const currentQty = Number(ingredient.currentQty);
-                        const value = currentQty * Number(ingredient.costPerUnit);
+                      {inventoryItems.map((item) => {
+                        const qty = Number(item.quantity);
+                        const price = Number(item.purchasePrice) || 0;
+                        const value = qty * price;
 
                         return (
-                          <tr key={ingredient.id}>
+                          <tr key={item.id}>
                             <td>
                               <Link
-                                href={`/dashboard/ingredients/${ingredient.id}`}
+                                href={`/dashboard/ingredients/${item.ingredient.id}`}
                                 className="font-semibold hover:text-primary"
                               >
-                                {ingredient.name}
+                                {item.ingredient.name}
                               </Link>
                             </td>
                             <td>
-                              {currentQty.toFixed(3)} {ingredient.unit}
+                              {item.vendor ? (
+                                <span className="badge badge-ghost badge-sm">
+                                  {item.vendor.name}
+                                </span>
+                              ) : (
+                                <span className="text-base-content/40 italic">-</span>
+                              )}
                             </td>
-                            <td>-</td>
+                            <td className="font-mono">
+                              {qty.toFixed(3)} {item.unit}
+                            </td>
+                            <td className="text-sm">
+                              {item.batchNumber && (
+                                <span className="badge badge-outline badge-xs mr-1">
+                                  {item.batchNumber}
+                                </span>
+                              )}
+                              {item.location && (
+                                <span className="text-base-content/70">
+                                  @ {item.location}
+                                </span>
+                              )}
+                              {!item.batchNumber && !item.location && (
+                                <span className="text-base-content/40 italic">-</span>
+                              )}
+                            </td>
                             <td>${value.toFixed(2)}</td>
-                            <td>
-                              <span className="badge badge-success">OK</span>
-                            </td>
                           </tr>
                         );
                       })}
@@ -255,13 +314,13 @@ export default async function InventoryPage() {
                           </td>
                           <td>
                             <Link
-                              href={`/dashboard/ingredients/${transaction.ingredientId}`}
+                              href={`/dashboard/ingredients/${transaction.inventoryItem.ingredient.id}`}
                               className="hover:text-primary"
                             >
-                              {transaction.ingredient.name}
+                              {transaction.inventoryItem.ingredient.name}
                             </Link>
                           </td>
-                          <td>
+                          <td className="font-mono">
                             {Number(transaction.quantity).toFixed(3)}{' '}
                             {transaction.unit}
                           </td>

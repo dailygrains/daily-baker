@@ -4,30 +4,39 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createInventoryTransaction } from '@/app/actions/inventoryTransaction';
 
-type Ingredient = {
+type InventoryItem = {
   id: string;
-  name: string;
+  quantity: number;
   unit: string;
-  currentQty: number;
+  batchNumber?: string | null;
+  location?: string | null;
+  ingredient: {
+    id: string;
+    name: string;
+  };
+  vendor?: {
+    id: string;
+    name: string;
+  } | null;
 };
 
 type InventoryTransactionFormProps = {
   bakeryId: string;
-  ingredients: Ingredient[];
+  inventoryItems: InventoryItem[];
 };
 
 export function InventoryTransactionForm({
   bakeryId,
-  ingredients,
+  inventoryItems,
 }: InventoryTransactionFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedIngredientId, setSelectedIngredientId] = useState('');
+  const [selectedItemId, setSelectedItemId] = useState('');
 
-  // Get selected ingredient
-  const selectedIngredient = ingredients.find(
-    (ing) => ing.id === selectedIngredientId
+  // Get selected inventory item
+  const selectedItem = inventoryItems.find(
+    (item) => item.id === selectedItemId
   );
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -40,7 +49,7 @@ export function InventoryTransactionForm({
     const data = {
       bakeryId,
       type: formData.get('type') as 'RECEIVE' | 'USE' | 'ADJUST' | 'WASTE',
-      ingredientId: formData.get('ingredientId') as string,
+      inventoryItemId: formData.get('inventoryItemId') as string,
       quantity: parseFloat(formData.get('quantity') as string),
       unit: formData.get('unit') as string,
       notes: (formData.get('notes') as string) || null,
@@ -88,29 +97,34 @@ export function InventoryTransactionForm({
         </label>
       </div>
 
-      {/* Ingredient Selection */}
+      {/* Inventory Batch Selection */}
       <div className="form-control">
         <label className="label">
-          <span className="label-text">Ingredient</span>
+          <span className="label-text">Inventory Batch</span>
         </label>
         <select
-          name="ingredientId"
+          name="inventoryItemId"
           className="select select-bordered"
           required
-          value={selectedIngredientId}
-          onChange={(e) => setSelectedIngredientId(e.target.value)}
+          value={selectedItemId}
+          onChange={(e) => setSelectedItemId(e.target.value)}
         >
-          <option value="">Select an ingredient</option>
-          {ingredients.map((ingredient) => (
-            <option key={ingredient.id} value={ingredient.id}>
-              {ingredient.name} (Current: {ingredient.currentQty.toFixed(3)}{' '}
-              {ingredient.unit})
-            </option>
-          ))}
+          <option value="">Select an inventory batch</option>
+          {inventoryItems.map((item) => {
+            const batchInfo = item.batchNumber ? ` (Batch: ${item.batchNumber})` : '';
+            const vendorInfo = item.vendor ? ` - ${item.vendor.name}` : '';
+            const locationInfo = item.location ? ` @ ${item.location}` : '';
+
+            return (
+              <option key={item.id} value={item.id}>
+                {item.ingredient.name}{vendorInfo}{batchInfo} - Current: {Number(item.quantity).toFixed(3)} {item.unit}{locationInfo}
+              </option>
+            );
+          })}
         </select>
         <label className="label">
           <span className="label-text-alt text-base-content/70">
-            Select the ingredient for this transaction
+            Select the inventory batch for this transaction
           </span>
         </label>
       </div>
@@ -131,8 +145,8 @@ export function InventoryTransactionForm({
         />
         <label className="label">
           <span className="label-text-alt text-base-content/70">
-            {selectedIngredient
-              ? `Current quantity: ${selectedIngredient.currentQty.toFixed(3)} ${selectedIngredient.unit}`
+            {selectedItem
+              ? `Current quantity: ${Number(selectedItem.quantity).toFixed(3)} ${selectedItem.unit}`
               : 'Enter the transaction quantity'}
           </span>
         </label>
@@ -148,15 +162,15 @@ export function InventoryTransactionForm({
           name="unit"
           className="input input-bordered"
           placeholder="e.g., kg, lbs, oz"
-          value={selectedIngredient?.unit || ''}
-          readOnly={!!selectedIngredient}
+          value={selectedItem?.unit || ''}
+          readOnly={!!selectedItem}
           required
         />
         <label className="label">
           <span className="label-text-alt text-base-content/70">
-            {selectedIngredient
-              ? 'Unit is automatically set from the ingredient'
-              : 'Select an ingredient to set the unit'}
+            {selectedItem
+              ? 'Unit is automatically set from the inventory batch'
+              : 'Select an inventory batch to set the unit'}
           </span>
         </label>
       </div>

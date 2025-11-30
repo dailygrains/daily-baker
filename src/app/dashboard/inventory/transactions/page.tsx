@@ -117,6 +117,7 @@ export default async function InventoryTransactionsPage() {
                     <tr>
                       <th>Type</th>
                       <th>Ingredient</th>
+                      <th>Batch</th>
                       <th>Quantity</th>
                       <th>Notes</th>
                       <th>User</th>
@@ -136,11 +137,20 @@ export default async function InventoryTransactionsPage() {
                         </td>
                         <td>
                           <Link
-                            href={`/dashboard/ingredients/${transaction.ingredientId}`}
+                            href={`/dashboard/ingredients/${transaction.inventoryItem.ingredient.id}`}
                             className="font-semibold hover:text-primary"
                           >
-                            {transaction.ingredient.name}
+                            {transaction.inventoryItem.ingredient.name}
                           </Link>
+                        </td>
+                        <td className="text-sm">
+                          {transaction.inventoryItem.batchNumber ? (
+                            <span className="badge badge-outline badge-xs">
+                              {transaction.inventoryItem.batchNumber}
+                            </span>
+                          ) : (
+                            <span className="text-base-content/40 italic">-</span>
+                          )}
                         </td>
                         <td className="font-mono">
                           {Number(transaction.quantity).toFixed(3)}{' '}

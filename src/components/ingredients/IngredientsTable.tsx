@@ -3,20 +3,23 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Decimal } from '@prisma/client/runtime/library';
 
 interface Ingredient {
   id: string;
   name: string;
-  currentQty: Decimal | number | string;
-  unit: string;
-  costPerUnit: Decimal | number | string;
+  description?: string | null;
+  category?: string | null;
+  defaultUnit: string;
+  reorderLevel?: number | null;
   vendors: Array<{
     vendor: {
       id: string;
       name: string;
     };
   }>;
+  _count?: {
+    inventoryItems: number;
+  };
 }
 
 interface IngredientsTableProps {
@@ -49,18 +52,16 @@ export function IngredientsTable({ ingredients }: IngredientsTableProps) {
           <thead>
             <tr>
               <th>Name</th>
-              <th>Current Qty</th>
-              <th>Cost per Unit</th>
+              <th>Category</th>
+              <th>Default Unit</th>
+              <th>Reorder Level</th>
+              <th>Inventory Batches</th>
               <th>Vendors</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
             {currentIngredients.map((ingredient) => {
-              const currentQty = Number(ingredient.currentQty);
-              const costPerUnit = Number(ingredient.costPerUnit);
-              const isLowStock = currentQty < 100;
-
               return (
                 <tr
                   key={ingredient.id}
@@ -68,19 +69,32 @@ export function IngredientsTable({ ingredients }: IngredientsTableProps) {
                   className="hover cursor-pointer"
                 >
                   <td className="align-top">
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold">{ingredient.name}</span>
-                      {isLowStock && (
-                        <span className="badge badge-warning badge-sm">Low Stock</span>
-                      )}
-                    </div>
+                    <span className="font-bold">{ingredient.name}</span>
                   </td>
                   <td className="align-top">
-                    <span className={isLowStock ? 'text-warning font-semibold' : ''}>
-                      {currentQty.toFixed(3)} {ingredient.unit}
-                    </span>
+                    {ingredient.category ? (
+                      <span className="badge badge-ghost badge-sm">{ingredient.category}</span>
+                    ) : (
+                      <span className="text-base-content/40 italic">-</span>
+                    )}
                   </td>
-                  <td className="align-top">${costPerUnit.toFixed(2)}</td>
+                  <td className="align-top">{ingredient.defaultUnit}</td>
+                  <td className="align-top">
+                    {ingredient.reorderLevel !== null && ingredient.reorderLevel !== undefined ? (
+                      `${ingredient.reorderLevel} ${ingredient.defaultUnit}`
+                    ) : (
+                      <span className="text-base-content/40 italic">-</span>
+                    )}
+                  </td>
+                  <td className="align-top">
+                    {ingredient._count?.inventoryItems ? (
+                      <span className="badge badge-primary badge-sm">
+                        {ingredient._count.inventoryItems}
+                      </span>
+                    ) : (
+                      <span className="text-base-content/40 italic">0</span>
+                    )}
+                  </td>
                   <td className="align-top">
                     {ingredient.vendors.length > 0 ? (
                       <div className="flex flex-wrap gap-1">

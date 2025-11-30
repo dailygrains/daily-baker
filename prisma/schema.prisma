@@ -32,14 +32,15 @@ model Bakery {
   website     String?
 
   // Relations
-  users        UserBakery[]
-  recipes      Recipe[]
-  ingredients  Ingredient[]
-  vendors      Vendor[]
-  equipment    Equipment[]
-  bakeSheets   BakeSheet[]
-  invitations  Invitation[]
-  activityLogs ActivityLog[]
+  users          UserBakery[]
+  recipes        Recipe[]
+  ingredients    Ingredient[]
+  inventoryItems InventoryItem[]
+  vendors        Vendor[]
+  equipment      Equipment[]
+  bakeSheets     BakeSheet[]
+  invitations    Invitation[]
+  activityLogs   ActivityLog[]
 
   @@index([isActive])
   @@map("bakeries")
@@ -190,41 +191,85 @@ model RecipeSectionIngredient {
 // ============================================================================
 
 model Ingredient {
-  id          String   @id @default(cuid())
-  bakeryId    String
-  bakery      Bakery   @relation(fields: [bakeryId], references: [id], onDelete: Cascade)
-  name        String
-  currentQty  Decimal  @default(0) @db.Decimal(10, 3)
-  unit        String // "g", "ml", "kg"
-  costPerUnit Decimal  @db.Decimal(10, 2) // For recipe costing
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           String   @id @default(cuid())
+  bakeryId     String
+  bakery       Bakery   @relation(fields: [bakeryId], references: [id], onDelete: Cascade)
+  name         String
+  description  String?  @db.Text
+  category     String?  // "Flour", "Dairy", "Sweeteners", etc.
+  defaultUnit  String   // "g" - default unit for recipes (now required)
+  reorderLevel Decimal? @db.Decimal(10, 3) // Minimum qty before reorder alert
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   // Relations
-  vendors      IngredientVendor[]
-  transactions InventoryTransaction[]
-  recipeUses   RecipeSectionIngredient[]
+  inventoryItems InventoryItem[]
+  vendors        IngredientVendor[]
+  recipeUses     RecipeSectionIngredient[]
 
   @@index([bakeryId])
   @@index([name])
+  @@index([category])
   @@map("ingredients")
 }
 
-model InventoryTransaction {
-  id           String          @id @default(cuid())
-  ingredientId String
-  ingredient   Ingredient      @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
-  type         TransactionType
-  quantity     Decimal         @db.Decimal(10, 3)
-  unit         String
-  notes        String?         @db.Text
-  bakeSheetId  String?
-  bakeSheet    BakeSheet?      @relation(fields: [bakeSheetId], references: [id], onDelete: SetNull)
-  createdBy    String
-  creator      User            @relation(fields: [createdBy], references: [id], onDelete: Restrict)
-  createdAt    DateTime        @default(now())
+model InventoryItem {
+  id             String     @id @default(cuid())
+  bakeryId       String
+  bakery         Bakery     @relation(fields: [bakeryId], references: [id], onDelete: Cascade)
+  ingredientId   String
+  ingredient     Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
 
+  // Batch/Lot details
+  quantity       Decimal    @default(0) @db.Decimal(10, 3)
+  unit           String     // Actual storage unit (might differ from defaultUnit)
+
+  // Purchase tracking
+  vendorId       String?
+  vendor         Vendor?    @relation(fields: [vendorId], references: [id], onDelete: SetNull)
+  purchasePrice  Decimal?   @db.Decimal(10, 2) // Cost per unit at time of purchase
+  purchaseDate   DateTime?
+
+  // Optional batch tracking
+  batchNumber    String?
+  expirationDate DateTime?
+  location       String?    // "Walk-in Cooler", "Dry Storage", etc.
+  notes          String?    @db.Text
+
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  // Relations
+  transactions InventoryTransaction[]
+
+  @@index([bakeryId])
   @@index([ingredientId])
+  @@index([vendorId])
+  @@index([expirationDate])
+  @@map("inventory_items")
+}
+
+model InventoryTransaction {
+  id              String          @id @default(cuid())
+  inventoryItemId String
+  inventoryItem   InventoryItem   @relation(fields: [inventoryItemId], references: [id], onDelete: Cascade)
+
+  type            TransactionType
+  quantity        Decimal         @db.Decimal(10, 3)
+  unit            String
+
+  // Cost tracking at transaction time
+  unitCost        Decimal?        @db.Decimal(10, 2) // Cost per unit at time of transaction
+  totalCost       Decimal?        @db.Decimal(10, 2) // Total cost (quantity * unitCost)
+
+  notes           String?         @db.Text
+  bakeSheetId     String?
+  bakeSheet       BakeSheet?      @relation(fields: [bakeSheetId], references: [id], onDelete: SetNull)
+  createdBy       String
+  creator         User            @relation(fields: [createdBy], references: [id], onDelete: Restrict)
+  createdAt       DateTime        @default(now())
+
+  @@index([inventoryItemId])
   @@index([type])
   @@index([bakeSheetId])
   @@index([createdBy])
@@ -256,9 +301,10 @@ model Vendor {
   updatedAt DateTime @updatedAt
 
   // Relations
-  contacts    VendorContact[]
-  ingredients IngredientVendor[]
-  equipment   Equipment[]
+  contacts       VendorContact[]
+  ingredients    IngredientVendor[]
+  inventoryItems InventoryItem[]
+  equipment      Equipment[]
 
   @@index([bakeryId])
   @@index([name])
