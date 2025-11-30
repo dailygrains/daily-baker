@@ -17,6 +17,12 @@ import {
   Shield
 } from 'lucide-react';
 import { ReactNode } from 'react';
+import { BakerySelector } from './BakerySelector';
+
+interface Bakery {
+  id: string;
+  name: string;
+}
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -25,6 +31,8 @@ interface DashboardLayoutProps {
   bakeryName?: string;
   userRole?: string;
   isPlatformAdmin?: boolean;
+  bakeries?: Bakery[];
+  currentBakeryId?: string | null;
 }
 
 export function DashboardLayout({
@@ -32,7 +40,9 @@ export function DashboardLayout({
   userName,
   userEmail,
   userRole,
-  isPlatformAdmin = false
+  isPlatformAdmin = false,
+  bakeries = [],
+  currentBakeryId
 }: DashboardLayoutProps) {
   return (
     <div className="drawer lg:drawer-open min-h-screen">
@@ -59,13 +69,18 @@ export function DashboardLayout({
 
         <aside className="bg-base-100 w-72 min-h-full border-r border-base-300 flex flex-col">
           {/* Logo / Brand */}
-          <div className="sticky top-0 z-20 bg-base-100 px-6 py-4">
-            <Link href="/dashboard" className="flex items-center gap-3">
-              <div className="flex flex-col">
-                <span className="font-bold text-lg">Daily Baker</span>
-                <span className="text-xs text-base-content/60">Bakery Management</span>
-              </div>
-            </Link>
+          <div className="sticky top-0 z-20 bg-base-100">
+            <div className="px-6 py-4">
+              <Link href="/dashboard" className="flex items-center gap-3">
+                <div className="flex flex-col">
+                  <span className="font-bold text-lg">Daily Baker</span>
+                  <span className="text-xs text-base-content/60">Bakery Management</span>
+                </div>
+              </Link>
+            </div>
+
+            {/* Bakery Selector - only show for non-platform admin users with multiple bakeries */}
+            {!isPlatformAdmin && <BakerySelector bakeries={bakeries} currentBakeryId={currentBakeryId ?? null} />}
           </div>
 
           {/* Navigation Menu */}

@@ -290,6 +290,8 @@ export default async function DashboardPage() {
       userEmail={user.email}
       bakeryName={user.bakery.name}
       userRole={user.role?.name}
+      bakeries={user.allBakeries}
+      currentBakeryId={user.bakeryId}
     >
       <PageHeader
         title={`Welcome back, ${user.name || 'Baker'}!`}

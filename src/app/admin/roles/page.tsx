@@ -68,7 +68,12 @@ export default async function RolesPage() {
           }
         />
       ) : (
-        <RolesTable roles={roles} />
+        <RolesTable
+          roles={roles.map(role => ({
+            ...role,
+            permissions: role.permissions as Record<string, boolean>
+          }))}
+        />
       )}
     </DashboardLayout>
   );

@@ -1,4 +1,5 @@
 import { currentUser } from '@clerk/nextjs/server';
+import { cookies } from 'next/headers';
 import { prisma } from './prisma';
 
 /**
@@ -57,20 +58,40 @@ export async function getCurrentUser() {
 
   // Transform user object to add convenience properties for backward compatibility
   // IMPORTANT: The schema supports many-to-many user-bakery relationships,
-  // but we return only the first bakery here to maintain backward compatibility
+  // but we return only the selected/first bakery here to maintain backward compatibility
   // with existing code that expects a single bakery. This is temporary until
   // full multi-bakery support is implemented throughout the application.
-  const firstBakery = user.bakeries[0];
+
+  // Get selected bakery ID from cookie (for multi-bakery users)
+  const cookieStore = await cookies();
+  const selectedBakeryId = cookieStore.get('selectedBakeryId')?.value;
+
+  // Find the selected bakery or fall back to first bakery
+  let currentBakery = user.bakeries[0];
+  if (selectedBakeryId && user.bakeries.length > 1) {
+    const selected = user.bakeries.find(ub => ub.bakeryId === selectedBakeryId);
+    if (selected) {
+      currentBakery = selected;
+    }
+  }
 
   // Log warning if user has multiple bakeries (helps identify when migration is needed)
   if (user.bakeries.length > 1) {
-    console.warn(`User ${user.id} has ${user.bakeries.length} bakeries assigned, but only returning the first one due to backward compatibility`);
+    console.warn(
+      `User ${user.id} has ${user.bakeries.length} bakeries assigned. ` +
+      `Using bakery: ${currentBakery?.bakery?.name} (${currentBakery?.bakeryId})`
+    );
   }
 
   return {
     ...user,
-    bakery: firstBakery?.bakery,
-    bakeryId: firstBakery?.bakeryId,
+    bakery: currentBakery?.bakery,
+    bakeryId: currentBakery?.bakeryId,
+    // Expose all bakeries for the selector
+    allBakeries: user.bakeries.map(ub => ({
+      id: ub.bakery.id,
+      name: ub.bakery.name,
+    })),
   };
 }
 

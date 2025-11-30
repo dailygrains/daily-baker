@@ -316,7 +316,7 @@ export function BakeryForm({
                 {assignedUsers.map((user) => (
                   <div
                     key={user.id}
-                    className="flex items-center justify-between gap-3 bg-base-200 rounded-lg"
+                    className="flex items-center justify-between gap-3 bg-base-200 rounded-lg p-3"
                   >
                     <div className="flex items-center gap-3 flex-1 min-w-0">
                       <div className="font-medium text-base-content truncate">
