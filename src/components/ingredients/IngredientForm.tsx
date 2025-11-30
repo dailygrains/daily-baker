@@ -1,28 +1,82 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { createIngredient, updateIngredient } from '@/app/actions/ingredient';
-import type { Ingredient, Vendor } from '@/generated/prisma';
+import { createIngredient, updateIngredient, assignVendorToIngredient, unassignVendorFromIngredient } from '@/app/actions/ingredient';
+import { VendorAutocomplete } from '@/components/vendor/VendorAutocomplete';
+import { X } from 'lucide-react';
+import type { Decimal } from '@prisma/client/runtime/library';
+import { useToast } from '@/contexts/ToastContext';
+
+interface Vendor {
+  id: string;
+  name: string;
+}
 
 interface IngredientFormProps {
   bakeryId: string;
-  ingredient?: Ingredient & { vendor: Vendor | null };
-  vendors?: Array<{ id: string; name: string }>;
+  ingredient?: {
+    id: string;
+    name: string;
+    currentQty: number | string | Decimal;
+    unit: string;
+    costPerUnit: number | string | Decimal;
+    vendors: Array<{
+      vendor: Vendor;
+    }>;
+  };
+  onFormRefChange?: (ref: HTMLFormElement | null) => void;
+  onSavingChange?: (isSaving: boolean) => void;
+  onUnsavedChangesChange?: (hasChanges: boolean) => void;
+  showBottomActions?: boolean;
 }
 
-export function IngredientForm({ bakeryId, ingredient, vendors = [] }: IngredientFormProps) {
+export function IngredientForm({
+  bakeryId,
+  ingredient,
+  onFormRefChange,
+  onSavingChange,
+  onUnsavedChangesChange,
+  showBottomActions = true,
+}: IngredientFormProps) {
   const router = useRouter();
+  const { showToast } = useToast();
+  const formRef = useRef<HTMLFormElement>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [assignedVendors, setAssignedVendors] = useState<Vendor[]>(
+    ingredient?.vendors?.map((iv) => iv.vendor) ?? []
+  );
+  const [isAssigningVendor, setIsAssigningVendor] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   const [formData, setFormData] = useState({
     name: ingredient?.name ?? '',
     currentQty: ingredient ? Number(ingredient.currentQty) : 0,
     unit: ingredient?.unit ?? '',
     costPerUnit: ingredient ? Number(ingredient.costPerUnit) : 0,
-    vendorId: ingredient?.vendorId ?? '',
   });
+
+  // Notify parent of form ref changes
+  useEffect(() => {
+    if (onFormRefChange && formRef.current) {
+      onFormRefChange(formRef.current);
+    }
+  }, [onFormRefChange]);
+
+  // Notify parent of saving state changes
+  useEffect(() => {
+    if (onSavingChange) {
+      onSavingChange(isSubmitting);
+    }
+  }, [isSubmitting, onSavingChange]);
+
+  // Notify parent of unsaved changes state
+  useEffect(() => {
+    if (onUnsavedChangesChange) {
+      onUnsavedChangesChange(hasUnsavedChanges);
+    }
+  }, [hasUnsavedChanges, onUnsavedChangesChange]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,164 +88,263 @@ export function IngredientForm({ bakeryId, ingredient, vendors = [] }: Ingredien
         ? await updateIngredient({
             id: ingredient.id,
             ...formData,
-            vendorId: formData.vendorId || null,
           })
         : await createIngredient({
             bakeryId,
             ...formData,
-            vendorId: formData.vendorId || null,
           });
 
       if (result.success) {
-        router.push('/dashboard/ingredients');
+        const message = ingredient
+          ? `Ingredient "${formData.name}" updated successfully`
+          : `Ingredient "${formData.name}" created successfully`;
+
+        showToast(message, 'success');
+        setHasUnsavedChanges(false);
+
+        // Only redirect to list after creating, stay on page after editing
+        if (!ingredient) {
+          router.push('/dashboard/ingredients');
+        }
         router.refresh();
       } else {
-        setError(result.error || 'Failed to save ingredient');
+        const errorMessage = result.error || 'Failed to save ingredient';
+        setError(errorMessage);
+        showToast(errorMessage, 'error');
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred';
+      setError(errorMessage);
+      showToast(errorMessage, 'error');
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const handleAssignVendor = async (vendor: Vendor) => {
+    if (!ingredient) return;
+
+    setIsAssigningVendor(true);
+    try {
+      const result = await assignVendorToIngredient(ingredient.id, vendor.id);
+      if (result.success) {
+        setAssignedVendors([...assignedVendors, vendor]);
+        showToast(`Vendor "${vendor.name}" assigned successfully`, 'success');
+        router.refresh();
+      } else {
+        const errorMessage = result.error || 'Failed to assign vendor';
+        setError(errorMessage);
+        showToast(errorMessage, 'error');
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred';
+      setError(errorMessage);
+      showToast(errorMessage, 'error');
+    } finally {
+      setIsAssigningVendor(false);
+    }
+  };
+
+  const handleUnassignVendor = async (vendorId: string) => {
+    if (!ingredient) return;
+
+    try {
+      const vendorName = assignedVendors.find(v => v.id === vendorId)?.name || 'Vendor';
+      const result = await unassignVendorFromIngredient(ingredient.id, vendorId);
+      if (result.success) {
+        setAssignedVendors(assignedVendors.filter((v) => v.id !== vendorId));
+        showToast(`${vendorName} unassigned successfully`, 'success');
+        router.refresh();
+      } else {
+        const errorMessage = result.error || 'Failed to remove vendor';
+        setError(errorMessage);
+        showToast(errorMessage, 'error');
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred';
+      setError(errorMessage);
+      showToast(errorMessage, 'error');
+    }
+  };
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form ref={formRef} onSubmit={handleSubmit} className="max-w-3xl mx-auto space-y-8">
       {error && (
         <div className="alert alert-error">
+          <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
           <span>{error}</span>
         </div>
       )}
 
-      <div className="form-control">
-        <label className="label">
-          <span className="label-text">Ingredient Name</span>
-        </label>
-        <input
-          type="text"
-          className="input input-bordered"
-          value={formData.name}
-          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          required
-          maxLength={100}
-          placeholder="e.g., All-Purpose Flour"
-        />
-      </div>
+      <div className="space-y-0">
+        <h2 className="text-xl font-semibold">Basic Information</h2>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="form-control">
-          <label className="label">
-            <span className="label-text">Current Quantity</span>
-          </label>
+        <fieldset className="fieldset">
+          <legend className="fieldset-legend">Ingredient Name *</legend>
           <input
-            type="number"
-            step="0.001"
-            min="0"
-            className="input input-bordered"
-            value={formData.currentQty}
-            onChange={(e) =>
-              setFormData({ ...formData, currentQty: parseFloat(e.target.value) || 0 })
-            }
+            type="text"
+            className="input input-bordered w-full"
+            value={formData.name}
+            onChange={(e) => {
+              setFormData({ ...formData, name: e.target.value });
+              setHasUnsavedChanges(true);
+            }}
             required
+            maxLength={100}
+            placeholder="e.g., All-Purpose Flour"
           />
-        </div>
+        </fieldset>
+      </div>
 
-        <div className="form-control">
+      <div className="space-y-0">
+        <h2 className="text-xl font-semibold">Inventory Details</h2>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+          <fieldset className="fieldset">
+            <legend className="fieldset-legend">Current Quantity *</legend>
+            <input
+              type="number"
+              step="0.001"
+              min="0"
+              className="input input-bordered w-full"
+              value={formData.currentQty}
+              onChange={(e) => {
+                setFormData({ ...formData, currentQty: parseFloat(e.target.value) || 0 });
+                setHasUnsavedChanges(true);
+              }}
+              required
+            />
+          </fieldset>
+
+          <fieldset className="fieldset">
+            <legend className="fieldset-legend">Unit *</legend>
+            <select
+              className="select select-bordered w-full"
+              value={formData.unit}
+              onChange={(e) => {
+                setFormData({ ...formData, unit: e.target.value });
+                setHasUnsavedChanges(true);
+              }}
+              required
+            >
+              <option value="">Select unit</option>
+              <option value="g">Grams (g)</option>
+              <option value="kg">Kilograms (kg)</option>
+              <option value="ml">Milliliters (ml)</option>
+              <option value="l">Liters (l)</option>
+              <option value="oz">Ounces (oz)</option>
+              <option value="lb">Pounds (lb)</option>
+              <option value="cup">Cups</option>
+              <option value="tbsp">Tablespoons</option>
+              <option value="tsp">Teaspoons</option>
+              <option value="unit">Units</option>
+            </select>
+          </fieldset>
+        </div>
+      </div>
+
+      <div className="space-y-0">
+        <h2 className="text-xl font-semibold">Pricing</h2>
+
+        <fieldset className="fieldset">
+          <legend className="fieldset-legend">Cost per Unit *</legend>
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base-content/50">
+              $
+            </span>
+            <input
+              type="number"
+              step="0.01"
+              min="0"
+              className="input input-bordered w-full pl-8"
+              value={formData.costPerUnit}
+              onChange={(e) => {
+                setFormData({ ...formData, costPerUnit: parseFloat(e.target.value) || 0 });
+                setHasUnsavedChanges(true);
+              }}
+              required
+              placeholder="0.00"
+            />
+          </div>
           <label className="label">
-            <span className="label-text">Unit</span>
+            <span className="label-text-alt">Price per single unit (e.g., per gram)</span>
           </label>
-          <select
-            className="select select-bordered"
-            value={formData.unit}
-            onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
-            required
-          >
-            <option value="">Select unit</option>
-            <option value="g">Grams (g)</option>
-            <option value="kg">Kilograms (kg)</option>
-            <option value="ml">Milliliters (ml)</option>
-            <option value="l">Liters (l)</option>
-            <option value="oz">Ounces (oz)</option>
-            <option value="lb">Pounds (lb)</option>
-            <option value="cup">Cups</option>
-            <option value="tbsp">Tablespoons</option>
-            <option value="tsp">Teaspoons</option>
-            <option value="unit">Units</option>
-          </select>
-        </div>
+        </fieldset>
       </div>
 
-      <div className="form-control">
-        <label className="label">
-          <span className="label-text">Cost per Unit</span>
-        </label>
-        <div className="relative">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base-content/50">
-            $
-          </span>
-          <input
-            type="number"
-            step="0.01"
-            min="0"
-            className="input input-bordered pl-8"
-            value={formData.costPerUnit}
-            onChange={(e) =>
-              setFormData({ ...formData, costPerUnit: parseFloat(e.target.value) || 0 })
-            }
-            required
-            placeholder="0.00"
-          />
-        </div>
-        <label className="label">
-          <span className="label-text-alt">Price per single unit (e.g., per gram)</span>
-        </label>
-      </div>
+      {ingredient && (
+        <div className="space-y-0">
+          <h2 className="text-xl font-semibold">Vendors</h2>
 
-      <div className="form-control">
-        <label className="label">
-          <span className="label-text">Vendor (Optional)</span>
-        </label>
-        <select
-          className="select select-bordered"
-          value={formData.vendorId}
-          onChange={(e) => setFormData({ ...formData, vendorId: e.target.value })}
-        >
-          <option value="">No vendor</option>
-          {vendors.map((vendor) => (
-            <option key={vendor.id} value={vendor.id}>
-              {vendor.name}
-            </option>
-          ))}
-        </select>
-        <label className="label">
-          <span className="label-text-alt">
-            Link this ingredient to a vendor for easier tracking
-          </span>
-        </label>
-      </div>
+          <fieldset className="fieldset">
+            <legend className="fieldset-legend">Assign Vendors</legend>
+            <VendorAutocomplete
+              bakeryId={bakeryId}
+              onSelect={handleAssignVendor}
+              excludeVendorIds={assignedVendors.map((v) => v.id)}
+              placeholder="Search and assign vendors..."
+            />
+            <label className="label">
+              <span className="label-text-alt">
+                Link this ingredient to multiple vendors for easier tracking
+              </span>
+            </label>
+          </fieldset>
 
-      <div className="flex gap-3 justify-end">
-        <button
-          type="button"
-          className="btn btn-ghost"
-          onClick={() => router.back()}
-          disabled={isSubmitting}
-        >
-          Cancel
-        </button>
-        <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
-          {isSubmitting ? (
-            <>
-              <span className="loading loading-spinner loading-sm"></span>
-              Saving...
-            </>
-          ) : ingredient ? (
-            'Update Ingredient'
-          ) : (
-            'Create Ingredient'
+          {assignedVendors.length > 0 && (
+            <fieldset className="fieldset">
+              <legend className="fieldset-legend">Assigned Vendors</legend>
+              <div className="space-y-2">
+                {assignedVendors.map((vendor) => (
+                  <div
+                    key={vendor.id}
+                    className="flex items-center justify-between p-3 bg-base-200 rounded-lg"
+                  >
+                    <div>
+                      <div className="font-medium">{vendor.name}</div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleUnassignVendor(vendor.id)}
+                      className="btn btn-ghost btn-sm text-error"
+                      disabled={isAssigningVendor}
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </fieldset>
           )}
-        </button>
-      </div>
+        </div>
+      )}
+
+      {showBottomActions && (
+        <div className="flex gap-3 justify-between pt-4">
+          <div className="flex gap-3 ml-auto">
+            <button
+              type="button"
+              className="btn btn-ghost"
+              onClick={() => router.back()}
+              disabled={isSubmitting}
+            >
+              Cancel
+            </button>
+            <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <span className="loading loading-spinner loading-sm"></span>
+                  {ingredient ? 'Saving...' : 'Creating...'}
+                </>
+              ) : (
+                ingredient ? 'Save Changes' : 'Create Ingredient'
+              )}
+            </button>
+          </div>
+        </div>
+      )}
     </form>
   );
 }

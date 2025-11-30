@@ -274,15 +274,21 @@ export async function getVendorById(id: string) {
       where: { id },
       include: {
         ingredients: {
-          select: {
-            id: true,
-            name: true,
-            currentQty: true,
-            unit: true,
-            costPerUnit: true,
+          include: {
+            ingredient: {
+              select: {
+                id: true,
+                name: true,
+                currentQty: true,
+                unit: true,
+                costPerUnit: true,
+              },
+            },
           },
           orderBy: {
-            name: 'asc',
+            ingredient: {
+              name: 'asc',
+            },
           },
         },
         equipment: {
@@ -317,7 +323,25 @@ export async function getVendorById(id: string) {
       };
     }
 
-    return { success: true, data: vendor };
+    // Serialize Decimal fields for client components
+    return {
+      success: true,
+      data: {
+        ...vendor,
+        ingredients: vendor.ingredients.map(iv => ({
+          ...iv,
+          ingredient: {
+            ...iv.ingredient,
+            currentQty: iv.ingredient.currentQty.toNumber(),
+            costPerUnit: iv.ingredient.costPerUnit.toNumber(),
+          },
+        })),
+        equipment: vendor.equipment.map(e => ({
+          ...e,
+          cost: e.cost ? e.cost.toNumber() : null,
+        })),
+      },
+    };
   } catch (error) {
     console.error('Failed to fetch vendor:', error);
     return {

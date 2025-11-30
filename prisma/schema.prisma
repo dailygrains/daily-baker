@@ -197,18 +197,16 @@ model Ingredient {
   currentQty  Decimal  @default(0) @db.Decimal(10, 3)
   unit        String // "g", "ml", "kg"
   costPerUnit Decimal  @db.Decimal(10, 2) // For recipe costing
-  vendorId    String?
-  vendor      Vendor?  @relation(fields: [vendorId], references: [id], onDelete: SetNull)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   // Relations
+  vendors      IngredientVendor[]
   transactions InventoryTransaction[]
   recipeUses   RecipeSectionIngredient[]
 
   @@index([bakeryId])
   @@index([name])
-  @@index([vendorId])
   @@map("ingredients")
 }
 
@@ -259,12 +257,26 @@ model Vendor {
 
   // Relations
   contacts    VendorContact[]
-  ingredients Ingredient[]
+  ingredients IngredientVendor[]
   equipment   Equipment[]
 
   @@index([bakeryId])
   @@index([name])
   @@map("vendors")
+}
+
+model IngredientVendor {
+  id           String     @id @default(cuid())
+  ingredientId String
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+  vendorId     String
+  vendor       Vendor     @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  createdAt    DateTime   @default(now())
+
+  @@unique([ingredientId, vendorId])
+  @@index([ingredientId])
+  @@index([vendorId])
+  @@map("ingredient_vendors")
 }
 
 model VendorContact {
@@ -286,20 +298,20 @@ model VendorContact {
 // ============================================================================
 
 model Equipment {
-  id            String          @id @default(cuid())
-  bakeryId      String
-  bakery        Bakery          @relation(fields: [bakeryId], references: [id], onDelete: Cascade)
-  name          String
-  status        EquipmentStatus @default(CONSIDERING)
-  vendorId      String?
-  vendor        Vendor?         @relation(fields: [vendorId], references: [id], onDelete: SetNull)
-  purchaseDate  DateTime?
-  cost          Decimal?        @db.Decimal(10, 2)
-  quantity      Int             @default(1)
-  serialNumber  String?
-  notes         String?         @db.Text
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
+  id           String          @id @default(cuid())
+  bakeryId     String
+  bakery       Bakery          @relation(fields: [bakeryId], references: [id], onDelete: Cascade)
+  name         String
+  status       EquipmentStatus @default(CONSIDERING)
+  vendorId     String?
+  vendor       Vendor?         @relation(fields: [vendorId], references: [id], onDelete: SetNull)
+  purchaseDate DateTime?
+  cost         Decimal?        @db.Decimal(10, 2)
+  quantity     Int             @default(1)
+  serialNumber String?
+  notes        String?         @db.Text
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
 
   @@index([bakeryId])
   @@index([status])

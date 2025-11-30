@@ -294,7 +294,6 @@ async function main() {
       currentQty: 250,
       unit: 'kg',
       costPerUnit: 2.50,
-      vendorId: flourVendor.id,
     },
   });
 
@@ -305,7 +304,6 @@ async function main() {
       currentQty: 100,
       unit: 'kg',
       costPerUnit: 3.00,
-      vendorId: flourVendor.id,
     },
   });
 
@@ -316,7 +314,6 @@ async function main() {
       currentQty: 50,
       unit: 'kg',
       costPerUnit: 3.50,
-      vendorId: flourVendor.id,
     },
   });
 
@@ -327,7 +324,6 @@ async function main() {
       currentQty: 20,
       unit: 'kg',
       costPerUnit: 8.00,
-      vendorId: flourVendor.id,
     },
   });
 
@@ -348,7 +344,6 @@ async function main() {
       currentQty: 5,
       unit: 'kg',
       costPerUnit: 15.00,
-      vendorId: flourVendor.id,
     },
   });
 
@@ -359,7 +354,6 @@ async function main() {
       currentQty: 30,
       unit: 'kg',
       costPerUnit: 12.00,
-      vendorId: dairyVendor.id,
     },
   });
 
@@ -370,7 +364,6 @@ async function main() {
       currentQty: 40,
       unit: 'L',
       costPerUnit: 2.00,
-      vendorId: dairyVendor.id,
     },
   });
 
@@ -381,7 +374,6 @@ async function main() {
       currentQty: 600,
       unit: 'unit',
       costPerUnit: 0.50,
-      vendorId: dairyVendor.id,
     },
   });
 
@@ -392,11 +384,28 @@ async function main() {
       currentQty: 75,
       unit: 'kg',
       costPerUnit: 2.00,
-      vendorId: flourVendor.id,
     },
   });
 
-  console.log(`✅ Created ${10} ingredients\n`);
+  console.log(`✅ Created ${10} ingredients`);
+
+  // Assign vendors to ingredients
+  await prisma.ingredientVendor.createMany({
+    data: [
+      { ingredientId: breadFlour.id, vendorId: flourVendor.id },
+      { ingredientId: wholeWheatFlour.id, vendorId: flourVendor.id },
+      { ingredientId: _ryeFlour.id, vendorId: flourVendor.id },
+      { ingredientId: salt.id, vendorId: flourVendor.id },
+      { ingredientId: yeast.id, vendorId: flourVendor.id },
+      { ingredientId: butter.id, vendorId: dairyVendor.id },
+      { ingredientId: milk.id, vendorId: dairyVendor.id },
+      { ingredientId: eggs.id, vendorId: dairyVendor.id },
+      { ingredientId: sugar.id, vendorId: flourVendor.id },
+      { ingredientId: water.id, vendorId: flourVendor.id },
+    ],
+  });
+
+  console.log(`✅ Assigned vendors to ingredients\n`);
 
   // ==========================================================================
   // Create Equipment (for Artisan Sourdough)
