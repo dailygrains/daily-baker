@@ -200,6 +200,11 @@ export async function getRoleById(id: string) {
             email: true,
           },
         },
+        _count: {
+          select: {
+            users: true,
+          },
+        },
       },
     });
 
