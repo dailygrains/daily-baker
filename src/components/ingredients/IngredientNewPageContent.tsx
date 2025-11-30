@@ -4,21 +4,14 @@ import { useState } from 'react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { IngredientForm } from '@/components/ingredients/IngredientForm';
 import { Save, ArrowLeft } from 'lucide-react';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import Link from 'next/link';
 
 interface IngredientNewPageContentProps {
   bakeryId: string;
-  isPlatformAdmin: boolean;
-  bakeries?: { id: string; name: string; }[];
-  currentBakeryId: string | null;
 }
 
 export function IngredientNewPageContent({
   bakeryId,
-  isPlatformAdmin,
-  bakeries,
-  currentBakeryId,
 }: IngredientNewPageContentProps) {
   const [formRef, setFormRef] = useState<HTMLFormElement | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -30,11 +23,7 @@ export function IngredientNewPageContent({
   }
 
   return (
-    <DashboardLayout
-      isPlatformAdmin={isPlatformAdmin}
-      bakeries={bakeries}
-      currentBakeryId={currentBakeryId}
-    >
+    <>
       <PageHeader
         title="Add New Ingredient"
         description="Add a new ingredient to your inventory"
@@ -73,6 +62,6 @@ export function IngredientNewPageContent({
         onSavingChange={setIsSaving}
         showBottomActions={false}
       />
-    </DashboardLayout>
+    </>
   );
 }

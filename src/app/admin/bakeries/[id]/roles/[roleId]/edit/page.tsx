@@ -1,5 +1,4 @@
 import { getCurrentUser } from '@/lib/clerk';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { RoleForm } from '@/components/role/RoleForm';
 import { getRoleById } from '@/app/actions/role';
@@ -31,35 +30,25 @@ export default async function EditRolePage({
 
   if (!roleResult.success || !roleResult.data) {
     return (
-      <DashboardLayout
-        userName={user.name || undefined}
-        userEmail={user.email}
-        isPlatformAdmin={true}
-        bakeries={user.allBakeries}
-        currentBakeryId={user.bakeryId}
-      >
+      
+      <>
         <PageHeader title="Edit Role" />
         <div className="alert alert-error">
           <span>{roleResult.error || 'Role not found'}</span>
         </div>
-      </DashboardLayout>
+      </>
     );
   }
 
   if (!bakeryResult.success || !bakeryResult.data) {
     return (
-      <DashboardLayout
-        userName={user.name || undefined}
-        userEmail={user.email}
-        isPlatformAdmin={true}
-        bakeries={user.allBakeries}
-        currentBakeryId={user.bakeryId}
-      >
+      
+      <>
         <PageHeader title="Edit Role" />
         <div className="alert alert-error">
           <span>{bakeryResult.error || 'Bakery not found'}</span>
         </div>
-      </DashboardLayout>
+      </>
     );
   }
 
@@ -67,14 +56,9 @@ export default async function EditRolePage({
   const bakery = bakeryResult.data;
 
   return (
-    <DashboardLayout
-      userName={user.name || undefined}
-      userEmail={user.email}
-      isPlatformAdmin={true}
-        bakeries={user.allBakeries}
-        currentBakeryId={user.bakeryId}
-    >
-      <PageHeader
+    
+      <>
+        <PageHeader
         title={`Edit Platform Role: ${role.name}`}
         description="Update platform-wide role details and permissions"
         actions={
@@ -86,6 +70,6 @@ export default async function EditRolePage({
       />
 
       <RoleForm role={role} bakery={bakery} mode="edit" />
-    </DashboardLayout>
+    </>
   );
 }

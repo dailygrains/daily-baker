@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { IngredientForm } from '@/components/ingredients/IngredientForm';
 import { Save, ArrowLeft } from 'lucide-react';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import Link from 'next/link';
 import type { Decimal } from '@prisma/client/runtime/library';
 
@@ -25,17 +24,11 @@ interface IngredientEditPageContentProps {
       vendor: Vendor;
     }>;
   };
-  isPlatformAdmin: boolean;
-  bakeries?: { id: string; name: string; }[];
-  currentBakeryId: string | null;
 }
 
 export function IngredientEditPageContent({
   bakeryId,
   ingredient,
-  isPlatformAdmin,
-  bakeries,
-  currentBakeryId,
 }: IngredientEditPageContentProps) {
   const [formRef, setFormRef] = useState<HTMLFormElement | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -48,11 +41,7 @@ export function IngredientEditPageContent({
   }
 
   return (
-    <DashboardLayout
-      isPlatformAdmin={isPlatformAdmin}
-      bakeries={bakeries}
-      currentBakeryId={currentBakeryId}
-    >
+    <>
       <PageHeader
         title={`Edit ${ingredient.name}`}
         sticky
@@ -92,6 +81,6 @@ export function IngredientEditPageContent({
         onUnsavedChangesChange={setHasUnsavedChanges}
         showBottomActions={false}
       />
-    </DashboardLayout>
+    </>
   );
 }

@@ -66,11 +66,20 @@ export async function getCurrentUser() {
   const cookieStore = await cookies();
   const selectedBakeryId = cookieStore.get('selectedBakeryId')?.value;
 
-  // Find the selected bakery or fall back to first bakery
+  // Find the selected bakery - don't default to first bakery
+  // Platform admins must explicitly select a bakery
+  // Regular users with only one bakery can auto-select it
   let currentBakery = user.bakeries[0];
-  let currentBakeryData = currentBakery?.bakery;
-  let currentBakeryIdValue = currentBakery?.bakeryId;
+  let currentBakeryData: typeof currentBakery.bakery | undefined = undefined;
+  let currentBakeryIdValue: string | undefined = undefined;
 
+  // Auto-select for regular users with exactly one bakery
+  if (!user.isPlatformAdmin && user.bakeries.length === 1) {
+    currentBakeryData = currentBakery?.bakery;
+    currentBakeryIdValue = currentBakery?.bakeryId;
+  }
+
+  // Override with cookie selection if present
   if (selectedBakeryId) {
     if (user.isPlatformAdmin) {
       // Platform admins can select any bakery, even if not assigned
@@ -81,7 +90,7 @@ export async function getCurrentUser() {
         currentBakeryData = selectedBakery;
         currentBakeryIdValue = selectedBakery.id;
       }
-    } else if (user.bakeries.length > 1) {
+    } else {
       // Regular users can only select from their assigned bakeries
       const selected = user.bakeries.find(ub => ub.bakeryId === selectedBakeryId);
       if (selected) {
@@ -96,8 +105,13 @@ export async function getCurrentUser() {
   if (user.bakeries.length > 1 && !user.isPlatformAdmin) {
     console.warn(
       `User ${user.id} has ${user.bakeries.length} bakeries assigned. ` +
-      `Using bakery: ${currentBakeryData?.name} (${currentBakeryIdValue})`
+      `Using bakery: ${currentBakeryData?.name ?? 'none selected'} (${currentBakeryIdValue ?? 'null'})`
     );
+  }
+
+  // Log info for platform admins without selection
+  if (user.isPlatformAdmin && !currentBakeryIdValue) {
+    console.info(`Platform admin ${user.id} has no bakery selected`);
   }
 
   // Platform admins should see ALL bakeries, not just assigned ones

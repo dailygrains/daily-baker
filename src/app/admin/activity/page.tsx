@@ -1,5 +1,4 @@
 import { getCurrentUser } from '@/lib/clerk';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { ActivityLogTable } from '@/components/activity/ActivityLogTable';
 import { getActivityLogs } from '@/app/actions/activity-log';
@@ -21,13 +20,8 @@ export default async function ActivityLogsPage() {
 
   if (!logsResult.success) {
     return (
-      <DashboardLayout
-        userName={user.name || undefined}
-        userEmail={user.email}
-        isPlatformAdmin={true}
-        bakeries={user.allBakeries}
-        currentBakeryId={user.bakeryId}
-      >
+      
+      <>
         <PageHeader
           title="Activity Logs"
           description="Platform-wide activity monitoring"
@@ -35,21 +29,16 @@ export default async function ActivityLogsPage() {
         <div className="alert alert-error">
           <span>{logsResult.error || 'Failed to load activity logs'}</span>
         </div>
-      </DashboardLayout>
+      </>
     );
   }
 
   const { logs, total } = logsResult.data!;
 
   return (
-    <DashboardLayout
-      userName={user.name || undefined}
-      userEmail={user.email}
-      isPlatformAdmin={true}
-        bakeries={user.allBakeries}
-        currentBakeryId={user.bakeryId}
-    >
-      <PageHeader
+    
+      <>
+        <PageHeader
         title="Activity Logs"
         description="Platform-wide activity monitoring"
       />
@@ -77,6 +66,6 @@ export default async function ActivityLogsPage() {
           <ActivityLogTable logs={logs} showBakery={true} />
         </div>
       </div>
-    </DashboardLayout>
+    </>
   );
 }

@@ -1,5 +1,4 @@
 import { getCurrentUser } from '@/lib/clerk';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { InvitationForm } from '@/components/invitation/InvitationForm';
 import { getAllBakeries } from '@/app/actions/bakery';
@@ -28,14 +27,9 @@ export default async function NewInvitationPage() {
   const roles = rolesResult.success ? rolesResult.data || [] : [];
 
   return (
-    <DashboardLayout
-      userName={user.name || undefined}
-      userEmail={user.email}
-      isPlatformAdmin={true}
-        bakeries={user.allBakeries}
-        currentBakeryId={user.bakeryId}
-    >
-      <PageHeader
+    
+      <>
+        <PageHeader
         title="Send Invitation"
         description="Invite a new user to the platform"
         actions={
@@ -60,6 +54,6 @@ export default async function NewInvitationPage() {
           </div>
         </div>
       </div>
-    </DashboardLayout>
+    </>
   );
 }

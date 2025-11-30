@@ -1,5 +1,4 @@
 import { getCurrentUser } from '@/lib/clerk';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { redirect } from 'next/navigation';
@@ -22,13 +21,8 @@ export default async function UsersPage() {
 
   if (!result.success) {
     return (
-      <DashboardLayout
-        userName={user.name || undefined}
-        userEmail={user.email}
-        isPlatformAdmin={true}
-        bakeries={user.allBakeries}
-        currentBakeryId={user.bakeryId}
-      >
+      
+      <>
         <PageHeader
           title="Users"
           description="Manage all users on the platform"
@@ -36,21 +30,16 @@ export default async function UsersPage() {
         <div className="alert alert-error">
           <span>{result.error}</span>
         </div>
-      </DashboardLayout>
+      </>
     );
   }
 
   const users = result.data || [];
 
   return (
-    <DashboardLayout
-      userName={user.name || undefined}
-      userEmail={user.email}
-      isPlatformAdmin={true}
-        bakeries={user.allBakeries}
-        currentBakeryId={user.bakeryId}
-    >
-      <PageHeader
+    
+      <>
+        <PageHeader
         title="Users"
         sticky
       />
@@ -64,6 +53,6 @@ export default async function UsersPage() {
       ) : (
         <UsersTable users={users} currentUserId={user.id} />
       )}
-    </DashboardLayout>
+    </>
   );
 }

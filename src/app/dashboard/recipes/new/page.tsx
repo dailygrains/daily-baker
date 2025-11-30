@@ -1,6 +1,5 @@
 import { getCurrentUser } from '@/lib/clerk';
 import { redirect } from 'next/navigation';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { RecipeForm } from '@/components/recipes/RecipeForm';
 import { db } from '@/lib/db';
@@ -31,12 +30,7 @@ export default async function NewRecipePage() {
   });
 
   return (
-    <DashboardLayout
-      isPlatformAdmin={user.isPlatformAdmin}
-      bakeries={user.allBakeries}
-      currentBakeryId={user.bakeryId}
-    >
-      <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6">
         <PageHeader
           title="Add New Recipe"
           description="Create a new recipe with ingredients and instructions"
@@ -60,6 +54,5 @@ export default async function NewRecipePage() {
           </div>
         </div>
       </div>
-    </DashboardLayout>
   );
 }

@@ -1,6 +1,5 @@
 import { getCurrentUser } from '@/lib/clerk';
 import { redirect } from 'next/navigation';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { getBakeSheetsByBakery } from '@/app/actions/bakeSheet';
 import Link from 'next/link';
@@ -22,15 +21,9 @@ export default async function BakeSheetsPage() {
 
   if (!bakeSheetsResult.success) {
     return (
-      <DashboardLayout
-        isPlatformAdmin={user.isPlatformAdmin}
-        bakeries={user.allBakeries}
-        currentBakeryId={user.bakeryId}
-      >
-        <div className="alert alert-error">
+      <div className="alert alert-error">
           <span>{bakeSheetsResult.error}</span>
         </div>
-      </DashboardLayout>
     );
   }
 
@@ -41,12 +34,7 @@ export default async function BakeSheetsPage() {
   const completedBakeSheets = bakeSheets.filter((bs) => bs.completed);
 
   return (
-    <DashboardLayout
-      isPlatformAdmin={user.isPlatformAdmin}
-      bakeries={user.allBakeries}
-      currentBakeryId={user.bakeryId}
-    >
-      <div className="space-y-6">
+    <div className="space-y-6">
         <PageHeader
           title="Bake Sheets"
           description="Manage production runs and track ingredient usage"
@@ -230,6 +218,5 @@ export default async function BakeSheetsPage() {
           </div>
         )}
       </div>
-    </DashboardLayout>
   );
 }

@@ -1,6 +1,5 @@
 import { getCurrentUser } from '@/lib/clerk';
 import { redirect } from 'next/navigation';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { EquipmentForm } from '@/components/equipment/EquipmentForm';
 import { db } from '@/lib/db';
@@ -29,12 +28,7 @@ export default async function NewEquipmentPage() {
   });
 
   return (
-    <DashboardLayout
-        isPlatformAdmin={user.isPlatformAdmin}
-        bakeries={user.allBakeries}
-        currentBakeryId={user.bakeryId}
-      >
-      <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-2xl mx-auto space-y-6">
         <PageHeader
           title="Add New Equipment"
           description="Track a new piece of bakery equipment"
@@ -46,6 +40,5 @@ export default async function NewEquipmentPage() {
           </div>
         </div>
       </div>
-    </DashboardLayout>
   );
 }

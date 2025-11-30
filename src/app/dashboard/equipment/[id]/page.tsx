@@ -1,6 +1,5 @@
 import { getCurrentUser } from '@/lib/clerk';
 import { redirect } from 'next/navigation';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { getEquipmentById } from '@/app/actions/equipment';
 import Link from 'next/link';
@@ -53,12 +52,7 @@ export default async function EquipmentDetailPage({
   };
 
   return (
-    <DashboardLayout
-        isPlatformAdmin={user.isPlatformAdmin}
-        bakeries={user.allBakeries}
-        currentBakeryId={user.bakeryId}
-      >
-      <div className="space-y-6">
+    <div className="space-y-6">
         <PageHeader
           title={equipment.name}
           description="Equipment details and information"
@@ -217,6 +211,5 @@ export default async function EquipmentDetailPage({
           </div>
         </div>
       </div>
-    </DashboardLayout>
   );
 }

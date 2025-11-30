@@ -1,6 +1,5 @@
 import { getCurrentUser } from '@/lib/clerk';
 import { redirect } from 'next/navigation';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { VendorForm } from '@/components/vendors/VendorForm';
 
@@ -16,12 +15,7 @@ export default async function NewVendorPage() {
   }
 
   return (
-    <DashboardLayout
-        isPlatformAdmin={user.isPlatformAdmin}
-        bakeries={user.allBakeries}
-        currentBakeryId={user.bakeryId}
-      >
-      <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-2xl mx-auto space-y-6">
         <PageHeader
           title="Add New Vendor"
           description="Add a new supplier or service provider"
@@ -33,6 +27,5 @@ export default async function NewVendorPage() {
           </div>
         </div>
       </div>
-    </DashboardLayout>
   );
 }

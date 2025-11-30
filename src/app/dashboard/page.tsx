@@ -1,5 +1,4 @@
 import { getCurrentUser } from '@/lib/clerk';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { redirect } from 'next/navigation';
 import { getPlatformStats, getRecentActivity } from '@/app/actions/platform-stats';
@@ -33,13 +32,7 @@ export default async function DashboardPage() {
     const activity = activityResult.success ? activityResult.data : null;
 
     return (
-      <DashboardLayout
-        userName={user.name || undefined}
-        userEmail={user.email}
-        isPlatformAdmin={true}
-        bakeries={user.allBakeries}
-        currentBakeryId={user.bakeryId}
-      >
+      <>
         <PageHeader
           title="Platform Dashboard"
           description="Overview of all bakeries on Daily Baker"
@@ -258,17 +251,14 @@ export default async function DashboardPage() {
             </Link>
           </div>
         </div>
-      </DashboardLayout>
+      </>
     );
   }
 
   // Regular users must be assigned to a bakery
   if (!user.bakery) {
     return (
-      <DashboardLayout
-        userName={user.name || undefined}
-        userEmail={user.email}
-      >
+      <>
         <PageHeader
           title="Welcome to Daily Baker"
           description="You're not currently assigned to a bakery"
@@ -281,20 +271,13 @@ export default async function DashboardPage() {
             <div className="text-sm">Please contact a platform administrator to assign you to a bakery.</div>
           </div>
         </div>
-      </DashboardLayout>
+      </>
     );
   }
 
   // Bakery user dashboard
   return (
-    <DashboardLayout
-      userName={user.name || undefined}
-      userEmail={user.email}
-      bakeryName={user.bakery.name}
-      userRole={user.role?.name}
-      bakeries={user.allBakeries}
-      currentBakeryId={user.bakeryId}
-    >
+    <>
       <PageHeader
         title={`Welcome back, ${user.name || 'Baker'}!`}
         description={`${user.bakery.name} Dashboard`}
@@ -388,6 +371,6 @@ export default async function DashboardPage() {
           </div>
         </div>
       </div>
-    </DashboardLayout>
+    </>
   );
 }

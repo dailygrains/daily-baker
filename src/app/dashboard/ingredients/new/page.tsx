@@ -16,9 +16,6 @@ export default async function NewIngredientPage() {
   return (
     <IngredientNewPageContent
       bakeryId={user.bakeryId}
-      isPlatformAdmin={user.isPlatformAdmin}
-      bakeries={user.allBakeries}
-      currentBakeryId={user.bakeryId}
     />
   );
 }

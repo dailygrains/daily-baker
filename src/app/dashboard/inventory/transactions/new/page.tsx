@@ -1,6 +1,5 @@
 import { getCurrentUser } from '@/lib/clerk';
 import { redirect } from 'next/navigation';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { InventoryTransactionForm } from '@/components/inventory/InventoryTransactionForm';
 import { db } from '@/lib/db';
@@ -37,12 +36,7 @@ export default async function NewInventoryTransactionPage() {
   }));
 
   return (
-    <DashboardLayout
-        isPlatformAdmin={user.isPlatformAdmin}
-        bakeries={user.allBakeries}
-        currentBakeryId={user.bakeryId}
-      >
-      <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-2xl mx-auto space-y-6">
         <PageHeader
           title="New Inventory Transaction"
           description="Record a change to your inventory"
@@ -57,6 +51,5 @@ export default async function NewInventoryTransactionPage() {
           </div>
         </div>
       </div>
-    </DashboardLayout>
   );
 }

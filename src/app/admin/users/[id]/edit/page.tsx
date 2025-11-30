@@ -1,5 +1,4 @@
 import { getCurrentUser } from '@/lib/clerk';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { UserEditPageContent } from '@/components/user/UserEditPageContent';
 import { getUserById, getAllRoles } from '@/app/actions/user';
@@ -31,18 +30,13 @@ export default async function EditUserPage({
 
   if (!userResult.success || !userResult.data) {
     return (
-      <DashboardLayout
-        userName={currentUser.name || undefined}
-        userEmail={currentUser.email}
-        isPlatformAdmin={true}
-        bakeries={currentUser.allBakeries}
-        currentBakeryId={currentUser.bakeryId}
-      >
+      
+      <>
         <PageHeader title="Edit User" />
         <div className="alert alert-error">
           <span>{userResult.error || 'User not found'}</span>
         </div>
-      </DashboardLayout>
+      </>
     );
   }
 

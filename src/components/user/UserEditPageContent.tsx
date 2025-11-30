@@ -8,7 +8,6 @@ import { deleteUser } from '@/app/actions/user';
 import { useToast } from '@/contexts/ToastContext';
 import type { User, Bakery, Role } from '@/generated/prisma';
 import { Trash2, Save, ArrowLeft } from 'lucide-react';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import Link from 'next/link';
 
 interface UserEditPageContentProps {
@@ -82,7 +81,7 @@ export function UserEditPageContent({
   }
 
   return (
-    <DashboardLayout isPlatformAdmin={isPlatformAdmin}>
+    <>
       <PageHeader
         title={`Edit User: ${user.name || user.email}`}
         sticky
@@ -202,6 +201,6 @@ export function UserEditPageContent({
           </div>
         </>
       )}
-    </DashboardLayout>
+    </>
   );
 }

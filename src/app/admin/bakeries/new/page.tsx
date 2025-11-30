@@ -1,5 +1,4 @@
 import { getCurrentUser } from '@/lib/clerk';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { BakeryForm } from '@/components/bakery/BakeryForm';
 import { redirect } from 'next/navigation';
@@ -18,14 +17,9 @@ export default async function NewBakeryPage() {
   }
 
   return (
-    <DashboardLayout
-      userName={user.name || undefined}
-      userEmail={user.email}
-      isPlatformAdmin={true}
-        bakeries={user.allBakeries}
-        currentBakeryId={user.bakeryId}
-    >
-      <PageHeader
+    
+      <>
+        <PageHeader
         title="Create New Bakery"
         description="Add a new bakery to the platform"
         actions={
@@ -37,6 +31,6 @@ export default async function NewBakeryPage() {
       />
 
       <BakeryForm mode="create" />
-    </DashboardLayout>
+    </>
   );
 }

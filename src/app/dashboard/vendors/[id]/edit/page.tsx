@@ -1,6 +1,5 @@
 import { getCurrentUser } from '@/lib/clerk';
 import { redirect } from 'next/navigation';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { VendorForm } from '@/components/vendors/VendorForm';
 import { getVendorById } from '@/app/actions/vendor';
@@ -30,12 +29,7 @@ export default async function EditVendorPage({
   const vendor = vendorResult.data;
 
   return (
-    <DashboardLayout
-        isPlatformAdmin={user.isPlatformAdmin}
-        bakeries={user.allBakeries}
-        currentBakeryId={user.bakeryId}
-      >
-      <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-2xl mx-auto space-y-6">
         <PageHeader
           title="Edit Vendor"
           description={`Update details for ${vendor.name}`}
@@ -47,6 +41,5 @@ export default async function EditVendorPage({
           </div>
         </div>
       </div>
-    </DashboardLayout>
   );
 }

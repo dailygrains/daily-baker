@@ -1,5 +1,4 @@
 import { getCurrentUser } from '@/lib/clerk';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { redirect } from 'next/navigation';
@@ -23,13 +22,8 @@ export default async function BakeriesPage() {
 
   if (!result.success) {
     return (
-      <DashboardLayout
-        userName={user.name || undefined}
-        userEmail={user.email}
-        isPlatformAdmin={true}
-        bakeries={user.allBakeries}
-        currentBakeryId={user.bakeryId}
-      >
+      
+      <>
         <PageHeader
           title="Bakeries"
           description="Manage all bakeries on the platform"
@@ -37,21 +31,16 @@ export default async function BakeriesPage() {
         <div className="alert alert-error">
           <span>{result.error}</span>
         </div>
-      </DashboardLayout>
+      </>
     );
   }
 
   const bakeries = result.data || [];
 
   return (
-    <DashboardLayout
-      userName={user.name || undefined}
-      userEmail={user.email}
-      isPlatformAdmin={true}
-        bakeries={user.allBakeries}
-        currentBakeryId={user.bakeryId}
-    >
-      <PageHeader
+    
+      <>
+        <PageHeader
         title="Bakeries"
         sticky
         actions={
@@ -77,6 +66,6 @@ export default async function BakeriesPage() {
       ) : (
         <BakeriesTable bakeries={bakeries} />
       )}
-    </DashboardLayout>
+    </>
   );
 }
