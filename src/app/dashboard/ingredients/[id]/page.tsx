@@ -2,9 +2,9 @@ import { getCurrentUser } from '@/lib/clerk';
 import { redirect } from 'next/navigation';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { getIngredientById, deleteIngredient } from '@/app/actions/ingredient';
+import { getIngredientById } from '@/app/actions/ingredient';
 import Link from 'next/link';
-import { Edit, Trash2, Package, TrendingUp, DollarSign } from 'lucide-react';
+import { Edit, Package, TrendingUp, DollarSign } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 export default async function IngredientDetailPage({
@@ -36,12 +36,16 @@ export default async function IngredientDetailPage({
   const isLowStock = currentQty < 100;
 
   return (
-    <DashboardLayout isPlatformAdmin={user.isPlatformAdmin}>
+    <DashboardLayout
+        isPlatformAdmin={user.isPlatformAdmin}
+        bakeries={user.allBakeries}
+        currentBakeryId={user.bakeryId}
+      >
       <div className="space-y-6">
         <PageHeader
           title={ingredient.name}
           description="Ingredient details and transaction history"
-          action={
+          actions={
             <div className="flex gap-2">
               <Link
                 href={`/dashboard/ingredients/${id}/edit`}

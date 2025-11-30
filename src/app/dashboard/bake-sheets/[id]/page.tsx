@@ -2,9 +2,9 @@ import { getCurrentUser } from '@/lib/clerk';
 import { redirect } from 'next/navigation';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { getBakeSheetById, completeBakeSheet } from '@/app/actions/bakeSheet';
+import { getBakeSheetById } from '@/app/actions/bakeSheet';
 import Link from 'next/link';
-import { CheckCircle2, Package, Clock, User } from 'lucide-react';
+import { CheckCircle2, Package, Clock } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { CompleteBakeSheetButton } from '@/components/bakeSheets/CompleteBakeSheetButton';
 
@@ -36,12 +36,16 @@ export default async function BakeSheetDetailPage({
   const scaledCost = recipeTotalCost * scale;
 
   return (
-    <DashboardLayout isPlatformAdmin={user.isPlatformAdmin}>
+    <DashboardLayout
+        isPlatformAdmin={user.isPlatformAdmin}
+        bakeries={user.allBakeries}
+        currentBakeryId={user.bakeryId}
+      >
       <div className="space-y-6">
         <PageHeader
           title={`${bakeSheet.quantity} of ${bakeSheet.recipe.name}`}
           description={`Bake sheet details${bakeSheet.completed ? ' (Completed)' : ''}`}
-          action={
+          actions={
             !bakeSheet.completed && (
               <CompleteBakeSheetButton bakeSheetId={id} />
             )

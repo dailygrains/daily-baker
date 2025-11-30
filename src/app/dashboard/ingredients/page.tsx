@@ -22,12 +22,16 @@ export default async function IngredientsPage() {
   const ingredients = ingredientsResult.success ? ingredientsResult.data! : [];
 
   return (
-    <DashboardLayout isPlatformAdmin={user.isPlatformAdmin}>
+    <DashboardLayout
+      isPlatformAdmin={user.isPlatformAdmin}
+      bakeries={user.allBakeries}
+      currentBakeryId={user.bakeryId}
+    >
       <div className="space-y-6">
         <PageHeader
           title="Ingredients"
           description="Manage your bakery's ingredient inventory"
-          action={
+          actions={
             <Link href="/dashboard/ingredients/new" className="btn btn-primary">
               <Plus className="h-4 w-4" />
               Add Ingredient

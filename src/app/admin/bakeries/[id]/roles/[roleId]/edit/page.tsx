@@ -3,6 +3,7 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { RoleForm } from '@/components/role/RoleForm';
 import { getRoleById } from '@/app/actions/role';
+import { getBakeryById } from '@/app/actions/bakery';
 import { redirect } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
@@ -23,11 +24,20 @@ export default async function EditRolePage({
   }
 
   const { id, roleId } = await params;
-  const roleResult = await getRoleById(roleId);
+  const [roleResult, bakeryResult] = await Promise.all([
+    getRoleById(roleId),
+    getBakeryById(id),
+  ]);
 
   if (!roleResult.success || !roleResult.data) {
     return (
-      <DashboardLayout isPlatformAdmin={true}>
+      <DashboardLayout
+        userName={user.name || undefined}
+        userEmail={user.email}
+        isPlatformAdmin={true}
+        bakeries={user.allBakeries}
+        currentBakeryId={user.bakeryId}
+      >
         <PageHeader title="Edit Role" />
         <div className="alert alert-error">
           <span>{roleResult.error || 'Role not found'}</span>
@@ -36,13 +46,37 @@ export default async function EditRolePage({
     );
   }
 
+  if (!bakeryResult.success || !bakeryResult.data) {
+    return (
+      <DashboardLayout
+        userName={user.name || undefined}
+        userEmail={user.email}
+        isPlatformAdmin={true}
+        bakeries={user.allBakeries}
+        currentBakeryId={user.bakeryId}
+      >
+        <PageHeader title="Edit Role" />
+        <div className="alert alert-error">
+          <span>{bakeryResult.error || 'Bakery not found'}</span>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   const role = roleResult.data;
+  const bakery = bakeryResult.data;
 
   return (
-    <DashboardLayout isPlatformAdmin={true}>
+    <DashboardLayout
+      userName={user.name || undefined}
+      userEmail={user.email}
+      isPlatformAdmin={true}
+        bakeries={user.allBakeries}
+        currentBakeryId={user.bakeryId}
+    >
       <PageHeader
-        title={`Edit ${role.name}`}
-        description="Update role details and permissions"
+        title={`Edit Platform Role: ${role.name}`}
+        description="Update platform-wide role details and permissions"
         actions={
           <Link href={`/admin/bakeries/${id}/roles`} className="btn btn-ghost">
             <ArrowLeft className="h-5 w-5 mr-2" />
@@ -51,7 +85,7 @@ export default async function EditRolePage({
         }
       />
 
-      <RoleForm role={role} bakery={role.bakery} mode="edit" />
+      <RoleForm role={role} bakery={bakery} mode="edit" />
     </DashboardLayout>
   );
 }

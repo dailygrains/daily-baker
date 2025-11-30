@@ -1,4 +1,5 @@
 import { currentUser } from '@clerk/nextjs/server';
+import { cookies } from 'next/headers';
 import { prisma } from './prisma';
 
 /**
@@ -16,7 +17,11 @@ export async function getCurrentUser() {
   let user = await prisma.user.findUnique({
     where: { clerkId: clerkUser.id },
     include: {
-      bakery: true,
+      bakeries: {
+        include: {
+          bakery: true,
+        },
+      },
       role: true,
     },
   });
@@ -28,22 +33,101 @@ export async function getCurrentUser() {
         clerkId: clerkUser.id,
         email: clerkUser.emailAddresses[0]?.emailAddress ?? '',
         name: `${clerkUser.firstName ?? ''} ${clerkUser.lastName ?? ''}`.trim() || null,
+        imageUrl: clerkUser.imageUrl,
         lastLoginAt: new Date(),
       },
       include: {
-        bakery: true,
+        bakeries: {
+          include: {
+            bakery: true,
+          },
+        },
         role: true,
       },
     });
   } else {
-    // Update last login
+    // Update last login and sync imageUrl in case it changed
     await prisma.user.update({
       where: { id: user.id },
-      data: { lastLoginAt: new Date() },
+      data: {
+        lastLoginAt: new Date(),
+        imageUrl: clerkUser.imageUrl,
+      },
     });
   }
 
-  return user;
+  // Transform user object to add convenience properties for backward compatibility
+  // IMPORTANT: The schema supports many-to-many user-bakery relationships,
+  // but we return only the selected/first bakery here to maintain backward compatibility
+  // with existing code that expects a single bakery. This is temporary until
+  // full multi-bakery support is implemented throughout the application.
+
+  // Get selected bakery ID from cookie (for multi-bakery users)
+  const cookieStore = await cookies();
+  const selectedBakeryId = cookieStore.get('selectedBakeryId')?.value;
+
+  // Find the selected bakery or fall back to first bakery
+  let currentBakery = user.bakeries[0];
+  let currentBakeryData = currentBakery?.bakery;
+  let currentBakeryIdValue = currentBakery?.bakeryId;
+
+  if (selectedBakeryId) {
+    if (user.isPlatformAdmin) {
+      // Platform admins can select any bakery, even if not assigned
+      const selectedBakery = await prisma.bakery.findUnique({
+        where: { id: selectedBakeryId },
+      });
+      if (selectedBakery) {
+        currentBakeryData = selectedBakery;
+        currentBakeryIdValue = selectedBakery.id;
+      }
+    } else if (user.bakeries.length > 1) {
+      // Regular users can only select from their assigned bakeries
+      const selected = user.bakeries.find(ub => ub.bakeryId === selectedBakeryId);
+      if (selected) {
+        currentBakery = selected;
+        currentBakeryData = selected.bakery;
+        currentBakeryIdValue = selected.bakeryId;
+      }
+    }
+  }
+
+  // Log warning if user has multiple bakeries (helps identify when migration is needed)
+  if (user.bakeries.length > 1 && !user.isPlatformAdmin) {
+    console.warn(
+      `User ${user.id} has ${user.bakeries.length} bakeries assigned. ` +
+      `Using bakery: ${currentBakeryData?.name} (${currentBakeryIdValue})`
+    );
+  }
+
+  // Platform admins should see ALL bakeries, not just assigned ones
+  let allBakeries;
+  if (user.isPlatformAdmin) {
+    const allSystemBakeries = await prisma.bakery.findMany({
+      select: {
+        id: true,
+        name: true,
+      },
+      orderBy: {
+        name: 'asc',
+      },
+    });
+    allBakeries = allSystemBakeries;
+  } else {
+    // Regular users only see their assigned bakeries
+    allBakeries = user.bakeries.map(ub => ({
+      id: ub.bakery.id,
+      name: ub.bakery.name,
+    }));
+  }
+
+  return {
+    ...user,
+    bakery: currentBakeryData,
+    bakeryId: currentBakeryIdValue,
+    // Expose all bakeries for the selector
+    allBakeries,
+  };
 }
 
 /**
@@ -55,11 +139,18 @@ export async function isPlatformAdmin() {
 }
 
 /**
- * Get user's bakery ID (null for platform admins without assigned bakery)
+ * Get user's bakery IDs (empty array for platform admins without assigned bakeries)
  */
-export async function getUserBakeryId() {
+export async function getUserBakeryIds() {
   const user = await getCurrentUser();
-  return user?.bakeryId ?? null;
+  if (!user) return [];
+
+  const userBakeries = await prisma.userBakery.findMany({
+    where: { userId: user.id },
+    select: { bakeryId: true },
+  });
+
+  return userBakeries.map(ub => ub.bakeryId);
 }
 
 /**
@@ -85,11 +176,21 @@ export async function requirePlatformAdmin() {
 }
 
 /**
- * Require bakery association - throws if user has no bakery
+ * Require bakery association - throws if user has no bakeries (platform admins exempt)
  */
 export async function requireBakeryUser() {
   const user = await requireAuth();
-  if (!user.bakeryId) {
+
+  // Platform admins don't need bakery assignment
+  if (user.isPlatformAdmin) {
+    return user;
+  }
+
+  const bakeryCount = await prisma.userBakery.count({
+    where: { userId: user.id },
+  });
+
+  if (bakeryCount === 0) {
     throw new Error('Bakery association required');
   }
   return user;

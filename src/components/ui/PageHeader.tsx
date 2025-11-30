@@ -4,11 +4,18 @@ interface PageHeaderProps {
   title: string;
   description?: string;
   actions?: ReactNode;
+  sticky?: boolean;
 }
 
-export function PageHeader({ title, description, actions }: PageHeaderProps) {
+export function PageHeader({ title, description, actions, sticky = false }: PageHeaderProps) {
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <div
+      className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 ${
+        sticky
+          ? 'sticky top-0 z-10 bg-base-100 -mx-6 -mt-6 px-6 pt-4 pb-4 border-b border-base-300 shadow-sm'
+          : ''
+      }`}
+    >
       <div>
         <h1 className="text-3xl font-bold">{title}</h1>
         {description && (

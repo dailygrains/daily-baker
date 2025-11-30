@@ -4,11 +4,11 @@ import { db } from '@/lib/db';
 import { getCurrentUser } from '@/lib/clerk';
 import { revalidatePath } from 'next/cache';
 import { createActivityLog } from './activity-log';
+import { getAllRoles } from './user';
 
 type PermissionsObject = Record<string, boolean>;
 
 export async function createRole(data: {
-  bakeryId: string;
   name: string;
   description?: string;
   permissions: PermissionsObject;
@@ -25,13 +25,9 @@ export async function createRole(data: {
 
     const role = await db.role.create({
       data: {
-        bakeryId: data.bakeryId,
         name: data.name,
         description: data.description || null,
         permissions: data.permissions,
-      },
-      include: {
-        bakery: true,
       },
     });
 
@@ -42,12 +38,12 @@ export async function createRole(data: {
       entityType: 'role',
       entityId: role.id,
       entityName: role.name,
-      description: `Created role "${role.name}" for bakery "${role.bakery.name}"`,
-      metadata: { roleId: role.id, bakeryId: role.bakeryId },
-      bakeryId: role.bakeryId,
+      description: `Created platform role "${role.name}"`,
+      metadata: { roleId: role.id },
+      bakeryId: currentUser.bakeryId,
     });
 
-    revalidatePath(`/admin/bakeries/${data.bakeryId}/roles`);
+    revalidatePath('/admin/roles');
 
     return {
       success: true,
@@ -83,9 +79,6 @@ export async function updateRole(data: {
     const role = await db.role.update({
       where: { id },
       data: updateData,
-      include: {
-        bakery: true,
-      },
     });
 
     // Log the activity
@@ -95,12 +88,12 @@ export async function updateRole(data: {
       entityType: 'role',
       entityId: role.id,
       entityName: role.name,
-      description: `Updated role "${role.name}" for bakery "${role.bakery.name}"`,
+      description: `Updated platform role "${role.name}"`,
       metadata: { roleId: role.id, updatedFields: Object.keys(updateData) },
-      bakeryId: role.bakeryId,
+      bakeryId: currentUser.bakeryId,
     });
 
-    revalidatePath(`/admin/bakeries/${role.bakeryId}/roles`);
+    revalidatePath('/admin/roles');
 
     return {
       success: true,
@@ -133,7 +126,6 @@ export async function deleteRole(id: string) {
         _count: {
           select: { users: true },
         },
-        bakery: true,
       },
     });
 
@@ -162,12 +154,12 @@ export async function deleteRole(id: string) {
       entityType: 'role',
       entityId: role.id,
       entityName: role.name,
-      description: `Deleted role "${role.name}" from bakery "${role.bakery.name}"`,
-      metadata: { roleId: role.id, bakeryId: role.bakeryId },
-      bakeryId: role.bakeryId,
+      description: `Deleted platform role "${role.name}"`,
+      metadata: { roleId: role.id },
+      bakeryId: currentUser.bakeryId,
     });
 
-    revalidatePath(`/admin/bakeries/${role.bakeryId}/roles`);
+    revalidatePath('/admin/roles');
 
     return {
       success: true,
@@ -181,40 +173,10 @@ export async function deleteRole(id: string) {
   }
 }
 
-export async function getRolesByBakery(bakeryId: string) {
-  try {
-    const currentUser = await getCurrentUser();
-
-    if (!currentUser?.isPlatformAdmin) {
-      return {
-        success: false,
-        error: 'Unauthorized',
-      };
-    }
-
-    const roles = await db.role.findMany({
-      where: { bakeryId },
-      include: {
-        _count: {
-          select: { users: true },
-        },
-      },
-      orderBy: {
-        name: 'asc',
-      },
-    });
-
-    return {
-      success: true,
-      data: roles,
-    };
-  } catch (error) {
-    console.error('Error fetching roles:', error);
-    return {
-      success: false,
-      error: 'Failed to fetch roles',
-    };
-  }
+// Deprecated: Roles are now platform-wide, use getAllRoles() instead
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function getRolesByBakery(_bakeryId: string) {
+  return getAllRoles();
 }
 
 export async function getRoleById(id: string) {
@@ -231,12 +193,16 @@ export async function getRoleById(id: string) {
     const role = await db.role.findUnique({
       where: { id },
       include: {
-        bakery: true,
         users: {
           select: {
             id: true,
             name: true,
             email: true,
+          },
+        },
+        _count: {
+          select: {
+            users: true,
           },
         },
       },

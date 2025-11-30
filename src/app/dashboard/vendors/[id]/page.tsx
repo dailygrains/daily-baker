@@ -4,7 +4,7 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { getVendorById } from '@/app/actions/vendor';
 import Link from 'next/link';
-import { Edit, Mail, Phone, Globe, MapPin, Package, Wrench, FileText } from 'lucide-react';
+import { Edit, Mail, Phone, Globe, Package, Wrench, FileText } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 export default async function VendorDetailPage({
@@ -34,12 +34,16 @@ export default async function VendorDetailPage({
   const equipmentCount = vendor._count.equipment;
 
   return (
-    <DashboardLayout isPlatformAdmin={user.isPlatformAdmin}>
+    <DashboardLayout
+        isPlatformAdmin={user.isPlatformAdmin}
+        bakeries={user.allBakeries}
+        currentBakeryId={user.bakeryId}
+      >
       <div className="space-y-6">
         <PageHeader
           title={vendor.name}
           description="Vendor details and linked items"
-          action={
+          actions={
             <Link
               href={`/dashboard/vendors/${id}/edit`}
               className="btn btn-primary btn-sm"
@@ -57,13 +61,6 @@ export default async function VendorDetailPage({
               <h2 className="card-title">Contact Information</h2>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                {vendor.contactName && (
-                  <div>
-                    <p className="text-sm text-base-content/70">Contact Person</p>
-                    <p className="text-lg font-semibold">{vendor.contactName}</p>
-                  </div>
-                )}
-
                 {vendor.email && (
                   <div>
                     <p className="text-sm text-base-content/70">Email</p>
@@ -105,16 +102,6 @@ export default async function VendorDetailPage({
                   </div>
                 )}
               </div>
-
-              {vendor.address && (
-                <div className="mt-4">
-                  <p className="text-sm text-base-content/70">Address</p>
-                  <div className="flex items-start gap-2 mt-1">
-                    <MapPin className="h-4 w-4 mt-1 flex-shrink-0" />
-                    <p className="whitespace-pre-line">{vendor.address}</p>
-                  </div>
-                </div>
-              )}
 
               {vendor.notes && (
                 <div className="mt-4">

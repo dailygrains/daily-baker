@@ -1,14 +1,18 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { createRole, updateRole } from '@/app/actions/role';
-import type { Role, Bakery } from '@prisma/client';
+import type { Role, Bakery } from '@/generated/prisma';
 
 interface RoleFormProps {
   role?: Role;
-  bakery: Bakery;
+  bakery?: Bakery;
   mode: 'create' | 'edit';
+  onFormRefChange?: (ref: HTMLFormElement | null) => void;
+  onSavingChange?: (isSaving: boolean) => void;
+  onUnsavedChangesChange?: (hasChanges: boolean) => void;
+  showBottomActions?: boolean;
 }
 
 const DEFAULT_PERMISSIONS = {
@@ -54,13 +58,41 @@ const PERMISSION_LABELS: Record<string, string> = {
   'settings.write': 'Edit settings',
 };
 
-export function RoleForm({ role, bakery, mode }: RoleFormProps) {
+export function RoleForm({
+  role,
+  bakery,
+  mode,
+  onFormRefChange,
+  onSavingChange,
+  onUnsavedChangesChange,
+  showBottomActions = true
+}: RoleFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const initialPermissions = role ? (role.permissions as Record<string, boolean>) : DEFAULT_PERMISSIONS;
   const [permissions, setPermissions] = useState<Record<string, boolean>>(initialPermissions);
+  const formRef = useRef<HTMLFormElement>(null);
+
+  useEffect(() => {
+    if (onFormRefChange && formRef.current) {
+      onFormRefChange(formRef.current);
+    }
+  }, [onFormRefChange]);
+
+  useEffect(() => {
+    if (onSavingChange) {
+      onSavingChange(isSubmitting);
+    }
+  }, [isSubmitting, onSavingChange]);
+
+  useEffect(() => {
+    if (onUnsavedChangesChange && mode === 'edit') {
+      const hasChanges = JSON.stringify(permissions) !== JSON.stringify(initialPermissions);
+      onUnsavedChangesChange(hasChanges);
+    }
+  }, [permissions, initialPermissions, onUnsavedChangesChange, mode]);
 
   function togglePermission(key: string) {
     setPermissions((prev) => ({
@@ -80,7 +112,6 @@ export function RoleForm({ role, bakery, mode }: RoleFormProps) {
 
     const result = mode === 'create'
       ? await createRole({
-          bakeryId: bakery.id,
           name,
           description,
           permissions,
@@ -93,7 +124,10 @@ export function RoleForm({ role, bakery, mode }: RoleFormProps) {
         });
 
     if (result.success) {
-      router.push(`/admin/bakeries/${bakery.id}/roles`);
+      const redirectPath = bakery
+        ? `/admin/bakeries/${bakery.id}/roles`
+        : '/admin/roles';
+      router.push(redirectPath);
       router.refresh();
     } else {
       setError(result.error || 'An error occurred');
@@ -102,7 +136,7 @@ export function RoleForm({ role, bakery, mode }: RoleFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form ref={formRef} onSubmit={handleSubmit} className="max-w-3xl mx-auto space-y-8">
       {error && (
         <div className="alert alert-error">
           <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
@@ -112,90 +146,83 @@ export function RoleForm({ role, bakery, mode }: RoleFormProps) {
         </div>
       )}
 
-      <div className="card bg-base-100 shadow-sm">
-        <div className="card-body">
-          <h2 className="card-title mb-4">Role Details</h2>
+      <div className="space-y-0">
+        <h2 className="text-xl font-semibold">Role Details</h2>
 
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text">Role Name <span className="text-error">*</span></span>
-            </label>
-            <input
-              type="text"
-              name="name"
-              defaultValue={role?.name}
-              className="input input-bordered"
-              required
-              placeholder="Head Baker, Inventory Manager, etc."
-            />
-          </div>
+        <fieldset className="fieldset">
+          <legend className="fieldset-legend">Role Name *</legend>
+          <input
+            type="text"
+            name="name"
+            defaultValue={role?.name}
+            className="input input-bordered w-full"
+            required
+            placeholder="Head Baker, Inventory Manager, etc."
+            maxLength={100}
+          />
+        </fieldset>
 
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text">Description</span>
-            </label>
-            <textarea
-              name="description"
-              defaultValue={role?.description || ''}
-              className="textarea textarea-bordered h-20"
-              placeholder="Brief description of this role's responsibilities"
-            />
-          </div>
-        </div>
+        <fieldset className="fieldset">
+          <legend className="fieldset-legend">Description</legend>
+          <textarea
+            name="description"
+            defaultValue={role?.description || ''}
+            className="textarea textarea-bordered h-24 w-full"
+            placeholder="Brief description of this role's responsibilities"
+            maxLength={500}
+          />
+        </fieldset>
       </div>
 
-      <div className="card bg-base-100 shadow-sm">
-        <div className="card-body">
-          <h2 className="card-title mb-4">Permissions</h2>
-          <p className="text-sm text-base-content/60 mb-4">
-            Select the permissions this role should have
-          </p>
+      <div className="space-y-0">
+        <h2 className="text-xl font-semibold">Permissions</h2>
 
-          {Object.entries(PERMISSION_CATEGORIES).map(([category, perms]) => (
-            <div key={category} className="mb-6">
-              <h3 className="font-bold mb-3">{category}</h3>
-              <div className="space-y-2 pl-4">
-                {perms.map((perm) => (
-                  <label key={perm} className="label cursor-pointer justify-start gap-3">
-                    <input
-                      type="checkbox"
-                      className="checkbox checkbox-primary"
-                      checked={permissions[perm] || false}
-                      onChange={() => togglePermission(perm)}
-                    />
-                    <span className="label-text">{PERMISSION_LABELS[perm]}</span>
-                  </label>
-                ))}
-              </div>
+        {Object.entries(PERMISSION_CATEGORIES).map(([category, perms]) => (
+          <fieldset key={category} className="fieldset">
+            <legend className="fieldset-legend">{category}</legend>
+            <div className="space-y-3">
+              {perms.map((perm) => (
+                <label key={perm} className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="checkbox checkbox-primary"
+                    checked={permissions[perm] || false}
+                    onChange={() => togglePermission(perm)}
+                  />
+                  <span className="text-base">{PERMISSION_LABELS[perm]}</span>
+                </label>
+              ))}
             </div>
-          ))}
-        </div>
+          </fieldset>
+        ))}
       </div>
 
-      <div className="flex gap-4 justify-end">
-        <button
-          type="button"
-          onClick={() => router.back()}
-          className="btn btn-ghost"
-          disabled={isSubmitting}
-        >
-          Cancel
-        </button>
-        <button
-          type="submit"
-          className="btn btn-primary"
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? (
-            <>
-              <span className="loading loading-spinner"></span>
-              {mode === 'create' ? 'Creating...' : 'Saving...'}
-            </>
-          ) : (
-            mode === 'create' ? 'Create Role' : 'Save Changes'
-          )}
-        </button>
-      </div>
+      {showBottomActions && (
+        <div className="flex gap-3 justify-end pt-4">
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="btn btn-ghost"
+            disabled={isSubmitting}
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="btn btn-primary"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? (
+              <>
+                <span className="loading loading-spinner loading-sm"></span>
+                {mode === 'create' ? 'Creating...' : 'Saving...'}
+              </>
+            ) : (
+              mode === 'create' ? 'Create Role' : 'Save Changes'
+            )}
+          </button>
+        </div>
+      )}
     </form>
   );
 }

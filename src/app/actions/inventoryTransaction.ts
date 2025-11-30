@@ -20,6 +20,10 @@ export async function createInventoryTransaction(
   try {
     const currentUser = await getCurrentUser();
 
+    if (!currentUser) {
+      return { success: false, error: 'Unauthorized: You must be logged in' };
+    }
+
     // Validate input
     const validatedData = createInventoryTransactionSchema.parse(data);
 
@@ -114,8 +118,7 @@ export async function createInventoryTransaction(
           quantity: new Decimal(validatedData.quantity),
           unit: validatedData.unit,
           notes: validatedData.notes || null,
-          bakeryId: validatedData.bakeryId,
-          userId: currentUser.id,
+          createdBy: currentUser.id,
         },
       });
 
@@ -183,6 +186,10 @@ export async function getInventoryTransactionsByBakery(
   try {
     const currentUser = await getCurrentUser();
 
+    if (!currentUser) {
+      return { success: false, error: 'Unauthorized: You must be logged in' };
+    }
+
     // Verify user belongs to the bakery
     if (currentUser.bakeryId !== bakeryId) {
       return {
@@ -191,11 +198,20 @@ export async function getInventoryTransactionsByBakery(
       };
     }
 
-    const where: any = { bakeryId };
+    const where: {
+      ingredient: { bakeryId: string };
+      type?: import('@/generated/prisma').TransactionType;
+      ingredientId?: string;
+      createdAt?: { gte?: Date; lte?: Date };
+    } = {
+      ingredient: {
+        bakeryId,
+      },
+    };
 
     // Apply filters
     if (filters?.type) {
-      where.type = filters.type;
+      where.type = filters.type as import('@/generated/prisma').TransactionType;
     }
     if (filters?.ingredientId) {
       where.ingredientId = filters.ingredientId;
@@ -220,7 +236,7 @@ export async function getInventoryTransactionsByBakery(
             unit: true,
           },
         },
-        user: {
+        creator: {
           select: {
             id: true,
             name: true,
@@ -256,6 +272,10 @@ export async function getInventoryTransactionsByIngredient(
   try {
     const currentUser = await getCurrentUser();
 
+    if (!currentUser) {
+      return { success: false, error: 'Unauthorized: You must be logged in' };
+    }
+
     // Get ingredient to verify ownership
     const ingredient = await db.ingredient.findUnique({
       where: { id: ingredientId },
@@ -277,7 +297,7 @@ export async function getInventoryTransactionsByIngredient(
     const transactions = await db.inventoryTransaction.findMany({
       where: { ingredientId },
       include: {
-        user: {
+        creator: {
           select: {
             id: true,
             name: true,
@@ -311,6 +331,10 @@ export async function deleteInventoryTransaction(transactionId: string) {
   try {
     const currentUser = await getCurrentUser();
 
+    if (!currentUser) {
+      return { success: false, error: 'Unauthorized: You must be logged in' };
+    }
+
     // Get the transaction
     const transaction = await db.inventoryTransaction.findUnique({
       where: { id: transactionId },
@@ -331,7 +355,7 @@ export async function deleteInventoryTransaction(transactionId: string) {
     }
 
     // Verify user belongs to the bakery
-    if (currentUser.bakeryId !== transaction.bakeryId) {
+    if (currentUser.bakeryId !== transaction.ingredient.bakeryId) {
       return {
         success: false,
         error: 'Unauthorized: Transaction does not belong to your bakery',
@@ -400,7 +424,7 @@ export async function deleteInventoryTransaction(transactionId: string) {
         quantity: Number(transaction.quantity),
         unit: transaction.unit,
       },
-      bakeryId: transaction.bakeryId,
+      bakeryId: transaction.ingredient.bakeryId,
     });
 
     revalidatePath('/dashboard/inventory');

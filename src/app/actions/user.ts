@@ -18,10 +18,14 @@ export async function getAllUsers() {
 
     const users = await db.user.findMany({
       include: {
-        bakery: {
+        bakeries: {
           select: {
-            id: true,
-            name: true,
+            bakery: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
           },
         },
         role: {
@@ -63,8 +67,18 @@ export async function getUserById(id: string) {
     const user = await db.user.findUnique({
       where: { id },
       include: {
-        bakery: true,
+        bakeries: {
+          include: {
+            bakery: true,
+          },
+        },
         role: true,
+        _count: {
+          select: {
+            inventoryTransactions: true,
+            sentInvitations: true,
+          },
+        },
       },
     });
 
@@ -88,7 +102,7 @@ export async function getUserById(id: string) {
   }
 }
 
-export async function assignUserToBakery(userId: string, bakeryId: string | null) {
+export async function assignUserToBakery(userId: string, bakeryId: string) {
   try {
     const currentUser = await getCurrentUser();
 
@@ -99,15 +113,46 @@ export async function assignUserToBakery(userId: string, bakeryId: string | null
       };
     }
 
-    const user = await db.user.update({
-      where: { id: userId },
-      data: {
-        bakeryId: bakeryId,
+    // Check if assignment already exists
+    const existingAssignment = await db.userBakery.findUnique({
+      where: {
+        userId_bakeryId: {
+          userId,
+          bakeryId,
+        },
       },
+    });
+
+    if (existingAssignment) {
+      return {
+        success: false,
+        error: 'User is already assigned to this bakery',
+      };
+    }
+
+    // Create the bakery assignment
+    await db.userBakery.create({
+      data: {
+        userId,
+        bakeryId,
+      },
+    });
+
+    // Fetch updated user with bakery info
+    const user = await db.user.findUnique({
+      where: { id: userId },
       include: {
-        bakery: true,
+        bakeries: {
+          include: {
+            bakery: true,
+          },
+        },
         role: true,
       },
+    });
+
+    const bakery = await db.bakery.findUnique({
+      where: { id: bakeryId },
     });
 
     // Log the activity
@@ -115,13 +160,11 @@ export async function assignUserToBakery(userId: string, bakeryId: string | null
       userId: currentUser.id,
       action: 'ASSIGN',
       entityType: 'user',
-      entityId: user.id,
-      entityName: user.name || user.email,
-      description: bakeryId
-        ? `Assigned ${user.name || user.email} to bakery "${user.bakery?.name}"`
-        : `Unassigned ${user.name || user.email} from bakery`,
-      metadata: { userId: user.id, bakeryId },
-      bakeryId: bakeryId,
+      entityId: userId,
+      entityName: user?.name || user?.email || '',
+      description: `Assigned ${user?.name || user?.email} to bakery "${bakery?.name}"`,
+      metadata: { userId, bakeryId },
+      bakeryId,
     });
 
     revalidatePath('/admin/users');
@@ -136,6 +179,70 @@ export async function assignUserToBakery(userId: string, bakeryId: string | null
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to assign user to bakery',
+    };
+  }
+}
+
+export async function unassignUserFromBakery(userId: string, bakeryId: string) {
+  try {
+    const currentUser = await getCurrentUser();
+
+    if (!currentUser?.isPlatformAdmin) {
+      return {
+        success: false,
+        error: 'Unauthorized: Only platform administrators can unassign users from bakeries',
+      };
+    }
+
+    // Delete the bakery assignment
+    await db.userBakery.deleteMany({
+      where: {
+        userId,
+        bakeryId,
+      },
+    });
+
+    // Fetch updated user
+    const user = await db.user.findUnique({
+      where: { id: userId },
+      include: {
+        bakeries: {
+          include: {
+            bakery: true,
+          },
+        },
+        role: true,
+      },
+    });
+
+    const bakery = await db.bakery.findUnique({
+      where: { id: bakeryId },
+    });
+
+    // Log the activity
+    await createActivityLog({
+      userId: currentUser.id,
+      action: 'REVOKE',
+      entityType: 'user',
+      entityId: userId,
+      entityName: user?.name || user?.email || '',
+      description: `Unassigned ${user?.name || user?.email} from bakery "${bakery?.name}"`,
+      metadata: { userId, bakeryId },
+      bakeryId,
+    });
+
+    revalidatePath('/admin/users');
+    revalidatePath(`/admin/users/${userId}`);
+
+    return {
+      success: true,
+      data: user,
+    };
+  } catch (error) {
+    console.error('Error unassigning user from bakery:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to unassign user from bakery',
     };
   }
 }
@@ -157,10 +264,17 @@ export async function assignUserRole(userId: string, roleId: string | null) {
         roleId: roleId,
       },
       include: {
-        bakery: true,
+        bakeries: {
+          include: {
+            bakery: true,
+          },
+        },
         role: true,
       },
     });
+
+    // Get first assigned bakery for activity log (if any)
+    const firstBakeryId = user.bakeries[0]?.bakeryId ?? null;
 
     // Log the activity
     await createActivityLog({
@@ -173,7 +287,7 @@ export async function assignUserRole(userId: string, roleId: string | null) {
         ? `Assigned role "${user.role?.name}" to ${user.name || user.email}`
         : `Removed role from ${user.name || user.email}`,
       metadata: { userId: user.id, roleId },
-      bakeryId: user.bakeryId,
+      bakeryId: firstBakeryId,
     });
 
     revalidatePath('/admin/users');
@@ -194,7 +308,6 @@ export async function assignUserRole(userId: string, roleId: string | null) {
 
 export async function updateUser(data: {
   id: string;
-  bakeryId?: string | null;
   roleId?: string | null;
   name?: string;
 }) {
@@ -214,10 +327,17 @@ export async function updateUser(data: {
       where: { id },
       data: updateData,
       include: {
-        bakery: true,
+        bakeries: {
+          include: {
+            bakery: true,
+          },
+        },
         role: true,
       },
     });
+
+    // Get first assigned bakery for activity log (if any)
+    const firstBakeryId = user.bakeries[0]?.bakeryId ?? null;
 
     // Log the activity
     await createActivityLog({
@@ -228,7 +348,7 @@ export async function updateUser(data: {
       entityName: user.name || user.email,
       description: `Updated user ${user.name || user.email}`,
       metadata: { userId: user.id, updatedFields: Object.keys(updateData) },
-      bakeryId: user.bakeryId,
+      bakeryId: firstBakeryId,
     });
 
     revalidatePath('/admin/users');
@@ -258,14 +378,24 @@ export async function deleteUser(id: string) {
       };
     }
 
-    // Get user info before deleting for the activity log
+    // Get user info before deleting and check for constraints
     const user = await db.user.findUnique({
       where: { id },
       select: {
         id: true,
         name: true,
         email: true,
-        bakeryId: true,
+        bakeries: {
+          select: {
+            bakeryId: true,
+          },
+        },
+        _count: {
+          select: {
+            inventoryTransactions: true,
+            sentInvitations: true,
+          },
+        },
       },
     });
 
@@ -276,9 +406,31 @@ export async function deleteUser(id: string) {
       };
     }
 
+    // Check for constraints
+    const transactionCount = user._count.inventoryTransactions;
+    const invitationCount = user._count.sentInvitations;
+
+    if (transactionCount > 0 || invitationCount > 0) {
+      const reasons = [];
+      if (transactionCount > 0) {
+        reasons.push(`${transactionCount} inventory transaction${transactionCount === 1 ? '' : 's'}`);
+      }
+      if (invitationCount > 0) {
+        reasons.push(`${invitationCount} sent invitation${invitationCount === 1 ? '' : 's'}`);
+      }
+
+      return {
+        success: false,
+        error: `Cannot delete user because they have ${reasons.join(' and ')}. Please reassign or remove these items before deleting.`,
+      };
+    }
+
     await db.user.delete({
       where: { id },
     });
+
+    // Get first assigned bakery for activity log (if any)
+    const firstBakeryId = user.bakeries[0]?.bakeryId ?? null;
 
     // Log the activity
     await createActivityLog({
@@ -289,7 +441,7 @@ export async function deleteUser(id: string) {
       entityName: user.name || user.email,
       description: `Deleted user ${user.name || user.email}`,
       metadata: { userId: user.id },
-      bakeryId: user.bakeryId,
+      bakeryId: firstBakeryId,
     });
 
     revalidatePath('/admin/users');
@@ -318,6 +470,11 @@ export async function getAllRoles() {
     }
 
     const roles = await db.role.findMany({
+      include: {
+        _count: {
+          select: { users: true },
+        },
+      },
       orderBy: {
         name: 'asc',
       },

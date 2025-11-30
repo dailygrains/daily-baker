@@ -27,7 +27,11 @@ export default async function InventoryPage() {
 
   if (!ingredientsResult.success) {
     return (
-      <DashboardLayout isPlatformAdmin={user.isPlatformAdmin}>
+      <DashboardLayout
+        isPlatformAdmin={user.isPlatformAdmin}
+        bakeries={user.allBakeries}
+        currentBakeryId={user.bakeryId}
+      >
         <div className="alert alert-error">
           <span>{ingredientsResult.error}</span>
         </div>
@@ -35,16 +39,14 @@ export default async function InventoryPage() {
     );
   }
 
-  const ingredients = ingredientsResult.data;
+  const ingredients = ingredientsResult.data || [];
   const transactions = transactionsResult.success
-    ? transactionsResult.data
+    ? transactionsResult.data || []
     : [];
 
   // Calculate stats
   const totalIngredients = ingredients.length;
-  const lowStockCount = ingredients.filter(
-    (ing) => Number(ing.currentQty) < (ing.minQty ? Number(ing.minQty) : 0)
-  ).length;
+  const lowStockCount = 0; // Low stock calculation removed as minQty field doesn't exist
   const totalValue = ingredients.reduce(
     (sum, ing) =>
       sum + Number(ing.currentQty) * Number(ing.costPerUnit),
@@ -83,7 +85,11 @@ export default async function InventoryPage() {
   };
 
   return (
-    <DashboardLayout isPlatformAdmin={user.isPlatformAdmin}>
+    <DashboardLayout
+      isPlatformAdmin={user.isPlatformAdmin}
+      bakeries={user.allBakeries}
+      currentBakeryId={user.bakeryId}
+    >
       <div className="space-y-6">
         <PageHeader
           title="Inventory Management"
@@ -174,10 +180,6 @@ export default async function InventoryPage() {
                     <tbody>
                       {ingredients.map((ingredient) => {
                         const currentQty = Number(ingredient.currentQty);
-                        const minQty = ingredient.minQty
-                          ? Number(ingredient.minQty)
-                          : 0;
-                        const isLowStock = currentQty < minQty;
                         const value = currentQty * Number(ingredient.costPerUnit);
 
                         return (
@@ -193,19 +195,10 @@ export default async function InventoryPage() {
                             <td>
                               {currentQty.toFixed(3)} {ingredient.unit}
                             </td>
-                            <td>
-                              {minQty > 0 ? `${minQty.toFixed(3)} ${ingredient.unit}` : '-'}
-                            </td>
+                            <td>-</td>
                             <td>${value.toFixed(2)}</td>
                             <td>
-                              {isLowStock ? (
-                                <span className="badge badge-warning gap-2">
-                                  <AlertTriangle className="h-3 w-3" />
-                                  Low Stock
-                                </span>
-                              ) : (
-                                <span className="badge badge-success">OK</span>
-                              )}
+                              <span className="badge badge-success">OK</span>
                             </td>
                           </tr>
                         );
@@ -273,7 +266,7 @@ export default async function InventoryPage() {
                             {transaction.unit}
                           </td>
                           <td className="text-sm text-base-content/70">
-                            {transaction.user.name || transaction.user.email}
+                            {transaction.creator.name || transaction.creator.email}
                           </td>
                           <td className="text-sm text-base-content/70">
                             {formatDistanceToNow(new Date(transaction.createdAt), {

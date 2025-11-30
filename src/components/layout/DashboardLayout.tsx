@@ -8,28 +8,41 @@ import {
   ShoppingCart,
   Users,
   Settings,
-  ChevronLeft,
   Menu,
   Wheat,
   Mail,
   Activity,
   BarChart3,
-  Wrench
+  Wrench,
+  Shield
 } from 'lucide-react';
 import { ReactNode } from 'react';
+import { BakerySelector } from './BakerySelector';
+
+interface Bakery {
+  id: string;
+  name: string;
+}
 
 interface DashboardLayoutProps {
   children: ReactNode;
+  userName?: string;
+  userEmail?: string;
   bakeryName?: string;
   userRole?: string;
   isPlatformAdmin?: boolean;
+  bakeries?: Bakery[];
+  currentBakeryId?: string | null;
 }
 
 export function DashboardLayout({
   children,
-  bakeryName,
+  userName,
+  userEmail,
   userRole,
-  isPlatformAdmin = false
+  isPlatformAdmin = false,
+  bakeries = [],
+  currentBakeryId
 }: DashboardLayoutProps) {
   return (
     <div className="drawer lg:drawer-open min-h-screen">
@@ -37,35 +50,12 @@ export function DashboardLayout({
 
       {/* Main Content */}
       <div className="drawer-content flex flex-col">
-        {/* Top Navigation Bar */}
-        <header className="navbar bg-base-100 border-b border-base-300 px-4 lg:px-6">
-          <div className="flex-none lg:hidden">
-            <label htmlFor="sidebar-drawer" className="btn btn-square btn-ghost">
-              <Menu className="h-5 w-5" />
-            </label>
-          </div>
-
-          <div className="flex-1 px-2 lg:px-0">
-            <div className="flex items-center gap-2">
-              {bakeryName && (
-                <>
-                  <Wheat className="h-5 w-5 text-primary hidden lg:block" />
-                  <span className="text-lg font-semibold hidden lg:inline">{bakeryName}</span>
-                </>
-              )}
-              {isPlatformAdmin && (
-                <div className="badge badge-primary badge-sm">Platform Admin</div>
-              )}
-            </div>
-          </div>
-
-          <div className="flex-none gap-2">
-            {userRole && (
-              <div className="badge badge-outline hidden sm:inline-flex">{userRole}</div>
-            )}
-            <UserButton afterSignOutUrl="/" />
-          </div>
-        </header>
+        {/* Mobile Menu Button */}
+        <div className="lg:hidden p-4">
+          <label htmlFor="sidebar-drawer" className="btn btn-square btn-ghost">
+            <Menu className="h-5 w-5" />
+          </label>
+        </div>
 
         {/* Page Content */}
         <main className="flex-1 p-4 lg:p-6 bg-base-200">
@@ -77,24 +67,24 @@ export function DashboardLayout({
       <div className="drawer-side z-10">
         <label htmlFor="sidebar-drawer" className="drawer-overlay"></label>
 
-        <aside className="bg-base-100 w-72 min-h-full border-r border-base-300">
+        <aside className="bg-base-100 w-72 min-h-full border-r border-base-300 flex flex-col">
           {/* Logo / Brand */}
-          <div className="sticky top-0 z-20 bg-base-100 px-6 py-4 border-b border-base-300">
-            <Link href="/dashboard" className="flex items-center gap-3">
-              <div className="avatar placeholder">
-                <div className="bg-primary text-primary-content rounded-lg w-10">
-                  <Wheat className="h-6 w-6" />
+          <div className="sticky top-0 z-20 bg-base-100">
+            <div className="px-6 py-4">
+              <Link href="/dashboard" className="flex items-center gap-3">
+                <div className="flex flex-col">
+                  <span className="font-bold text-lg">Daily Baker</span>
+                  <span className="text-xs text-base-content/60">Bakery Management</span>
                 </div>
-              </div>
-              <div className="flex flex-col">
-                <span className="font-bold text-lg">Daily Baker</span>
-                <span className="text-xs text-base-content/60">Bakery Management</span>
-              </div>
-            </Link>
+              </Link>
+            </div>
+
+            {/* Bakery Selector - show for all users to select bakery context */}
+            <BakerySelector bakeries={bakeries} currentBakeryId={currentBakeryId ?? null} />
           </div>
 
           {/* Navigation Menu */}
-          <nav className="p-4">
+          <nav className="p-4 flex-1 overflow-y-auto">
             <ul className="menu gap-1">
               {/* Dashboard */}
               <li>
@@ -196,6 +186,12 @@ export function DashboardLayout({
                     </Link>
                   </li>
                   <li>
+                    <Link href="/admin/roles" className="gap-3">
+                      <Shield className="h-5 w-5" />
+                      Roles
+                    </Link>
+                  </li>
+                  <li>
                     <Link href="/admin/activity" className="gap-3">
                       <Activity className="h-5 w-5" />
                       Activity Logs
@@ -216,6 +212,23 @@ export function DashboardLayout({
               </li>
             </ul>
           </nav>
+
+          {/* User Section - Fixed at bottom */}
+          <div className="sticky bottom-0 bg-base-100 px-6 py-4 border-t border-base-300">
+            <div className="flex items-center gap-3">
+              <UserButton afterSignOutUrl="/" />
+              <div className="flex flex-col flex-1 min-w-0">
+                {(userName || userEmail) && (
+                  <span className="text-sm font-medium truncate">{userName || userEmail}</span>
+                )}
+                {isPlatformAdmin ? (
+                  <span className="text-xs text-primary truncate">Platform Admin</span>
+                ) : userRole ? (
+                  <span className="text-xs text-base-content/60 truncate">{userRole}</span>
+                ) : null}
+              </div>
+            </div>
+          </div>
         </aside>
       </div>
     </div>

@@ -7,7 +7,6 @@ import {
   BarChart3,
   TrendingUp,
   Package,
-  AlertCircle,
   Calendar,
   Wheat,
   Users,
@@ -34,7 +33,13 @@ export default async function DashboardPage() {
     const activity = activityResult.success ? activityResult.data : null;
 
     return (
-      <DashboardLayout isPlatformAdmin={true}>
+      <DashboardLayout
+        userName={user.name || undefined}
+        userEmail={user.email}
+        isPlatformAdmin={true}
+        bakeries={user.allBakeries}
+        currentBakeryId={user.bakeryId}
+      >
         <PageHeader
           title="Platform Dashboard"
           description="Overview of all bakeries on Daily Baker"
@@ -176,7 +181,7 @@ export default async function DashboardPage() {
                         <div key={user.id}>
                           <p className="font-medium text-sm">{user.name || user.email}</p>
                           <p className="text-xs text-base-content/60">
-                            {user.bakery?.name || 'No bakery'}
+                            {user.bakeries?.[0]?.bakery?.name || 'No bakery'}
                           </p>
                           <p className="text-xs text-base-content/60 flex items-center gap-1">
                             <Clock className="h-3 w-3" />
@@ -260,7 +265,10 @@ export default async function DashboardPage() {
   // Regular users must be assigned to a bakery
   if (!user.bakery) {
     return (
-      <DashboardLayout>
+      <DashboardLayout
+        userName={user.name || undefined}
+        userEmail={user.email}
+      >
         <PageHeader
           title="Welcome to Daily Baker"
           description="You're not currently assigned to a bakery"
@@ -280,8 +288,12 @@ export default async function DashboardPage() {
   // Bakery user dashboard
   return (
     <DashboardLayout
+      userName={user.name || undefined}
+      userEmail={user.email}
       bakeryName={user.bakery.name}
       userRole={user.role?.name}
+      bakeries={user.allBakeries}
+      currentBakeryId={user.bakeryId}
     >
       <PageHeader
         title={`Welcome back, ${user.name || 'Baker'}!`}
@@ -295,7 +307,7 @@ export default async function DashboardPage() {
             <div className="stat-figure text-primary">
               <Calendar className="h-8 w-8" />
             </div>
-            <div className="stat-title">Today's Bake Sheets</div>
+            <div className="stat-title">Today&apos;s Bake Sheets</div>
             <div className="stat-value text-primary">1</div>
             <div className="stat-desc">1 in progress</div>
           </div>
@@ -331,7 +343,7 @@ export default async function DashboardPage() {
             <div className="stat-figure text-accent">
               <TrendingUp className="h-8 w-8" />
             </div>
-            <div className="stat-title">This Week</div>
+            <div className="stat-title">This Week&apos;s Production</div>
             <div className="stat-value text-accent">180</div>
             <div className="stat-desc">Items produced</div>
           </div>
@@ -342,26 +354,26 @@ export default async function DashboardPage() {
       <div className="mt-6">
         <h2 className="text-xl font-bold mb-4">Quick Actions</h2>
         <div className="grid gap-4 md:grid-cols-3">
-          <a href="/dashboard/bake-sheets" className="card bg-base-100 shadow-sm hover:shadow-md transition-shadow">
+          <Link href="/dashboard/bake-sheets" className="card bg-base-100 shadow-sm hover:shadow-md transition-shadow">
             <div className="card-body">
               <h3 className="card-title text-lg">View Bake Sheets</h3>
-              <p className="text-sm text-base-content/60">See today's production schedule</p>
+              <p className="text-sm text-base-content/60">See today&apos;s production schedule</p>
             </div>
-          </a>
+          </Link>
 
-          <a href="/dashboard/recipes" className="card bg-base-100 shadow-sm hover:shadow-md transition-shadow">
+          <Link href="/dashboard/recipes" className="card bg-base-100 shadow-sm hover:shadow-md transition-shadow">
             <div className="card-body">
               <h3 className="card-title text-lg">Browse Recipes</h3>
               <p className="text-sm text-base-content/60">View all bakery recipes</p>
             </div>
-          </a>
+          </Link>
 
-          <a href="/dashboard/ingredients" className="card bg-base-100 shadow-sm hover:shadow-md transition-shadow">
+          <Link href="/dashboard/ingredients" className="card bg-base-100 shadow-sm hover:shadow-md transition-shadow">
             <div className="card-body">
               <h3 className="card-title text-lg">Check Inventory</h3>
               <p className="text-sm text-base-content/60">Monitor ingredient levels</p>
             </div>
-          </a>
+          </Link>
         </div>
       </div>
 

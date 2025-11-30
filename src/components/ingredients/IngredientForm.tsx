@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createIngredient, updateIngredient } from '@/app/actions/ingredient';
-import type { Ingredient, Vendor } from '@prisma/client';
+import type { Ingredient, Vendor } from '@/generated/prisma';
 
 interface IngredientFormProps {
   bakeryId: string;

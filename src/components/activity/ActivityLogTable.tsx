@@ -1,6 +1,6 @@
 'use client';
 
-import { ActivityType } from '@prisma/client';
+import { ActivityType } from '@/generated/prisma';
 import { formatDistanceToNow } from 'date-fns';
 
 interface ActivityLog {

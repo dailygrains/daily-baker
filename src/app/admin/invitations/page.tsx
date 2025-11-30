@@ -4,7 +4,7 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { redirect } from 'next/navigation';
 import { getAllInvitations, revokeInvitation } from '@/app/actions/invitation';
-import { Mail, Plus, Copy, X, Clock, CheckCircle2, XCircle, RefreshCw } from 'lucide-react';
+import { Mail, Plus, Copy, X, Clock, CheckCircle2, XCircle } from 'lucide-react';
 import Link from 'next/link';
 
 export default async function InvitationsPage() {
@@ -22,7 +22,13 @@ export default async function InvitationsPage() {
 
   if (!result.success) {
     return (
-      <DashboardLayout isPlatformAdmin={true}>
+      <DashboardLayout
+        userName={user.name || undefined}
+        userEmail={user.email}
+        isPlatformAdmin={true}
+        bakeries={user.allBakeries}
+        currentBakeryId={user.bakeryId}
+      >
         <PageHeader
           title="Invitations"
           description="Manage user invitations"
@@ -56,7 +62,13 @@ export default async function InvitationsPage() {
   }
 
   return (
-    <DashboardLayout isPlatformAdmin={true}>
+    <DashboardLayout
+      userName={user.name || undefined}
+      userEmail={user.email}
+      isPlatformAdmin={true}
+        bakeries={user.allBakeries}
+        currentBakeryId={user.bakeryId}
+    >
       <PageHeader
         title="Invitations"
         description="Manage user invitations to the platform"
@@ -177,7 +189,10 @@ export default async function InvitationsPage() {
                               >
                                 <Copy className="h-4 w-4" />
                               </button>
-                              <form action={revokeInvitation.bind(null, invitation.id)}>
+                              <form action={async () => {
+                                'use server';
+                                await revokeInvitation(invitation.id);
+                              }}>
                                 <button
                                   type="submit"
                                   className="btn btn-sm btn-ghost text-error"

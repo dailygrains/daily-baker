@@ -1,6 +1,7 @@
 'use server';
 
 import { db } from '@/lib/db';
+import type { InputJsonObject } from '@prisma/client/runtime/library';
 
 type ActivityLogInput = {
   userId: string;
@@ -9,7 +10,7 @@ type ActivityLogInput = {
   entityId: string;
   entityName: string;
   description: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   bakeryId?: string;
 };
 
@@ -26,7 +27,7 @@ export async function createActivityLog(data: ActivityLogInput) {
         entityId: data.entityId,
         entityName: data.entityName,
         description: data.description,
-        metadata: data.metadata || null,
+        metadata: data.metadata as InputJsonObject | undefined,
         bakeryId: data.bakeryId || null,
       },
     });

@@ -1,11 +1,9 @@
 import { getCurrentUser } from '@/lib/clerk';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { PageHeader } from '@/components/ui/PageHeader';
-import { BakeryForm } from '@/components/bakery/BakeryForm';
 import { getBakeryById } from '@/app/actions/bakery';
 import { redirect } from 'next/navigation';
-import { ArrowLeft } from 'lucide-react';
-import Link from 'next/link';
+import { BakeryEditPageContent } from '@/components/bakery/BakeryEditPageContent';
+import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { PageHeader } from '@/components/ui/PageHeader';
 
 export default async function EditBakeryPage({
   params,
@@ -27,7 +25,9 @@ export default async function EditBakeryPage({
 
   if (!result.success || !result.data) {
     return (
-      <DashboardLayout isPlatformAdmin={true}>
+      <DashboardLayout isPlatformAdmin={true}
+        bakeries={user.allBakeries}
+        currentBakeryId={user.bakeryId}>
         <PageHeader title="Edit Bakery" />
         <div className="alert alert-error">
           <span>{result.error || 'Bakery not found'}</span>
@@ -39,19 +39,9 @@ export default async function EditBakeryPage({
   const bakery = result.data;
 
   return (
-    <DashboardLayout isPlatformAdmin={true}>
-      <PageHeader
-        title={`Edit ${bakery.name}`}
-        description="Update bakery information"
-        actions={
-          <Link href="/admin/bakeries" className="btn btn-ghost">
-            <ArrowLeft className="h-5 w-5 mr-2" />
-            Back to Bakeries
-          </Link>
-        }
-      />
-
-      <BakeryForm bakery={bakery} mode="edit" />
-    </DashboardLayout>
+    <BakeryEditPageContent
+      bakery={bakery}
+      isPlatformAdmin={user.isPlatformAdmin}
+    />
   );
 }

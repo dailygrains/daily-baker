@@ -3,11 +3,11 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createEquipment, updateEquipment } from '@/app/actions/equipment';
-import type { Equipment, Vendor } from '@prisma/client';
+import type { Equipment, EquipmentStatus } from '@/generated/prisma';
 
 interface EquipmentFormProps {
   bakeryId: string;
-  equipment?: Equipment & { vendor: Vendor | null };
+  equipment?: Equipment & { vendor: { id: string; name: string; email: string | null; phone: string | null } | null };
   vendors?: Array<{ id: string; name: string }>;
 }
 
@@ -16,7 +16,16 @@ export function EquipmentForm({ bakeryId, equipment, vendors = [] }: EquipmentFo
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    name: string;
+    status: EquipmentStatus;
+    vendorId: string;
+    purchaseDate: string;
+    cost: number;
+    quantity: number;
+    serialNumber: string;
+    notes: string;
+  }>({
     name: equipment?.name ?? '',
     status: equipment?.status ?? 'CONSIDERING',
     vendorId: equipment?.vendorId ?? '',
@@ -99,7 +108,7 @@ export function EquipmentForm({ bakeryId, equipment, vendors = [] }: EquipmentFo
           <select
             className="select select-bordered"
             value={formData.status}
-            onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+            onChange={(e) => setFormData({ ...formData, status: e.target.value as EquipmentStatus })}
             required
           >
             <option value="CONSIDERING">Considering</option>

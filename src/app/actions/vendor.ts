@@ -38,11 +38,9 @@ export async function createVendor(data: CreateVendorInput) {
       data: {
         bakeryId: validatedData.bakeryId,
         name: validatedData.name,
-        contactName: validatedData.contactName || null,
         email: validatedData.email || null,
         phone: validatedData.phone || null,
         website: validatedData.website || null,
-        address: validatedData.address || null,
         notes: validatedData.notes || null,
       },
     });
@@ -57,7 +55,6 @@ export async function createVendor(data: CreateVendorInput) {
       description: `Created vendor "${vendor.name}"`,
       metadata: {
         vendorId: vendor.id,
-        contactName: vendor.contactName,
       },
       bakeryId: vendor.bakeryId,
     });
@@ -110,11 +107,9 @@ export async function updateVendor(data: UpdateVendorInput) {
       where: { id: validatedData.id },
       data: {
         name: validatedData.name,
-        contactName: validatedData.contactName,
         email: validatedData.email,
         phone: validatedData.phone,
         website: validatedData.website,
-        address: validatedData.address,
         notes: validatedData.notes,
       },
     });

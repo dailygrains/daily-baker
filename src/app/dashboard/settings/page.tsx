@@ -15,7 +15,11 @@ export default async function SettingsPage() {
   // Platform admins have different settings
   if (user.isPlatformAdmin) {
     return (
-      <DashboardLayout isPlatformAdmin={true}>
+      <DashboardLayout
+        isPlatformAdmin={true}
+        bakeries={user.allBakeries}
+        currentBakeryId={user.bakeryId}
+      >
         <PageHeader
           title="Platform Settings"
           description="Configure platform-wide settings"
@@ -36,7 +40,10 @@ export default async function SettingsPage() {
   // Regular users must be assigned to a bakery
   if (!user.bakery) {
     return (
-      <DashboardLayout>
+      <DashboardLayout
+        bakeries={user.allBakeries}
+        currentBakeryId={user.bakeryId}
+      >
         <PageHeader
           title="Settings"
           description="Configure your bakery settings"
@@ -60,6 +67,8 @@ export default async function SettingsPage() {
       <DashboardLayout
         bakeryName={user.bakery.name}
         userRole={user.role?.name}
+        bakeries={user.allBakeries}
+        currentBakeryId={user.bakeryId}
       >
         <PageHeader
           title="Settings"
@@ -78,6 +87,8 @@ export default async function SettingsPage() {
     <DashboardLayout
       bakeryName={user.bakery.name}
       userRole={user.role?.name}
+      bakeries={user.allBakeries}
+      currentBakeryId={user.bakeryId}
     >
       <PageHeader
         title="Bakery Settings"
@@ -88,7 +99,7 @@ export default async function SettingsPage() {
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
         <div>
           <h3 className="font-bold">Bakery Information</h3>
-          <div className="text-sm">Update your bakery's contact information and details</div>
+          <div className="text-sm">Update your bakery&apos;s contact information and details</div>
         </div>
       </div>
 

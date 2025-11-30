@@ -20,7 +20,10 @@ export default async function BakeryActivityPage() {
 
   if (!user.bakery) {
     return (
-      <DashboardLayout>
+      <DashboardLayout
+        bakeries={user.allBakeries}
+        currentBakeryId={user.bakeryId}
+      >
         <PageHeader
           title="Activity"
           description="Recent bakery activity"
@@ -58,6 +61,8 @@ export default async function BakeryActivityPage() {
       <DashboardLayout
         bakeryName={user.bakery.name}
         userRole={user.role?.name}
+        bakeries={user.allBakeries}
+        currentBakeryId={user.bakeryId}
       >
         <PageHeader
           title="Activity"
@@ -76,6 +81,8 @@ export default async function BakeryActivityPage() {
     <DashboardLayout
       bakeryName={user.bakery.name}
       userRole={user.role?.name}
+      bakeries={user.allBakeries}
+      currentBakeryId={user.bakeryId}
     >
       <PageHeader
         title="Activity"

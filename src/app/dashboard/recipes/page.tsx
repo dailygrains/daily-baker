@@ -4,7 +4,7 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { getRecipesByBakery } from '@/app/actions/recipe';
 import Link from 'next/link';
-import { Plus, DollarSign, Layers, ClipboardList } from 'lucide-react';
+import { Plus, Layers, ClipboardList } from 'lucide-react';
 
 export default async function RecipesPage() {
   const user = await getCurrentUser();
@@ -21,7 +21,11 @@ export default async function RecipesPage() {
 
   if (!recipesResult.success) {
     return (
-      <DashboardLayout isPlatformAdmin={user.isPlatformAdmin}>
+      <DashboardLayout
+        isPlatformAdmin={user.isPlatformAdmin}
+        bakeries={user.allBakeries}
+        currentBakeryId={user.bakeryId}
+      >
         <div className="alert alert-error">
           <span>{recipesResult.error}</span>
         </div>
@@ -35,12 +39,16 @@ export default async function RecipesPage() {
   const avgCost = totalRecipes > 0 ? (Number(totalCost) / totalRecipes).toFixed(2) : '0.00';
 
   return (
-    <DashboardLayout isPlatformAdmin={user.isPlatformAdmin}>
+    <DashboardLayout
+      isPlatformAdmin={user.isPlatformAdmin}
+      bakeries={user.allBakeries}
+      currentBakeryId={user.bakeryId}
+    >
       <div className="space-y-6">
         <PageHeader
           title="Recipes"
           description="Manage your bakery recipes and costing"
-          action={
+          actions={
             <Link href="/dashboard/recipes/new" className="btn btn-primary">
               <Plus className="h-4 w-4" />
               Add Recipe

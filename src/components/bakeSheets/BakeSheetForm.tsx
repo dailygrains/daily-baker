@@ -129,7 +129,7 @@ export function BakeSheetForm({ bakeryId, recipes }: BakeSheetFormProps) {
         />
         <label className="label">
           <span className="label-text-alt text-base-content/70">
-            Describe what you're making (e.g., "25 loaves")
+            Describe what you&apos;re making (e.g., &quot;25 loaves&quot;)
           </span>
         </label>
       </div>

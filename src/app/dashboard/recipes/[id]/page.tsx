@@ -38,12 +38,16 @@ export default async function RecipeDetailPage({
   const costPerUnit = yieldNum > 0 ? (totalCost / yieldNum).toFixed(2) : '0.00';
 
   return (
-    <DashboardLayout isPlatformAdmin={user.isPlatformAdmin}>
+    <DashboardLayout
+      isPlatformAdmin={user.isPlatformAdmin}
+      bakeries={user.allBakeries}
+      currentBakeryId={user.bakeryId}
+    >
       <div className="space-y-6">
         <PageHeader
           title={recipe.name}
           description={recipe.description || 'Recipe details and instructions'}
-          action={
+          actions={
             <Link
               href={`/dashboard/recipes/${id}/edit`}
               className="btn btn-primary btn-sm"
