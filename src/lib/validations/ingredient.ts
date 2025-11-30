@@ -9,7 +9,6 @@ export const createIngredientSchema = z.object({
   currentQty: z.number().nonnegative('Quantity cannot be negative').default(0),
   unit: z.string().min(1, 'Unit is required').max(20),
   costPerUnit: z.number().nonnegative('Cost per unit cannot be negative'),
-  vendorId: z.string().cuid().optional().nullable(),
 });
 
 /**
@@ -21,7 +20,6 @@ export const updateIngredientSchema = z.object({
   currentQty: z.number().nonnegative('Quantity cannot be negative').optional(),
   unit: z.string().min(1, 'Unit is required').max(20).optional(),
   costPerUnit: z.number().nonnegative('Cost per unit cannot be negative').optional(),
-  vendorId: z.string().cuid().optional().nullable(),
 });
 
 /**

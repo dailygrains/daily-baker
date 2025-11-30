@@ -37,26 +37,25 @@ export default async function IngredientDetailPage({
 
   return (
     <DashboardLayout
-        isPlatformAdmin={user.isPlatformAdmin}
-        bakeries={user.allBakeries}
-        currentBakeryId={user.bakeryId}
-      >
+      isPlatformAdmin={user.isPlatformAdmin}
+      bakeries={user.allBakeries}
+      currentBakeryId={user.bakeryId}
+    >
+      <PageHeader
+        title={ingredient.name}
+        sticky
+        actions={
+          <Link
+            href={`/dashboard/ingredients/${id}/edit`}
+            className="btn btn-primary"
+          >
+            <Edit className="h-5 w-5 mr-2" />
+            Edit
+          </Link>
+        }
+      />
+
       <div className="space-y-6">
-        <PageHeader
-          title={ingredient.name}
-          description="Ingredient details and transaction history"
-          actions={
-            <div className="flex gap-2">
-              <Link
-                href={`/dashboard/ingredients/${id}/edit`}
-                className="btn btn-primary btn-sm"
-              >
-                <Edit className="h-4 w-4" />
-                Edit
-              </Link>
-            </div>
-          }
-        />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Info Card */}
@@ -85,14 +84,18 @@ export default async function IngredientDetailPage({
                 </div>
 
                 <div>
-                  <p className="text-sm text-base-content/70">Vendor</p>
-                  <p className="text-lg font-semibold">
-                    {ingredient.vendor ? (
-                      ingredient.vendor.name
-                    ) : (
-                      <span className="text-base-content/50">No vendor</span>
-                    )}
-                  </p>
+                  <p className="text-sm text-base-content/70">Vendors</p>
+                  {ingredient.vendors.length > 0 ? (
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {ingredient.vendors.map((iv) => (
+                        <span key={iv.vendor.id} className="badge badge-ghost">
+                          {iv.vendor.name}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-base-content/50 italic">No vendors</p>
+                  )}
                 </div>
 
                 <div>
@@ -147,51 +150,49 @@ export default async function IngredientDetailPage({
 
         {/* Recent Transactions */}
         {ingredient.transactions.length > 0 && (
-          <div className="card bg-base-100 shadow-xl">
-            <div className="card-body">
-              <h2 className="card-title">Recent Transactions</h2>
-              <div className="overflow-x-auto">
-                <table className="table table-zebra">
-                  <thead>
-                    <tr>
-                      <th>Date</th>
-                      <th>Type</th>
-                      <th>Quantity</th>
-                      <th>Notes</th>
+          <div>
+            <h2 className="text-xl font-semibold mb-4">Recent Transactions</h2>
+            <div className="overflow-x-auto">
+              <table className="table table-zebra">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Quantity</th>
+                    <th>Notes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {ingredient.transactions.map((transaction) => (
+                    <tr key={transaction.id}>
+                      <td className="align-top">
+                        {formatDistanceToNow(new Date(transaction.createdAt), {
+                          addSuffix: true,
+                        })}
+                      </td>
+                      <td className="align-top">
+                        <span
+                          className={`badge ${
+                            transaction.type === 'RECEIVE'
+                              ? 'badge-success'
+                              : transaction.type === 'USE'
+                                ? 'badge-info'
+                                : transaction.type === 'ADJUST'
+                                  ? 'badge-warning'
+                                  : 'badge-error'
+                          }`}
+                        >
+                          {transaction.type}
+                        </span>
+                      </td>
+                      <td className="align-top">
+                        {Number(transaction.quantity).toFixed(3)} {transaction.unit}
+                      </td>
+                      <td className="align-top">{transaction.notes || '-'}</td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {ingredient.transactions.map((transaction) => (
-                      <tr key={transaction.id}>
-                        <td>
-                          {formatDistanceToNow(new Date(transaction.createdAt), {
-                            addSuffix: true,
-                          })}
-                        </td>
-                        <td>
-                          <span
-                            className={`badge ${
-                              transaction.type === 'RECEIVE'
-                                ? 'badge-success'
-                                : transaction.type === 'USE'
-                                  ? 'badge-info'
-                                  : transaction.type === 'ADJUST'
-                                    ? 'badge-warning'
-                                    : 'badge-error'
-                            }`}
-                          >
-                            {transaction.type}
-                          </span>
-                        </td>
-                        <td>
-                          {Number(transaction.quantity).toFixed(3)} {transaction.unit}
-                        </td>
-                        <td>{transaction.notes || '-'}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         )}

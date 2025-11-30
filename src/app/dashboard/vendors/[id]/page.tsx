@@ -163,23 +163,23 @@ export default async function VendorDetailPage({
                     </tr>
                   </thead>
                   <tbody>
-                    {vendor.ingredients.map((ingredient) => (
-                      <tr key={ingredient.id}>
+                    {vendor.ingredients.map((iv) => (
+                      <tr key={iv.ingredient.id}>
                         <td>
                           <Link
-                            href={`/dashboard/ingredients/${ingredient.id}`}
+                            href={`/dashboard/ingredients/${iv.ingredient.id}`}
                             className="font-semibold hover:text-primary"
                           >
-                            {ingredient.name}
+                            {iv.ingredient.name}
                           </Link>
                         </td>
                         <td>
-                          {Number(ingredient.currentQty).toFixed(3)} {ingredient.unit}
+                          {Number(iv.ingredient.currentQty).toFixed(3)} {iv.ingredient.unit}
                         </td>
-                        <td>${Number(ingredient.costPerUnit).toFixed(2)}</td>
+                        <td>${Number(iv.ingredient.costPerUnit).toFixed(2)}</td>
                         <td>
                           <Link
-                            href={`/dashboard/ingredients/${ingredient.id}`}
+                            href={`/dashboard/ingredients/${iv.ingredient.id}`}
                             className="btn btn-ghost btn-xs"
                           >
                             View

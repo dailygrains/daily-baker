@@ -274,15 +274,21 @@ export async function getVendorById(id: string) {
       where: { id },
       include: {
         ingredients: {
-          select: {
-            id: true,
-            name: true,
-            currentQty: true,
-            unit: true,
-            costPerUnit: true,
+          include: {
+            ingredient: {
+              select: {
+                id: true,
+                name: true,
+                currentQty: true,
+                unit: true,
+                costPerUnit: true,
+              },
+            },
           },
           orderBy: {
-            name: 'asc',
+            ingredient: {
+              name: 'asc',
+            },
           },
         },
         equipment: {

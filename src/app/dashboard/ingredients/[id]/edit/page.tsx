@@ -1,10 +1,7 @@
 import { getCurrentUser } from '@/lib/clerk';
 import { redirect } from 'next/navigation';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { PageHeader } from '@/components/ui/PageHeader';
-import { IngredientForm } from '@/components/ingredients/IngredientForm';
+import { IngredientEditPageContent } from '@/components/ingredients/IngredientEditPageContent';
 import { getIngredientById } from '@/app/actions/ingredient';
-import { db } from '@/lib/db';
 
 export default async function EditIngredientPage({
   params,
@@ -30,40 +27,13 @@ export default async function EditIngredientPage({
 
   const ingredient = ingredientResult.data;
 
-  // Fetch vendors for the dropdown
-  const vendors = await db.vendor.findMany({
-    where: { bakeryId: user.bakeryId },
-    select: {
-      id: true,
-      name: true,
-    },
-    orderBy: {
-      name: 'asc',
-    },
-  });
-
   return (
-    <DashboardLayout
-        isPlatformAdmin={user.isPlatformAdmin}
-        bakeries={user.allBakeries}
-        currentBakeryId={user.bakeryId}
-      >
-      <div className="max-w-2xl mx-auto space-y-6">
-        <PageHeader
-          title="Edit Ingredient"
-          description={`Update details for ${ingredient.name}`}
-        />
-
-        <div className="card bg-base-100 shadow-xl">
-          <div className="card-body">
-            <IngredientForm
-              bakeryId={user.bakeryId}
-              ingredient={ingredient}
-              vendors={vendors}
-            />
-          </div>
-        </div>
-      </div>
-    </DashboardLayout>
+    <IngredientEditPageContent
+      bakeryId={user.bakeryId}
+      ingredient={ingredient}
+      isPlatformAdmin={user.isPlatformAdmin}
+      bakeries={user.allBakeries}
+      currentBakeryId={user.bakeryId}
+    />
   );
 }

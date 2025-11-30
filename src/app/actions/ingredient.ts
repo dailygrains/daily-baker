@@ -41,10 +41,13 @@ export async function createIngredient(data: CreateIngredientInput) {
         currentQty: new Decimal(validatedData.currentQty),
         unit: validatedData.unit,
         costPerUnit: new Decimal(validatedData.costPerUnit),
-        vendorId: validatedData.vendorId || null,
       },
       include: {
-        vendor: true,
+        vendors: {
+          include: {
+            vendor: true,
+          },
+        },
       },
     });
 
@@ -62,9 +65,14 @@ export async function createIngredient(data: CreateIngredientInput) {
 
     revalidatePath('/dashboard/ingredients');
 
+    // Serialize Decimal fields for client components
     return {
       success: true,
-      data: ingredient,
+      data: {
+        ...ingredient,
+        currentQty: ingredient.currentQty.toNumber(),
+        costPerUnit: ingredient.costPerUnit.toNumber(),
+      },
     };
   } catch (error) {
     console.error('Error creating ingredient:', error);
@@ -116,13 +124,16 @@ export async function updateIngredient(data: UpdateIngredientInput) {
     if (updateData.currentQty !== undefined) prismaUpdateData.currentQty = new Decimal(updateData.currentQty);
     if (updateData.unit !== undefined) prismaUpdateData.unit = updateData.unit;
     if (updateData.costPerUnit !== undefined) prismaUpdateData.costPerUnit = new Decimal(updateData.costPerUnit);
-    if (updateData.vendorId !== undefined) prismaUpdateData.vendorId = updateData.vendorId;
 
     const ingredient = await db.ingredient.update({
       where: { id },
       data: prismaUpdateData,
       include: {
-        vendor: true,
+        vendors: {
+          include: {
+            vendor: true,
+          },
+        },
       },
     });
 
@@ -141,9 +152,14 @@ export async function updateIngredient(data: UpdateIngredientInput) {
     revalidatePath('/dashboard/ingredients');
     revalidatePath(`/dashboard/ingredients/${id}`);
 
+    // Serialize Decimal fields for client components
     return {
       success: true,
-      data: ingredient,
+      data: {
+        ...ingredient,
+        currentQty: ingredient.currentQty.toNumber(),
+        costPerUnit: ingredient.costPerUnit.toNumber(),
+      },
     };
   } catch (error) {
     console.error('Error updating ingredient:', error);
@@ -251,10 +267,14 @@ export async function getIngredientsByBakery(bakeryId: string) {
     const ingredients = await db.ingredient.findMany({
       where: { bakeryId },
       include: {
-        vendor: {
-          select: {
-            id: true,
-            name: true,
+        vendors: {
+          include: {
+            vendor: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
           },
         },
         _count: {
@@ -268,9 +288,14 @@ export async function getIngredientsByBakery(bakeryId: string) {
       },
     });
 
+    // Serialize Decimal fields for client components
     return {
       success: true,
-      data: ingredients,
+      data: ingredients.map(ingredient => ({
+        ...ingredient,
+        currentQty: ingredient.currentQty.toNumber(),
+        costPerUnit: ingredient.costPerUnit.toNumber(),
+      })),
     };
   } catch (error) {
     console.error('Error fetching ingredients:', error);
@@ -295,7 +320,11 @@ export async function getIngredientById(id: string) {
     const ingredient = await db.ingredient.findUnique({
       where: { id },
       include: {
-        vendor: true,
+        vendors: {
+          include: {
+            vendor: true,
+          },
+        },
         transactions: {
           orderBy: {
             createdAt: 'desc',
@@ -324,15 +353,198 @@ export async function getIngredientById(id: string) {
       };
     }
 
+    // Serialize Decimal fields for client components
     return {
       success: true,
-      data: ingredient,
+      data: {
+        ...ingredient,
+        currentQty: ingredient.currentQty.toNumber(),
+        costPerUnit: ingredient.costPerUnit.toNumber(),
+      },
     };
   } catch (error) {
     console.error('Error fetching ingredient:', error);
     return {
       success: false,
       error: 'Failed to fetch ingredient',
+    };
+  }
+}
+
+export async function assignVendorToIngredient(ingredientId: string, vendorId: string) {
+  try {
+    const currentUser = await getCurrentUser();
+
+    if (!currentUser) {
+      return {
+        success: false,
+        error: 'Unauthorized: You must be logged in',
+      };
+    }
+
+    // Check if ingredient exists and user has access
+    const ingredient = await db.ingredient.findUnique({
+      where: { id: ingredientId },
+      include: {
+        bakery: true,
+      },
+    });
+
+    if (!ingredient) {
+      return {
+        success: false,
+        error: 'Ingredient not found',
+      };
+    }
+
+    if (currentUser.bakeryId !== ingredient.bakeryId) {
+      return {
+        success: false,
+        error: 'Unauthorized: You can only manage ingredients for your bakery',
+      };
+    }
+
+    // Check if vendor exists and belongs to the same bakery
+    const vendor = await db.vendor.findUnique({
+      where: { id: vendorId },
+    });
+
+    if (!vendor) {
+      return {
+        success: false,
+        error: 'Vendor not found',
+      };
+    }
+
+    if (vendor.bakeryId !== ingredient.bakeryId) {
+      return {
+        success: false,
+        error: 'Vendor does not belong to the same bakery',
+      };
+    }
+
+    // Check if assignment already exists
+    const existing = await db.ingredientVendor.findUnique({
+      where: {
+        ingredientId_vendorId: {
+          ingredientId,
+          vendorId,
+        },
+      },
+    });
+
+    if (existing) {
+      return {
+        success: false,
+        error: 'Vendor is already assigned to this ingredient',
+      };
+    }
+
+    // Create the assignment
+    await db.ingredientVendor.create({
+      data: {
+        ingredientId,
+        vendorId,
+      },
+    });
+
+    // Log the activity
+    await createActivityLog({
+      userId: currentUser.id,
+      action: 'ASSIGN',
+      entityType: 'ingredient',
+      entityId: ingredient.id,
+      entityName: ingredient.name,
+      description: `Assigned vendor "${vendor.name}" to ingredient "${ingredient.name}"`,
+      metadata: { ingredientId: ingredient.id, vendorId: vendor.id },
+      bakeryId: ingredient.bakeryId,
+    });
+
+    revalidatePath('/dashboard/ingredients');
+    revalidatePath(`/dashboard/ingredients/${ingredientId}`);
+
+    return {
+      success: true,
+    };
+  } catch (error) {
+    console.error('Error assigning vendor to ingredient:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to assign vendor',
+    };
+  }
+}
+
+export async function unassignVendorFromIngredient(ingredientId: string, vendorId: string) {
+  try {
+    const currentUser = await getCurrentUser();
+
+    if (!currentUser) {
+      return {
+        success: false,
+        error: 'Unauthorized: You must be logged in',
+      };
+    }
+
+    // Check if ingredient exists and user has access
+    const ingredient = await db.ingredient.findUnique({
+      where: { id: ingredientId },
+    });
+
+    if (!ingredient) {
+      return {
+        success: false,
+        error: 'Ingredient not found',
+      };
+    }
+
+    if (currentUser.bakeryId !== ingredient.bakeryId) {
+      return {
+        success: false,
+        error: 'Unauthorized: You can only manage ingredients for your bakery',
+      };
+    }
+
+    // Get vendor name for logging
+    const vendor = await db.vendor.findUnique({
+      where: { id: vendorId },
+    });
+
+    // Delete the assignment
+    await db.ingredientVendor.delete({
+      where: {
+        ingredientId_vendorId: {
+          ingredientId,
+          vendorId,
+        },
+      },
+    });
+
+    // Log the activity
+    if (vendor) {
+      await createActivityLog({
+        userId: currentUser.id,
+        action: 'REVOKE',
+        entityType: 'ingredient',
+        entityId: ingredient.id,
+        entityName: ingredient.name,
+        description: `Removed vendor "${vendor.name}" from ingredient "${ingredient.name}"`,
+        metadata: { ingredientId: ingredient.id, vendorId: vendor.id },
+        bakeryId: ingredient.bakeryId,
+      });
+    }
+
+    revalidatePath('/dashboard/ingredients');
+    revalidatePath(`/dashboard/ingredients/${ingredientId}`);
+
+    return {
+      success: true,
+    };
+  } catch (error) {
+    console.error('Error unassigning vendor from ingredient:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to unassign vendor',
     };
   }
 }
