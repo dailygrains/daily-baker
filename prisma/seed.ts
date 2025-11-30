@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { PrismaClient, EquipmentStatus, TransactionType } from '../src/generated/prisma';
 
 const prisma = new PrismaClient();
@@ -53,7 +54,7 @@ async function main() {
     },
   });
 
-  const rusticLoaves = await prisma.bakery.create({
+  const _rusticLoaves = await prisma.bakery.create({
     data: {
       name: 'Rustic Loaves Bakery',
       slug: 'rustic-loaves',
@@ -146,7 +147,7 @@ async function main() {
   console.log('👥 Creating users...');
 
   // Platform Admin (no bakery association)
-  const platformAdmin = await prisma.user.create({
+  const _platformAdmin = await prisma.user.create({
     data: {
       clerkId: 'user_platform_admin',
       email: process.env.PLATFORM_ADMIN_EMAIL || 'admin@dailybaker.com',
@@ -157,7 +158,7 @@ async function main() {
   });
 
   // Artisan Sourdough Users
-  const artisanOwner = await prisma.user.create({
+  const _artisanOwner = await prisma.user.create({
     data: {
       clerkId: 'user_artisan_owner',
       email: 'owner@artisansourdough.com',
@@ -206,7 +207,7 @@ async function main() {
   });
 
   // Sweet Treats Users
-  const sweetTreatsOwner = await prisma.user.create({
+  const _sweetTreatsOwner = await prisma.user.create({
     data: {
       clerkId: 'user_sweetreats_owner',
       email: 'owner@sweettreats.com',
@@ -329,7 +330,7 @@ async function main() {
     },
   });
 
-  const ryeFlour = await prisma.ingredient.create({
+  const _ryeFlour = await prisma.ingredient.create({
     data: {
       bakeryId: artisanBakery.id,
       name: 'Rye Flour',
@@ -507,7 +508,7 @@ async function main() {
   });
 
   // Create recipe sections and ingredients for Sourdough
-  const levainSection = await prisma.recipeSection.create({
+  const _levainSection = await prisma.recipeSection.create({
     data: {
       recipeId: sourdoughRecipe.id,
       name: 'Levain (Sourdough Starter)',
@@ -530,7 +531,7 @@ async function main() {
     },
   });
 
-  const doughSection = await prisma.recipeSection.create({
+  const _doughSection = await prisma.recipeSection.create({
     data: {
       recipeId: sourdoughRecipe.id,
       name: 'Main Dough',

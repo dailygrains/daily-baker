@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import * as Sentry from '@sentry/nextjs';
 
 Sentry.init({
@@ -11,7 +12,7 @@ Sentry.init({
   debug: false,
 
   // Filter out noise from error tracking
-  beforeSend(event, hint) {
+  beforeSend(event, _hint) {
     // Don't send errors in development
     if (process.env.NODE_ENV !== 'production') {
       return null;

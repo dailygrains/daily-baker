@@ -4,7 +4,7 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { getRecipesByBakery } from '@/app/actions/recipe';
 import Link from 'next/link';
-import { Plus, DollarSign, Layers, ClipboardList } from 'lucide-react';
+import { Plus, Layers, ClipboardList } from 'lucide-react';
 
 export default async function RecipesPage() {
   const user = await getCurrentUser();

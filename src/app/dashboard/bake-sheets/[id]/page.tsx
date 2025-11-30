@@ -2,9 +2,9 @@ import { getCurrentUser } from '@/lib/clerk';
 import { redirect } from 'next/navigation';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { getBakeSheetById, completeBakeSheet } from '@/app/actions/bakeSheet';
+import { getBakeSheetById } from '@/app/actions/bakeSheet';
 import Link from 'next/link';
-import { CheckCircle2, Package, Clock, User } from 'lucide-react';
+import { CheckCircle2, Package, Clock } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { CompleteBakeSheetButton } from '@/components/bakeSheets/CompleteBakeSheetButton';
 

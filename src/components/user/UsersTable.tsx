@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 interface User {
   id: string;
@@ -69,7 +70,7 @@ export function UsersTable({ users, currentUserId }: UsersTableProps) {
                     <div className="avatar">
                       <div className="w-10 rounded-full">
                         {u.imageUrl ? (
-                          <img src={u.imageUrl} alt={u.name || u.email} />
+                          <Image src={u.imageUrl} alt={u.name || u.email} width={40} height={40} className="rounded-full" />
                         ) : (
                           <div className="bg-neutral text-neutral-content rounded-full w-10 h-10 flex items-center justify-center">
                             <span className="text-sm">

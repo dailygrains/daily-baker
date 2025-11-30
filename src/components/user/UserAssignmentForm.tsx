@@ -66,7 +66,7 @@ export function UserAssignmentForm({
   }
 
   // Handle bakery assignment
-  const handleAssignBakery = async (bakeryId: string | null, bakeryName?: string) => {
+  const handleAssignBakery = async (bakeryId: string | null) => {
     if (!bakeryId) return;
 
     setIsSubmitting(true);

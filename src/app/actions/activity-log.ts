@@ -3,7 +3,6 @@
 import { db } from '@/lib/db';
 import { getCurrentUser } from '@/lib/clerk';
 import { ActivityType } from '@/generated/prisma';
-import { revalidatePath } from 'next/cache';
 import type { InputJsonObject } from '@prisma/client/runtime/library';
 
 /**

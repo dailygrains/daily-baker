@@ -4,7 +4,7 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { getVendorById } from '@/app/actions/vendor';
 import Link from 'next/link';
-import { Edit, Mail, Phone, Globe, MapPin, Package, Wrench, FileText } from 'lucide-react';
+import { Edit, Mail, Phone, Globe, Package, Wrench, FileText } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 export default async function VendorDetailPage({

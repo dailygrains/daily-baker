@@ -7,7 +7,6 @@ import {
   BarChart3,
   TrendingUp,
   Package,
-  AlertCircle,
   Calendar,
   Wheat,
   Users,

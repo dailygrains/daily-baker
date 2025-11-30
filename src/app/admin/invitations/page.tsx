@@ -4,7 +4,7 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { redirect } from 'next/navigation';
 import { getAllInvitations, revokeInvitation } from '@/app/actions/invitation';
-import { Mail, Plus, Copy, X, Clock, CheckCircle2, XCircle, RefreshCw } from 'lucide-react';
+import { Mail, Plus, Copy, X, Clock, CheckCircle2, XCircle } from 'lucide-react';
 import Link from 'next/link';
 
 export default async function InvitationsPage() {

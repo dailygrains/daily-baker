@@ -4,7 +4,7 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { getEquipmentByBakery } from '@/app/actions/equipment';
 import Link from 'next/link';
-import { Plus, Wrench, DollarSign, Package } from 'lucide-react';
+import { Plus, Package } from 'lucide-react';
 
 export default async function EquipmentPage() {
   const user = await getCurrentUser();

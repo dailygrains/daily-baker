@@ -8,7 +8,6 @@ import {
   ShoppingCart,
   Users,
   Settings,
-  ChevronLeft,
   Menu,
   Wheat,
   Mail,
@@ -31,7 +30,6 @@ export function DashboardLayout({
   children,
   userName,
   userEmail,
-  bakeryName,
   userRole,
   isPlatformAdmin = false
 }: DashboardLayoutProps) {

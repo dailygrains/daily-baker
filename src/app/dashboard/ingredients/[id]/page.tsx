@@ -2,9 +2,9 @@ import { getCurrentUser } from '@/lib/clerk';
 import { redirect } from 'next/navigation';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { getIngredientById, deleteIngredient } from '@/app/actions/ingredient';
+import { getIngredientById } from '@/app/actions/ingredient';
 import Link from 'next/link';
-import { Edit, Trash2, Package, TrendingUp, DollarSign } from 'lucide-react';
+import { Edit, Package, TrendingUp, DollarSign } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 export default async function IngredientDetailPage({
