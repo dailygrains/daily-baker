@@ -200,7 +200,7 @@ export async function getInventoryTransactionsByBakery(
 
     const where: {
       ingredient: { bakeryId: string };
-      type?: string;
+      type?: import('@/generated/prisma').TransactionType;
       ingredientId?: string;
       createdAt?: { gte?: Date; lte?: Date };
     } = {
@@ -211,7 +211,7 @@ export async function getInventoryTransactionsByBakery(
 
     // Apply filters
     if (filters?.type) {
-      where.type = filters.type;
+      where.type = filters.type as import('@/generated/prisma').TransactionType;
     }
     if (filters?.ingredientId) {
       where.ingredientId = filters.ingredientId;

@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { getCurrentUser } from '@/lib/clerk';
 import { ActivityType } from '@/generated/prisma';
 import { revalidatePath } from 'next/cache';
+import type { InputJsonObject } from '@prisma/client/runtime/library';
 
 /**
  * Helper function to create an activity log entry
@@ -29,7 +30,7 @@ export async function createActivityLog(data: {
         entityId: data.entityId || null,
         entityName: data.entityName || null,
         description: data.description,
-        metadata: (data.metadata as Record<string, unknown>) || null,
+        metadata: data.metadata as InputJsonObject | undefined,
       },
     });
 
