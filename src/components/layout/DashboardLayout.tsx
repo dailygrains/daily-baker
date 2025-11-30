@@ -13,7 +13,8 @@ import {
   Mail,
   Activity,
   BarChart3,
-  Wrench
+  Wrench,
+  Shield
 } from 'lucide-react';
 import { ReactNode } from 'react';
 
@@ -167,6 +168,12 @@ export function DashboardLayout({
                     <Link href="/admin/invitations" className="gap-3">
                       <Mail className="h-5 w-5" />
                       Invitations
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/admin/roles" className="gap-3">
+                      <Shield className="h-5 w-5" />
+                      Roles
                     </Link>
                   </li>
                   <li>

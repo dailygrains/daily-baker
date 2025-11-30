@@ -7,7 +7,7 @@ import type { Role, Bakery } from '@/generated/prisma';
 
 interface RoleFormProps {
   role?: Role;
-  bakery: Bakery;
+  bakery?: Bakery;
   mode: 'create' | 'edit';
 }
 
@@ -92,7 +92,10 @@ export function RoleForm({ role, bakery, mode }: RoleFormProps) {
         });
 
     if (result.success) {
-      router.push(`/admin/bakeries/${bakery.id}/roles`);
+      const redirectPath = bakery
+        ? `/admin/bakeries/${bakery.id}/roles`
+        : '/admin/roles';
+      router.push(redirectPath);
       router.refresh();
     } else {
       setError(result.error || 'An error occurred');
