@@ -360,6 +360,10 @@ export async function getIngredientById(id: string) {
         ...ingredient,
         currentQty: ingredient.currentQty.toNumber(),
         costPerUnit: ingredient.costPerUnit.toNumber(),
+        transactions: ingredient.transactions?.map(t => ({
+          ...t,
+          quantity: t.quantity.toNumber(),
+        })),
       },
     };
   } catch (error) {

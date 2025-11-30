@@ -401,6 +401,7 @@ async function main() {
       { ingredientId: milk.id, vendorId: dairyVendor.id },
       { ingredientId: eggs.id, vendorId: dairyVendor.id },
       { ingredientId: sugar.id, vendorId: flourVendor.id },
+      { ingredientId: water.id, vendorId: flourVendor.id },
     ],
   });
 

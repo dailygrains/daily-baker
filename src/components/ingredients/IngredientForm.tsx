@@ -78,10 +78,6 @@ export function IngredientForm({
     }
   }, [hasUnsavedChanges, onUnsavedChangesChange]);
 
-  const handleInputChange = () => {
-    setHasUnsavedChanges(true);
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -172,7 +168,7 @@ export function IngredientForm({
   };
 
   return (
-    <form ref={formRef} onSubmit={handleSubmit} onChange={handleInputChange} className="max-w-3xl mx-auto space-y-8">
+    <form ref={formRef} onSubmit={handleSubmit} className="max-w-3xl mx-auto space-y-8">
       {error && (
         <div className="alert alert-error">
           <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
@@ -191,7 +187,10 @@ export function IngredientForm({
             type="text"
             className="input input-bordered w-full"
             value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            onChange={(e) => {
+              setFormData({ ...formData, name: e.target.value });
+              setHasUnsavedChanges(true);
+            }}
             required
             maxLength={100}
             placeholder="e.g., All-Purpose Flour"
@@ -211,9 +210,10 @@ export function IngredientForm({
               min="0"
               className="input input-bordered w-full"
               value={formData.currentQty}
-              onChange={(e) =>
-                setFormData({ ...formData, currentQty: parseFloat(e.target.value) || 0 })
-              }
+              onChange={(e) => {
+                setFormData({ ...formData, currentQty: parseFloat(e.target.value) || 0 });
+                setHasUnsavedChanges(true);
+              }}
               required
             />
           </fieldset>
@@ -223,7 +223,10 @@ export function IngredientForm({
             <select
               className="select select-bordered w-full"
               value={formData.unit}
-              onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
+              onChange={(e) => {
+                setFormData({ ...formData, unit: e.target.value });
+                setHasUnsavedChanges(true);
+              }}
               required
             >
               <option value="">Select unit</option>
@@ -257,9 +260,10 @@ export function IngredientForm({
               min="0"
               className="input input-bordered w-full pl-8"
               value={formData.costPerUnit}
-              onChange={(e) =>
-                setFormData({ ...formData, costPerUnit: parseFloat(e.target.value) || 0 })
-              }
+              onChange={(e) => {
+                setFormData({ ...formData, costPerUnit: parseFloat(e.target.value) || 0 });
+                setHasUnsavedChanges(true);
+              }}
               required
               placeholder="0.00"
             />

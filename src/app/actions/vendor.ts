@@ -323,7 +323,25 @@ export async function getVendorById(id: string) {
       };
     }
 
-    return { success: true, data: vendor };
+    // Serialize Decimal fields for client components
+    return {
+      success: true,
+      data: {
+        ...vendor,
+        ingredients: vendor.ingredients.map(iv => ({
+          ...iv,
+          ingredient: {
+            ...iv.ingredient,
+            currentQty: iv.ingredient.currentQty.toNumber(),
+            costPerUnit: iv.ingredient.costPerUnit.toNumber(),
+          },
+        })),
+        equipment: vendor.equipment.map(e => ({
+          ...e,
+          cost: e.cost ? e.cost.toNumber() : null,
+        })),
+      },
+    };
   } catch (error) {
     console.error('Failed to fetch vendor:', error);
     return {
