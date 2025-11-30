@@ -19,7 +19,23 @@ export default async function RolesPage() {
   }
 
   const rolesResult = await getAllRoles();
-  const roles = rolesResult.success ? rolesResult.data || [] : [];
+
+  if (!rolesResult.success) {
+    return (
+      <DashboardLayout
+        userName={user.name || undefined}
+        userEmail={user.email}
+        isPlatformAdmin={true}
+      >
+        <PageHeader title="Platform Roles" />
+        <div className="alert alert-error">
+          <span>{rolesResult.error || 'Failed to load roles'}</span>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  const roles = rolesResult.data || [];
 
   return (
     <DashboardLayout
