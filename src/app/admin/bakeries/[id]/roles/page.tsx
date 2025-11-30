@@ -4,7 +4,7 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { redirect } from 'next/navigation';
 import { getBakeryById } from '@/app/actions/bakery';
-import { getRolesByBakery } from '@/app/actions/role';
+import { getAllRoles } from '@/app/actions/user';
 import { Shield, Plus, Edit, Trash2, Users } from 'lucide-react';
 import Link from 'next/link';
 
@@ -27,7 +27,7 @@ export default async function BakeryRolesPage({
 
   const [bakeryResult, rolesResult] = await Promise.all([
     getBakeryById(id),
-    getRolesByBakery(id),
+    getAllRoles(),
   ]);
 
   if (!bakeryResult.success || !bakeryResult.data) {
@@ -55,8 +55,8 @@ export default async function BakeryRolesPage({
       isPlatformAdmin={true}
     >
       <PageHeader
-        title={`Roles for ${bakery.name}`}
-        description="Manage roles and permissions for this bakery"
+        title="Platform Roles"
+        description={`Manage platform-wide roles and permissions (viewed from ${bakery.name})`}
         actions={
           <Link href={`/admin/bakeries/${id}/roles/new`} className="btn btn-primary">
             <Plus className="h-5 w-5 mr-2" />

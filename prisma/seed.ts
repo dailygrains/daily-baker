@@ -69,13 +69,12 @@ async function main() {
   console.log(`✅ Created ${3} bakeries\n`);
 
   // ==========================================================================
-  // Create Roles
+  // Create Platform-Wide Roles
   // ==========================================================================
-  console.log('👔 Creating roles...');
+  console.log('👔 Creating platform-wide roles...');
 
-  const artisanOwnerRole = await prisma.role.create({
+  const ownerRole = await prisma.role.create({
     data: {
-      bakeryId: artisanBakery.id,
       name: 'Owner',
       description: 'Full access to all bakery operations',
       permissions: {
@@ -91,9 +90,8 @@ async function main() {
     },
   });
 
-  const artisanManagerRole = await prisma.role.create({
+  const managerRole = await prisma.role.create({
     data: {
-      bakeryId: artisanBakery.id,
       name: 'Manager',
       description: 'Manage daily operations',
       permissions: {
@@ -107,9 +105,8 @@ async function main() {
     },
   });
 
-  const artisanBakerRole = await prisma.role.create({
+  const bakerRole = await prisma.role.create({
     data: {
-      bakeryId: artisanBakery.id,
       name: 'Baker',
       description: 'Execute baking operations',
       permissions: {
@@ -121,25 +118,7 @@ async function main() {
     },
   });
 
-  const sweetTreatsOwnerRole = await prisma.role.create({
-    data: {
-      bakeryId: sweetTreats.id,
-      name: 'Owner',
-      description: 'Full access to all bakery operations',
-      permissions: {
-        bakery: { manage: true },
-        users: { invite: true, manage: true },
-        recipes: { create: true, edit: true, delete: true },
-        inventory: { view: true, edit: true, order: true },
-        production: { view: true, create: true, complete: true },
-        reports: { view: true, export: true },
-        equipment: { view: true, edit: true },
-        vendors: { view: true, edit: true },
-      },
-    },
-  });
-
-  console.log(`✅ Created ${4} roles\n`);
+  console.log(`✅ Created ${3} platform-wide roles\n`);
 
   // ==========================================================================
   // Create Users
@@ -163,7 +142,7 @@ async function main() {
       clerkId: 'user_artisan_owner',
       email: 'owner@artisansourdough.com',
       name: 'Sarah Johnson',
-      roleId: artisanOwnerRole.id,
+      roleId: ownerRole.id,
       isPlatformAdmin: false,
       lastLoginAt: new Date(),
       bakeries: {
@@ -179,7 +158,7 @@ async function main() {
       clerkId: 'user_artisan_manager',
       email: 'manager@artisansourdough.com',
       name: 'Michael Chen',
-      roleId: artisanManagerRole.id,
+      roleId: managerRole.id,
       isPlatformAdmin: false,
       lastLoginAt: new Date(),
       bakeries: {
@@ -195,7 +174,7 @@ async function main() {
       clerkId: 'user_artisan_baker',
       email: 'baker@artisansourdough.com',
       name: 'Emma Rodriguez',
-      roleId: artisanBakerRole.id,
+      roleId: bakerRole.id,
       isPlatformAdmin: false,
       lastLoginAt: new Date(),
       bakeries: {
@@ -212,7 +191,7 @@ async function main() {
       clerkId: 'user_sweetreats_owner',
       email: 'owner@sweettreats.com',
       name: 'David Martinez',
-      roleId: sweetTreatsOwnerRole.id,
+      roleId: ownerRole.id,
       isPlatformAdmin: false,
       lastLoginAt: new Date(),
       bakeries: {

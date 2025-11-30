@@ -49,8 +49,8 @@ export default async function NewRolePage({
       isPlatformAdmin={true}
     >
       <PageHeader
-        title={`Create Role for ${bakery.name}`}
-        description="Define a new role with specific permissions"
+        title="Create Platform Role"
+        description="Define a new platform-wide role with specific permissions"
         actions={
           <Link href={`/admin/bakeries/${id}/roles`} className="btn btn-ghost">
             <ArrowLeft className="h-5 w-5 mr-2" />

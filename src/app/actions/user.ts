@@ -470,6 +470,11 @@ export async function getAllRoles() {
     }
 
     const roles = await db.role.findMany({
+      include: {
+        _count: {
+          select: { users: true },
+        },
+      },
       orderBy: {
         name: 'asc',
       },

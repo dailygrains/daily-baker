@@ -80,7 +80,6 @@ export function RoleForm({ role, bakery, mode }: RoleFormProps) {
 
     const result = mode === 'create'
       ? await createRole({
-          bakeryId: bakery.id,
           name,
           description,
           permissions,

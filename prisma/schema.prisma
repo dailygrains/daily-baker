@@ -38,7 +38,6 @@ model Bakery {
   vendors      Vendor[]
   equipment    Equipment[]
   bakeSheets   BakeSheet[]
-  roles        Role[]
   invitations  Invitation[]
   activityLogs ActivityLog[]
 
@@ -117,9 +116,7 @@ enum InvitationStatus {
 
 model Role {
   id          String   @id @default(cuid())
-  bakeryId    String
-  bakery      Bakery   @relation(fields: [bakeryId], references: [id], onDelete: Cascade)
-  name        String // "Head Baker", "Inventory Manager", etc.
+  name        String   @unique // "Owner", "Head Baker", "Inventory Manager", etc.
   description String?
   permissions Json // { "recipes.read": true, "recipes.write": true, ... }
   createdAt   DateTime @default(now())
@@ -129,8 +126,6 @@ model Role {
   users       User[]
   invitations Invitation[]
 
-  @@unique([bakeryId, name])
-  @@index([bakeryId])
   @@map("roles")
 }
 
