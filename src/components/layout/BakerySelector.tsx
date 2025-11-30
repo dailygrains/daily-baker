@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ChevronDown, Building2, Check } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
@@ -17,22 +17,28 @@ interface BakerySelectorProps {
 export function BakerySelector({ bakeries, currentBakeryId }: BakerySelectorProps) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
+  const [pendingBakeryId, setPendingBakeryId] = useState<string | null>(null);
 
-  // Only show selector if user has multiple bakeries
-  if (bakeries.length <= 1) {
+  // Handle cookie setting in useEffect to satisfy ESLint
+  useEffect(() => {
+    if (pendingBakeryId) {
+      document.cookie = `selectedBakeryId=${pendingBakeryId}; path=/; max-age=31536000; SameSite=Lax`;
+      router.refresh();
+      // No need to reset pendingBakeryId since page will refresh
+    }
+  }, [pendingBakeryId, router]);
+
+  // Don't show if no bakeries assigned
+  if (bakeries.length === 0) {
     return null;
   }
 
   const currentBakery = bakeries.find(b => b.id === currentBakeryId) || bakeries[0];
+  const hasMultipleBakeries = bakeries.length > 1;
 
   const handleBakeryChange = async (bakeryId: string) => {
     setIsOpen(false);
-
-    // Set cookie to persist selected bakery
-    document.cookie = `selectedBakeryId=${bakeryId}; path=/; max-age=31536000; SameSite=Lax`;
-
-    // Refresh the page to apply the change
-    router.refresh();
+    setPendingBakeryId(bakeryId);
   };
 
   return (
@@ -41,17 +47,20 @@ export function BakerySelector({ bakeries, currentBakeryId }: BakerySelectorProp
         <button
           type="button"
           tabIndex={0}
-          onClick={() => setIsOpen(!isOpen)}
+          onClick={() => hasMultipleBakeries && setIsOpen(!isOpen)}
+          disabled={!hasMultipleBakeries}
           className="btn btn-ghost btn-sm w-full justify-between normal-case font-normal"
         >
           <div className="flex items-center gap-2 flex-1 min-w-0">
             <Building2 className="h-4 w-4 flex-shrink-0" />
             <span className="truncate text-sm">{currentBakery.name}</span>
           </div>
-          <ChevronDown className={`h-4 w-4 flex-shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+          {hasMultipleBakeries && (
+            <ChevronDown className={`h-4 w-4 flex-shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+          )}
         </button>
 
-        {isOpen && (
+        {isOpen && hasMultipleBakeries && (
           <ul
             tabIndex={0}
             className="dropdown-content z-[1] menu p-2 shadow-lg bg-base-100 rounded-box w-full mt-1 border border-base-300 max-h-60 overflow-y-auto"
