@@ -312,7 +312,7 @@ export function BakeryForm({
                   Currently Assigned ({assignedUsers.length})
                 </span>
               </div>
-              <div className="space-y-2">
+              <div>
                 {assignedUsers.map((user) => (
                   <div
                     key={user.id}
