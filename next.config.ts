@@ -5,6 +5,19 @@ const nextConfig: NextConfig = {
   transpilePackages: ['@mdxeditor/editor'],
   // Enable Turbopack explicitly (Next.js 16 default)
   turbopack: {},
+  // Configure allowed image domains
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'img.clerk.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'images.clerk.dev',
+      },
+    ],
+  },
   // Webpack config for production builds
   webpack: (config) => {
     config.experiments = {

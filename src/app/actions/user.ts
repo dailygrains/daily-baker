@@ -113,6 +113,23 @@ export async function assignUserToBakery(userId: string, bakeryId: string) {
       };
     }
 
+    // Check if assignment already exists
+    const existingAssignment = await db.userBakery.findUnique({
+      where: {
+        userId_bakeryId: {
+          userId,
+          bakeryId,
+        },
+      },
+    });
+
+    if (existingAssignment) {
+      return {
+        success: false,
+        error: 'User is already assigned to this bakery',
+      };
+    }
+
     // Create the bakery assignment
     await db.userBakery.create({
       data: {

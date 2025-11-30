@@ -30,13 +30,9 @@ export async function GET(request: NextRequest) {
       include: {
         bakeries: {
           select: {
-            bakery: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
+            bakeryId: true,
           },
+          take: 1, // Only need first bakery for display
         },
         role: {
           select: {
@@ -52,9 +48,30 @@ export async function GET(request: NextRequest) {
       ],
     });
 
+    // Transform data to flatten bakery structure and fetch only needed bakery names
+    const bakeryIds = [...new Set(users.map(u => u.bakeries[0]?.bakeryId).filter(Boolean))];
+    const bakeries = bakeryIds.length > 0
+      ? await db.bakery.findMany({
+          where: { id: { in: bakeryIds } },
+          select: { id: true, name: true },
+        })
+      : [];
+
+    const bakeryMap = new Map(bakeries.map(b => [b.id, b]));
+
+    const transformedUsers = users.map(user => ({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      bakery: user.bakeries[0]?.bakeryId
+        ? bakeryMap.get(user.bakeries[0].bakeryId) || null
+        : null,
+      role: user.role,
+    }));
+
     return NextResponse.json({
       success: true,
-      data: users,
+      data: transformedUsers,
     });
   } catch (error) {
     console.error('Error searching users:', error);

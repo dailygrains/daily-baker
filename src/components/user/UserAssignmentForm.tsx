@@ -225,9 +225,6 @@ export function UserAssignmentForm({
               </option>
             ))}
           </select>
-          <label className="label">
-            <span className="label-text-alt">Assign a role to this user</span>
-          </label>
         </fieldset>
       </div>
 

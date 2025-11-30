@@ -205,7 +205,7 @@ export async function getInventoryTransactionsByBakery(
       createdAt?: { gte?: Date; lte?: Date };
     } = {
       ingredient: {
-        bakeryId: bakeryId,
+        bakeryId,
       },
     };
 

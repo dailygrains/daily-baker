@@ -316,9 +316,9 @@ export function UserAutocomplete({
                       )}
                       <div className="text-xs text-base-content/50 truncate mt-1">
                         {user.bakery ? (
-                          <span>Currently assigned to: {user.bakery.name}</span>
+                          <span>Assigned to: {user.bakery.name}</span>
                         ) : (
-                          <span>Not assigned to any bakery</span>
+                          <span>No bakery assignments</span>
                         )}
                       </div>
                     </div>

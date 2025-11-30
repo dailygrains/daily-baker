@@ -55,9 +55,17 @@ export async function getCurrentUser() {
     });
   }
 
-  // Transform user object to add convenience properties
-  // Get the first bakery (for now, assuming single bakery per user)
+  // Transform user object to add convenience properties for backward compatibility
+  // IMPORTANT: The schema supports many-to-many user-bakery relationships,
+  // but we return only the first bakery here to maintain backward compatibility
+  // with existing code that expects a single bakery. This is temporary until
+  // full multi-bakery support is implemented throughout the application.
   const firstBakery = user.bakeries[0];
+
+  // Log warning if user has multiple bakeries (helps identify when migration is needed)
+  if (user.bakeries.length > 1) {
+    console.warn(`User ${user.id} has ${user.bakeries.length} bakeries assigned, but only returning the first one due to backward compatibility`);
+  }
 
   return {
     ...user,
