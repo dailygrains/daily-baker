@@ -168,7 +168,7 @@ export function UserAssignmentForm({
             <div className="label">
               <span className="label-text-alt">Currently Assigned ({assignedBakeries.length})</span>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-3">
               {assignedBakeries.map((bakery) => (
                 <div key={bakery.id} className="flex items-center justify-between gap-3 bg-base-200 rounded-lg p-3">
                   <div className="flex-1 min-w-0">
