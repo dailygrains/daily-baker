@@ -22,6 +22,8 @@ export default async function NewBakeryPage() {
       userName={user.name || undefined}
       userEmail={user.email}
       isPlatformAdmin={true}
+        bakeries={user.allBakeries}
+        currentBakeryId={user.bakeryId}
     >
       <PageHeader
         title="Create New Bakery"

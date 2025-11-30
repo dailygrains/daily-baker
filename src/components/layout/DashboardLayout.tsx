@@ -79,8 +79,8 @@ export function DashboardLayout({
               </Link>
             </div>
 
-            {/* Bakery Selector - only show for non-platform admin users with multiple bakeries */}
-            {!isPlatformAdmin && <BakerySelector bakeries={bakeries} currentBakeryId={currentBakeryId ?? null} />}
+            {/* Bakery Selector - show for all users to select bakery context */}
+            <BakerySelector bakeries={bakeries} currentBakeryId={currentBakeryId ?? null} />
           </div>
 
           {/* Navigation Menu */}

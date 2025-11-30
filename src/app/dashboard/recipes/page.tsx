@@ -21,7 +21,11 @@ export default async function RecipesPage() {
 
   if (!recipesResult.success) {
     return (
-      <DashboardLayout isPlatformAdmin={user.isPlatformAdmin}>
+      <DashboardLayout
+        isPlatformAdmin={user.isPlatformAdmin}
+        bakeries={user.allBakeries}
+        currentBakeryId={user.bakeryId}
+      >
         <div className="alert alert-error">
           <span>{recipesResult.error}</span>
         </div>
@@ -35,7 +39,11 @@ export default async function RecipesPage() {
   const avgCost = totalRecipes > 0 ? (Number(totalCost) / totalRecipes).toFixed(2) : '0.00';
 
   return (
-    <DashboardLayout isPlatformAdmin={user.isPlatformAdmin}>
+    <DashboardLayout
+      isPlatformAdmin={user.isPlatformAdmin}
+      bakeries={user.allBakeries}
+      currentBakeryId={user.bakeryId}
+    >
       <div className="space-y-6">
         <PageHeader
           title="Recipes"

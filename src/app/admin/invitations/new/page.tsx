@@ -32,6 +32,8 @@ export default async function NewInvitationPage() {
       userName={user.name || undefined}
       userEmail={user.email}
       isPlatformAdmin={true}
+        bakeries={user.allBakeries}
+        currentBakeryId={user.bakeryId}
     >
       <PageHeader
         title="Send Invitation"

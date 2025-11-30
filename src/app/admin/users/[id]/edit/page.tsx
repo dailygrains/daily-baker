@@ -35,6 +35,8 @@ export default async function EditUserPage({
         userName={currentUser.name || undefined}
         userEmail={currentUser.email}
         isPlatformAdmin={true}
+        bakeries={currentUser.allBakeries}
+        currentBakeryId={currentUser.bakeryId}
       >
         <PageHeader title="Edit User" />
         <div className="alert alert-error">

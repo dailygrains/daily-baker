@@ -36,7 +36,11 @@ export default async function IngredientDetailPage({
   const isLowStock = currentQty < 100;
 
   return (
-    <DashboardLayout isPlatformAdmin={user.isPlatformAdmin}>
+    <DashboardLayout
+        isPlatformAdmin={user.isPlatformAdmin}
+        bakeries={user.allBakeries}
+        currentBakeryId={user.bakeryId}
+      >
       <div className="space-y-6">
         <PageHeader
           title={ingredient.name}

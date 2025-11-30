@@ -29,7 +29,11 @@ export default async function NewIngredientPage() {
   });
 
   return (
-    <DashboardLayout isPlatformAdmin={user.isPlatformAdmin}>
+    <DashboardLayout
+        isPlatformAdmin={user.isPlatformAdmin}
+        bakeries={user.allBakeries}
+        currentBakeryId={user.bakeryId}
+      >
       <div className="max-w-2xl mx-auto space-y-6">
         <PageHeader
           title="Add New Ingredient"

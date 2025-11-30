@@ -36,7 +36,11 @@ export default async function BakeSheetDetailPage({
   const scaledCost = recipeTotalCost * scale;
 
   return (
-    <DashboardLayout isPlatformAdmin={user.isPlatformAdmin}>
+    <DashboardLayout
+        isPlatformAdmin={user.isPlatformAdmin}
+        bakeries={user.allBakeries}
+        currentBakeryId={user.bakeryId}
+      >
       <div className="space-y-6">
         <PageHeader
           title={`${bakeSheet.quantity} of ${bakeSheet.recipe.name}`}

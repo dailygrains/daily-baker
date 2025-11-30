@@ -26,6 +26,8 @@ export default async function UsersPage() {
         userName={user.name || undefined}
         userEmail={user.email}
         isPlatformAdmin={true}
+        bakeries={user.allBakeries}
+        currentBakeryId={user.bakeryId}
       >
         <PageHeader
           title="Users"
@@ -45,6 +47,8 @@ export default async function UsersPage() {
       userName={user.name || undefined}
       userEmail={user.email}
       isPlatformAdmin={true}
+        bakeries={user.allBakeries}
+        currentBakeryId={user.bakeryId}
     >
       <PageHeader
         title="Users"

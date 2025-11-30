@@ -68,30 +68,65 @@ export async function getCurrentUser() {
 
   // Find the selected bakery or fall back to first bakery
   let currentBakery = user.bakeries[0];
-  if (selectedBakeryId && user.bakeries.length > 1) {
-    const selected = user.bakeries.find(ub => ub.bakeryId === selectedBakeryId);
-    if (selected) {
-      currentBakery = selected;
+  let currentBakeryData = currentBakery?.bakery;
+  let currentBakeryIdValue = currentBakery?.bakeryId;
+
+  if (selectedBakeryId) {
+    if (user.isPlatformAdmin) {
+      // Platform admins can select any bakery, even if not assigned
+      const selectedBakery = await prisma.bakery.findUnique({
+        where: { id: selectedBakeryId },
+      });
+      if (selectedBakery) {
+        currentBakeryData = selectedBakery;
+        currentBakeryIdValue = selectedBakery.id;
+      }
+    } else if (user.bakeries.length > 1) {
+      // Regular users can only select from their assigned bakeries
+      const selected = user.bakeries.find(ub => ub.bakeryId === selectedBakeryId);
+      if (selected) {
+        currentBakery = selected;
+        currentBakeryData = selected.bakery;
+        currentBakeryIdValue = selected.bakeryId;
+      }
     }
   }
 
   // Log warning if user has multiple bakeries (helps identify when migration is needed)
-  if (user.bakeries.length > 1) {
+  if (user.bakeries.length > 1 && !user.isPlatformAdmin) {
     console.warn(
       `User ${user.id} has ${user.bakeries.length} bakeries assigned. ` +
-      `Using bakery: ${currentBakery?.bakery?.name} (${currentBakery?.bakeryId})`
+      `Using bakery: ${currentBakeryData?.name} (${currentBakeryIdValue})`
     );
+  }
+
+  // Platform admins should see ALL bakeries, not just assigned ones
+  let allBakeries;
+  if (user.isPlatformAdmin) {
+    const allSystemBakeries = await prisma.bakery.findMany({
+      select: {
+        id: true,
+        name: true,
+      },
+      orderBy: {
+        name: 'asc',
+      },
+    });
+    allBakeries = allSystemBakeries;
+  } else {
+    // Regular users only see their assigned bakeries
+    allBakeries = user.bakeries.map(ub => ({
+      id: ub.bakery.id,
+      name: ub.bakery.name,
+    }));
   }
 
   return {
     ...user,
-    bakery: currentBakery?.bakery,
-    bakeryId: currentBakery?.bakeryId,
+    bakery: currentBakeryData,
+    bakeryId: currentBakeryIdValue,
     // Expose all bakeries for the selector
-    allBakeries: user.bakeries.map(ub => ({
-      id: ub.bakery.id,
-      name: ub.bakery.name,
-    })),
+    allBakeries,
   };
 }
 

@@ -46,9 +46,18 @@ export async function GET(
       );
     }
 
+    // Transform data to match the structure expected by the frontend
+    const transformedUser = {
+      id: targetUser.id,
+      name: targetUser.name,
+      email: targetUser.email,
+      bakeries: targetUser.bakeries.map(ub => ub.bakery),
+      role: targetUser.role,
+    };
+
     return NextResponse.json({
       success: true,
-      data: targetUser,
+      data: transformedUser,
     });
   } catch (error) {
     console.error('Error fetching user:', error);

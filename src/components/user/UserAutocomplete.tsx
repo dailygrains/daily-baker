@@ -7,10 +7,10 @@ interface User {
   id: string;
   name: string | null;
   email: string;
-  bakery: {
+  bakeries: {
     id: string;
     name: string;
-  } | null;
+  }[];
   role: {
     id: string;
     name: string;
@@ -315,10 +315,12 @@ export function UserAutocomplete({
                         </div>
                       )}
                       <div className="text-xs text-base-content/50 truncate mt-1">
-                        {user.bakery ? (
-                          <span>Primary bakery: {user.bakery.name}</span>
-                        ) : (
+                        {user.bakeries.length === 0 ? (
                           <span>No bakery assignments</span>
+                        ) : user.bakeries.length === 1 ? (
+                          <span>Assigned to: {user.bakeries[0].name}</span>
+                        ) : (
+                          <span>Assigned to {user.bakeries.length} bakeries: {user.bakeries.map(b => b.name).join(', ')}</span>
                         )}
                       </div>
                     </div>

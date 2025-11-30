@@ -21,7 +21,11 @@ export default async function VendorsPage() {
 
   if (!vendorsResult.success) {
     return (
-      <DashboardLayout isPlatformAdmin={user.isPlatformAdmin}>
+      <DashboardLayout
+        isPlatformAdmin={user.isPlatformAdmin}
+        bakeries={user.allBakeries}
+        currentBakeryId={user.bakeryId}
+      >
         <div className="alert alert-error">
           <span>{vendorsResult.error}</span>
         </div>
@@ -35,7 +39,11 @@ export default async function VendorsPage() {
   const vendorsWithPhone = vendors.filter((v) => v.phone).length;
 
   return (
-    <DashboardLayout isPlatformAdmin={user.isPlatformAdmin}>
+    <DashboardLayout
+      isPlatformAdmin={user.isPlatformAdmin}
+      bakeries={user.allBakeries}
+      currentBakeryId={user.bakeryId}
+    >
       <div className="space-y-6">
         <PageHeader
           title="Vendors"

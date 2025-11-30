@@ -27,6 +27,8 @@ export default async function BakeriesPage() {
         userName={user.name || undefined}
         userEmail={user.email}
         isPlatformAdmin={true}
+        bakeries={user.allBakeries}
+        currentBakeryId={user.bakeryId}
       >
         <PageHeader
           title="Bakeries"
@@ -46,6 +48,8 @@ export default async function BakeriesPage() {
       userName={user.name || undefined}
       userEmail={user.email}
       isPlatformAdmin={true}
+        bakeries={user.allBakeries}
+        currentBakeryId={user.bakeryId}
     >
       <PageHeader
         title="Bakeries"

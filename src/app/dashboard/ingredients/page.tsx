@@ -22,7 +22,11 @@ export default async function IngredientsPage() {
   const ingredients = ingredientsResult.success ? ingredientsResult.data! : [];
 
   return (
-    <DashboardLayout isPlatformAdmin={user.isPlatformAdmin}>
+    <DashboardLayout
+      isPlatformAdmin={user.isPlatformAdmin}
+      bakeries={user.allBakeries}
+      currentBakeryId={user.bakeryId}
+    >
       <div className="space-y-6">
         <PageHeader
           title="Ingredients"

@@ -29,6 +29,8 @@ export default async function EditRolePage({
         userName={user.name || undefined}
         userEmail={user.email}
         isPlatformAdmin={true}
+        bakeries={user.allBakeries}
+        currentBakeryId={user.bakeryId}
       >
         <PageHeader title="Edit Role" />
         <div className="alert alert-error">

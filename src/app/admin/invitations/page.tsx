@@ -26,6 +26,8 @@ export default async function InvitationsPage() {
         userName={user.name || undefined}
         userEmail={user.email}
         isPlatformAdmin={true}
+        bakeries={user.allBakeries}
+        currentBakeryId={user.bakeryId}
       >
         <PageHeader
           title="Invitations"
@@ -64,6 +66,8 @@ export default async function InvitationsPage() {
       userName={user.name || undefined}
       userEmail={user.email}
       isPlatformAdmin={true}
+        bakeries={user.allBakeries}
+        currentBakeryId={user.bakeryId}
     >
       <PageHeader
         title="Invitations"

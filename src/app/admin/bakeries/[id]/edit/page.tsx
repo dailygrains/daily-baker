@@ -25,7 +25,9 @@ export default async function EditBakeryPage({
 
   if (!result.success || !result.data) {
     return (
-      <DashboardLayout isPlatformAdmin={true}>
+      <DashboardLayout isPlatformAdmin={true}
+        bakeries={user.allBakeries}
+        currentBakeryId={user.bakeryId}>
         <PageHeader title="Edit Bakery" />
         <div className="alert alert-error">
           <span>{result.error || 'Bakery not found'}</span>

@@ -27,6 +27,8 @@ export default async function RolesPage() {
         userName={user.name || undefined}
         userEmail={user.email}
         isPlatformAdmin={true}
+        bakeries={user.allBakeries}
+        currentBakeryId={user.bakeryId}
       >
         <PageHeader title="Platform Roles" />
         <div className="alert alert-error">
@@ -43,6 +45,8 @@ export default async function RolesPage() {
       userName={user.name || undefined}
       userEmail={user.email}
       isPlatformAdmin={true}
+        bakeries={user.allBakeries}
+        currentBakeryId={user.bakeryId}
     >
       <PageHeader
         title="Platform Roles"

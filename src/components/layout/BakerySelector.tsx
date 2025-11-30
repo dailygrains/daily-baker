@@ -16,7 +16,6 @@ interface BakerySelectorProps {
 
 export function BakerySelector({ bakeries, currentBakeryId }: BakerySelectorProps) {
   const router = useRouter();
-  const [isOpen, setIsOpen] = useState(false);
   const [pendingBakeryId, setPendingBakeryId] = useState<string | null>(null);
 
   // Handle cookie setting in useEffect to satisfy ESLint
@@ -37,30 +36,27 @@ export function BakerySelector({ bakeries, currentBakeryId }: BakerySelectorProp
   const hasMultipleBakeries = bakeries.length > 1;
 
   const handleBakeryChange = async (bakeryId: string) => {
-    setIsOpen(false);
     setPendingBakeryId(bakeryId);
   };
 
   return (
     <div className="px-6 py-3 border-b border-base-300">
       <div className="dropdown dropdown-bottom w-full">
-        <button
-          type="button"
-          tabIndex={0}
-          onClick={() => hasMultipleBakeries && setIsOpen(!isOpen)}
-          disabled={!hasMultipleBakeries}
-          className="btn btn-ghost btn-sm w-full justify-between normal-case font-normal"
+        <div
+          tabIndex={hasMultipleBakeries ? 0 : -1}
+          role="button"
+          className={`btn btn-ghost btn-sm w-full justify-between normal-case font-normal ${!hasMultipleBakeries ? 'cursor-default' : ''}`}
         >
           <div className="flex items-center gap-2 flex-1 min-w-0">
             <Building2 className="h-4 w-4 flex-shrink-0" />
             <span className="truncate text-sm">{currentBakery.name}</span>
           </div>
           {hasMultipleBakeries && (
-            <ChevronDown className={`h-4 w-4 flex-shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+            <ChevronDown className="h-4 w-4 flex-shrink-0" />
           )}
-        </button>
+        </div>
 
-        {isOpen && hasMultipleBakeries && (
+        {hasMultipleBakeries && (
           <ul
             tabIndex={0}
             className="dropdown-content z-[1] menu p-2 shadow-lg bg-base-100 rounded-box w-full mt-1 border border-base-300 max-h-60 overflow-y-auto"

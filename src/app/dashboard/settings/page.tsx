@@ -15,7 +15,11 @@ export default async function SettingsPage() {
   // Platform admins have different settings
   if (user.isPlatformAdmin) {
     return (
-      <DashboardLayout isPlatformAdmin={true}>
+      <DashboardLayout
+        isPlatformAdmin={true}
+        bakeries={user.allBakeries}
+        currentBakeryId={user.bakeryId}
+      >
         <PageHeader
           title="Platform Settings"
           description="Configure platform-wide settings"
@@ -36,7 +40,10 @@ export default async function SettingsPage() {
   // Regular users must be assigned to a bakery
   if (!user.bakery) {
     return (
-      <DashboardLayout>
+      <DashboardLayout
+        bakeries={user.allBakeries}
+        currentBakeryId={user.bakeryId}
+      >
         <PageHeader
           title="Settings"
           description="Configure your bakery settings"
@@ -60,6 +67,8 @@ export default async function SettingsPage() {
       <DashboardLayout
         bakeryName={user.bakery.name}
         userRole={user.role?.name}
+        bakeries={user.allBakeries}
+        currentBakeryId={user.bakeryId}
       >
         <PageHeader
           title="Settings"
@@ -78,6 +87,8 @@ export default async function SettingsPage() {
     <DashboardLayout
       bakeryName={user.bakery.name}
       userRole={user.role?.name}
+      bakeries={user.allBakeries}
+      currentBakeryId={user.bakeryId}
     >
       <PageHeader
         title="Bakery Settings"

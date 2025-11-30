@@ -21,7 +21,11 @@ export default async function EquipmentPage() {
 
   if (!equipmentResult.success) {
     return (
-      <DashboardLayout isPlatformAdmin={user.isPlatformAdmin}>
+      <DashboardLayout
+        isPlatformAdmin={user.isPlatformAdmin}
+        bakeries={user.allBakeries}
+        currentBakeryId={user.bakeryId}
+      >
         <div className="alert alert-error">
           <span>{equipmentResult.error}</span>
         </div>
@@ -56,7 +60,11 @@ export default async function EquipmentPage() {
   };
 
   return (
-    <DashboardLayout isPlatformAdmin={user.isPlatformAdmin}>
+    <DashboardLayout
+      isPlatformAdmin={user.isPlatformAdmin}
+      bakeries={user.allBakeries}
+      currentBakeryId={user.bakeryId}
+    >
       <div className="space-y-6">
         <PageHeader
           title="Equipment"
