@@ -137,6 +137,7 @@ export function RecipesTable({ recipes }: RecipesTableProps) {
               className="join-item btn btn-sm"
               onClick={() => handlePageChange(currentPage - 1)}
               disabled={currentPage === 1}
+              aria-label="Previous page"
             >
               «
             </button>
@@ -147,6 +148,8 @@ export function RecipesTable({ recipes }: RecipesTableProps) {
                   currentPage === page ? 'btn-active' : ''
                 }`}
                 onClick={() => handlePageChange(page)}
+                aria-label={`Go to page ${page}`}
+                aria-current={currentPage === page ? 'page' : undefined}
               >
                 {page}
               </button>
@@ -155,6 +158,7 @@ export function RecipesTable({ recipes }: RecipesTableProps) {
               className="join-item btn btn-sm"
               onClick={() => handlePageChange(currentPage + 1)}
               disabled={currentPage === totalPages}
+              aria-label="Next page"
             >
               »
             </button>

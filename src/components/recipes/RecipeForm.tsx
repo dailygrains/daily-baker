@@ -53,6 +53,10 @@ export function RecipeForm({
 }: RecipeFormProps) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
+  // Track mounted state to prevent MDXEditor onChange callbacks from triggering
+  // state updates before the component is fully mounted or after unmount.
+  // MDXEditor can fire onChange during its initial render, which would cause
+  // React warnings about state updates on unmounted components.
   const isMounted = useRef(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -310,6 +314,7 @@ export function RecipeForm({
                       className="btn btn-sm"
                       onClick={() => moveSection(sectionIndex, 'up')}
                       disabled={sectionIndex === 0}
+                      aria-label={`Move ${section.name} section up`}
                     >
                       <ChevronUp className="h-4 w-4" />
                     </button>
@@ -318,6 +323,7 @@ export function RecipeForm({
                       className="btn btn-sm"
                       onClick={() => moveSection(sectionIndex, 'down')}
                       disabled={sectionIndex === sections.length - 1}
+                      aria-label={`Move ${section.name} section down`}
                     >
                       <ChevronDown className="h-4 w-4" />
                     </button>
@@ -327,6 +333,7 @@ export function RecipeForm({
                       type="button"
                       className="btn btn-error btn-sm"
                       onClick={() => removeSection(sectionIndex)}
+                      aria-label={`Delete ${section.name} section`}
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -376,6 +383,7 @@ export function RecipeForm({
                           type="button"
                           className="btn btn-error btn-sm"
                           onClick={() => removeIngredient(sectionIndex, ingredientIndex)}
+                          aria-label={`Remove ingredient from ${section.name}`}
                         >
                           <Trash2 className="h-3 w-3" />
                         </button>
