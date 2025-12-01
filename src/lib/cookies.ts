@@ -15,6 +15,8 @@ const COOKIE_DEFAULTS = {
     maxAge: 60 * 60 * 24 * 365, // 1 year
     path: '/',
     sameSite: 'lax' as const,
+    httpOnly: true, // Prevent XSS attacks
+    secure: process.env.NODE_ENV === 'production', // HTTPS only in production
   },
 };
 

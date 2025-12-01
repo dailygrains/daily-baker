@@ -32,7 +32,11 @@ export const useToastStore = create<ToastStore>((set, get) => ({
         get().removeToast(id);
       }, duration);
 
-      get().timeouts.set(id, timeoutId);
+      set((state) => {
+        const newTimeouts = new Map(state.timeouts);
+        newTimeouts.set(id, timeoutId);
+        return { timeouts: newTimeouts };
+      });
     }
 
     return id;
@@ -43,11 +47,15 @@ export const useToastStore = create<ToastStore>((set, get) => ({
 
     if (timeoutId) {
       clearTimeout(timeoutId);
-      timeouts.delete(id);
     }
 
-    set((state) => ({
-      toasts: state.toasts.filter((t) => t.id !== id),
-    }));
+    set((state) => {
+      const newTimeouts = new Map(state.timeouts);
+      newTimeouts.delete(id);
+      return {
+        toasts: state.toasts.filter((t) => t.id !== id),
+        timeouts: newTimeouts,
+      };
+    });
   },
 }));
