@@ -45,6 +45,7 @@ export const MDXEditor = forwardRef<MDXEditorMethods, MDXEditorProps>(
           onChange={onChange}
           placeholder={placeholder}
           readOnly={readOnly}
+          contentEditableClassName="prose max-w-none"
           plugins={[
             headingsPlugin(),
             listsPlugin(),

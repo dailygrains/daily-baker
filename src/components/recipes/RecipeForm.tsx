@@ -1,16 +1,22 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createRecipe, updateRecipe } from '@/app/actions/recipe';
 import { Plus, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
 import { MDXEditor } from '@/components/ui/MDXEditor';
 import type { Recipe, RecipeSection, RecipeSectionIngredient, Ingredient } from '@/generated/prisma';
 
-type RecipeWithSections = Recipe & {
-  sections: (RecipeSection & {
-    ingredients: (RecipeSectionIngredient & {
-      ingredient: Pick<Ingredient, 'id' | 'name' | 'unit' | 'costPerUnit'>;
+type RecipeWithSections = Omit<Recipe, 'totalCost'> & {
+  totalCost: string | Recipe['totalCost'];
+  sections: (Omit<RecipeSection, 'createdAt' | 'updatedAt' | 'ingredients'> & {
+    createdAt?: Date;
+    updatedAt?: Date;
+    ingredients: (Omit<RecipeSectionIngredient, 'quantity' | 'ingredient'> & {
+      quantity: string | RecipeSectionIngredient['quantity'];
+      ingredient: Pick<Ingredient, 'id' | 'name' | 'unit'> & {
+        costPerUnit: string | Ingredient['costPerUnit'];
+      };
     })[];
   })[];
 };
@@ -19,6 +25,9 @@ interface RecipeFormProps {
   bakeryId: string;
   recipe?: RecipeWithSections;
   availableIngredients: Array<{ id: string; name: string; unit: string }>;
+  onFormRefChange?: (ref: HTMLFormElement | null) => void;
+  onSavingChange?: (isSaving: boolean) => void;
+  showBottomActions?: boolean;
 }
 
 interface SectionFormData {
@@ -34,8 +43,17 @@ interface SectionFormData {
   }>;
 }
 
-export function RecipeForm({ bakeryId, recipe, availableIngredients }: RecipeFormProps) {
+export function RecipeForm({
+  bakeryId,
+  recipe,
+  availableIngredients,
+  onFormRefChange,
+  onSavingChange,
+  showBottomActions = true,
+}: RecipeFormProps) {
   const router = useRouter();
+  const formRef = useRef<HTMLFormElement>(null);
+  const isMounted = useRef(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -140,6 +158,7 @@ export function RecipeForm({ bakeryId, recipe, availableIngredients }: RecipeFor
   };
 
   const updateSection = useCallback((index: number, field: keyof SectionFormData, value: unknown) => {
+    if (!isMounted.current) return;
     setSections((prevSections) => {
       const newSections = [...prevSections];
       newSections[index] = { ...newSections[index], [field]: value };
@@ -175,6 +194,7 @@ export function RecipeForm({ bakeryId, recipe, availableIngredients }: RecipeFor
     field: string,
     value: unknown
   ) => {
+    if (!isMounted.current) return;
     setSections((prevSections) => {
       const newSections = [...prevSections];
       newSections[sectionIndex].ingredients[ingredientIndex] = {
@@ -194,224 +214,236 @@ export function RecipeForm({ bakeryId, recipe, availableIngredients }: RecipeFor
     });
   }, [availableIngredients]);
 
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (onFormRefChange && formRef.current) {
+      onFormRefChange(formRef.current);
+    }
+  }, [onFormRefChange]);
+
+  useEffect(() => {
+    if (onSavingChange) {
+      onSavingChange(isSubmitting);
+    }
+  }, [isSubmitting, onSavingChange]);
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form ref={formRef} onSubmit={handleSubmit} className="max-w-3xl mx-auto space-y-8">
       {error && (
         <div className="alert alert-error">
+          <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
           <span>{error}</span>
         </div>
       )}
 
-      {/* Basic Info */}
-      <div className="space-y-4">
-        <div className="form-control">
-          <label className="label">
-            <span className="label-text">Recipe Name *</span>
-          </label>
+      <div className="space-y-0">
+        <h2 className="text-xl font-semibold">Basic Information</h2>
+
+        <fieldset className="fieldset">
+          <legend className="fieldset-legend">Recipe Name *</legend>
           <input
             type="text"
-            className="input input-bordered"
+            className="input input-bordered w-full"
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             required
             maxLength={200}
             placeholder="e.g., Classic Sourdough"
           />
-        </div>
+        </fieldset>
 
-        <div className="form-control">
-          <label className="label">
-            <span className="label-text">Description</span>
-          </label>
+        <fieldset className="fieldset">
+          <legend className="fieldset-legend">Description</legend>
           <textarea
-            className="textarea textarea-bordered h-24"
+            className="textarea textarea-bordered w-full h-24"
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             maxLength={2000}
             placeholder="Brief description of the recipe..."
           />
-        </div>
+        </fieldset>
 
-        <div className="form-control">
-          <label className="label">
-            <span className="label-text">Yield *</span>
-          </label>
+        <fieldset className="fieldset">
+          <legend className="fieldset-legend">Yield *</legend>
           <input
             type="text"
-            className="input input-bordered"
+            className="input input-bordered w-full"
             value={formData.yield}
             onChange={(e) => setFormData({ ...formData, yield: e.target.value })}
             required
             maxLength={100}
             placeholder="e.g., 2 loaves, 12 baguettes"
           />
+          <label className="label">
+            <span className="label-text-alt">Total quantity produced by this recipe</span>
+          </label>
+        </fieldset>
+      </div>
+
+      <div className="space-y-0">
+        <h2 className="text-xl font-semibold">Recipe Sections</h2>
+
+        <div className="space-y-4 fieldset">
+          {sections.map((section, sectionIndex) => (
+            <div key={sectionIndex} className="border border-base-300 rounded-lg p-4 bg-white/5">
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    className="input input-bordered flex-1"
+                    value={section.name}
+                    onChange={(e) => updateSection(sectionIndex, 'name', e.target.value)}
+                    placeholder="Section name (e.g., Poolish, Dough)"
+                    maxLength={100}
+                  />
+                  <div className="btn-group">
+                    <button
+                      type="button"
+                      className="btn btn-sm"
+                      onClick={() => moveSection(sectionIndex, 'up')}
+                      disabled={sectionIndex === 0}
+                    >
+                      <ChevronUp className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-sm"
+                      onClick={() => moveSection(sectionIndex, 'down')}
+                      disabled={sectionIndex === sections.length - 1}
+                    >
+                      <ChevronDown className="h-4 w-4" />
+                    </button>
+                  </div>
+                  {sections.length > 1 && (
+                    <button
+                      type="button"
+                      className="btn btn-error btn-sm"
+                      onClick={() => removeSection(sectionIndex)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+
+                <fieldset className="fieldset">
+                  <legend className="fieldset-legend">Ingredients</legend>
+                  <div className="space-y-2">
+                    {section.ingredients.map((ingredient, ingredientIndex) => (
+                      <div key={ingredientIndex} className="flex gap-2">
+                        <select
+                          className="select select-bordered select-sm flex-1"
+                          value={ingredient.ingredientId}
+                          onChange={(e) =>
+                            updateIngredient(
+                              sectionIndex,
+                              ingredientIndex,
+                              'ingredientId',
+                              e.target.value
+                            )
+                          }
+                        >
+                          {availableIngredients.map((ing) => (
+                            <option key={ing.id} value={ing.id}>
+                              {ing.name}
+                            </option>
+                          ))}
+                        </select>
+                        <input
+                          type="number"
+                          step="0.001"
+                          min="0"
+                          className="input input-bordered input-sm w-24"
+                          value={ingredient.quantity}
+                          onChange={(e) =>
+                            updateIngredient(
+                              sectionIndex,
+                              ingredientIndex,
+                              'quantity',
+                              parseFloat(e.target.value) || 0
+                            )
+                          }
+                        />
+                        <span className="text-sm self-center w-12">{ingredient.unit}</span>
+                        <button
+                          type="button"
+                          className="btn btn-error btn-sm"
+                          onClick={() => removeIngredient(sectionIndex, ingredientIndex)}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+
+                    {section.ingredients.length === 0 && (
+                      <p className="text-sm text-base-content/50">No ingredients added yet</p>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    className="btn btn-primary btn-sm mt-2"
+                    onClick={() => addIngredient(sectionIndex)}
+                    disabled={availableIngredients.length === 0}
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add Ingredient
+                  </button>
+                </fieldset>
+
+                <fieldset className="fieldset">
+                  <legend className="fieldset-legend">Instructions</legend>
+                  <MDXEditor
+                    markdown={section.instructions}
+                    onChange={(markdown) =>
+                      updateSection(sectionIndex, 'instructions', markdown)
+                    }
+                    placeholder="Step-by-step instructions for this section..."
+                    className="min-h-[200px]"
+                  />
+                </fieldset>
+              </div>
+            </div>
+          ))}
+
+          <button type="button" className="btn btn-outline w-full" onClick={addSection}>
+            <Plus className="h-5 w-5 mr-2" />
+            Add Section
+          </button>
         </div>
       </div>
 
-      <div className="divider">Recipe Sections</div>
-
-      {/* Sections */}
-      <div className="space-y-4">
-        {sections.map((section, sectionIndex) => (
-          <div key={sectionIndex} className="card bg-base-200 shadow-md">
-            <div className="card-body">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1 space-y-4">
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      className="input input-bordered flex-1"
-                      value={section.name}
-                      onChange={(e) => updateSection(sectionIndex, 'name', e.target.value)}
-                      placeholder="Section name (e.g., Poolish, Dough)"
-                      maxLength={100}
-                    />
-                    <div className="btn-group">
-                      <button
-                        type="button"
-                        className="btn btn-sm"
-                        onClick={() => moveSection(sectionIndex, 'up')}
-                        disabled={sectionIndex === 0}
-                      >
-                        <ChevronUp className="h-4 w-4" />
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-sm"
-                        onClick={() => moveSection(sectionIndex, 'down')}
-                        disabled={sectionIndex === sections.length - 1}
-                      >
-                        <ChevronDown className="h-4 w-4" />
-                      </button>
-                    </div>
-                    {sections.length > 1 && (
-                      <button
-                        type="button"
-                        className="btn btn-error btn-sm"
-                        onClick={() => removeSection(sectionIndex)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Instructions */}
-                  <div className="form-control">
-                    <label className="label">
-                      <span className="label-text">Instructions</span>
-                    </label>
-                    <MDXEditor
-                      markdown={section.instructions}
-                      onChange={(markdown) =>
-                        updateSection(sectionIndex, 'instructions', markdown)
-                      }
-                      placeholder="Step-by-step instructions for this section..."
-                      className="min-h-[200px]"
-                    />
-                  </div>
-
-                  {/* Ingredients */}
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <label className="label-text font-semibold">Ingredients</label>
-                      <button
-                        type="button"
-                        className="btn btn-primary btn-xs"
-                        onClick={() => addIngredient(sectionIndex)}
-                        disabled={availableIngredients.length === 0}
-                      >
-                        <Plus className="h-3 w-3" />
-                        Add Ingredient
-                      </button>
-                    </div>
-
-                    <div className="space-y-2">
-                      {section.ingredients.map((ingredient, ingredientIndex) => (
-                        <div key={ingredientIndex} className="flex gap-2">
-                          <select
-                            className="select select-bordered select-sm flex-1"
-                            value={ingredient.ingredientId}
-                            onChange={(e) =>
-                              updateIngredient(
-                                sectionIndex,
-                                ingredientIndex,
-                                'ingredientId',
-                                e.target.value
-                              )
-                            }
-                          >
-                            {availableIngredients.map((ing) => (
-                              <option key={ing.id} value={ing.id}>
-                                {ing.name}
-                              </option>
-                            ))}
-                          </select>
-                          <input
-                            type="number"
-                            step="0.001"
-                            min="0"
-                            className="input input-bordered input-sm w-24"
-                            value={ingredient.quantity}
-                            onChange={(e) =>
-                              updateIngredient(
-                                sectionIndex,
-                                ingredientIndex,
-                                'quantity',
-                                parseFloat(e.target.value) || 0
-                              )
-                            }
-                          />
-                          <span className="text-sm self-center w-12">{ingredient.unit}</span>
-                          <button
-                            type="button"
-                            className="btn btn-error btn-sm"
-                            onClick={() => removeIngredient(sectionIndex, ingredientIndex)}
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </button>
-                        </div>
-                      ))}
-
-                      {section.ingredients.length === 0 && (
-                        <p className="text-sm text-base-content/50">No ingredients added yet</p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        ))}
-
-        <button type="button" className="btn btn-outline w-full" onClick={addSection}>
-          <Plus className="h-4 w-4" />
-          Add Section
-        </button>
-      </div>
-
       {/* Actions */}
-      <div className="flex gap-3 justify-end pt-4">
-        <button
-          type="button"
-          className="btn btn-ghost"
-          onClick={() => router.back()}
-          disabled={isSubmitting}
-        >
-          Cancel
-        </button>
-        <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
-          {isSubmitting ? (
-            <>
-              <span className="loading loading-spinner loading-sm"></span>
-              Saving...
-            </>
-          ) : recipe ? (
-            'Update Recipe'
-          ) : (
-            'Create Recipe'
-          )}
-        </button>
-      </div>
+      {showBottomActions && (
+        <div className="flex gap-3 justify-end pt-4">
+          <button
+            type="button"
+            className="btn btn-ghost"
+            onClick={() => router.back()}
+            disabled={isSubmitting}
+          >
+            Cancel
+          </button>
+          <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+            {isSubmitting ? (
+              <>
+                <span className="loading loading-spinner loading-sm"></span>
+                Saving...
+              </>
+            ) : recipe ? (
+              'Update Recipe'
+            ) : (
+              'Create Recipe'
+            )}
+          </button>
+        </div>
+      )}
     </form>
   );
 }

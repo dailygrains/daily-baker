@@ -2,17 +2,19 @@
 
 import { useState } from 'react';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { IngredientForm } from '@/components/ingredients/IngredientForm';
-import { Save, ArrowLeft } from 'lucide-react';
+import { RecipeForm } from '@/components/recipes/RecipeForm';
+import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
-interface IngredientNewPageContentProps {
+interface RecipeNewPageContentProps {
   bakeryId: string;
+  availableIngredients: Array<{ id: string; name: string; unit: string }>;
 }
 
-export function IngredientNewPageContent({
+export function RecipeNewPageContent({
   bakeryId,
-}: IngredientNewPageContentProps) {
+  availableIngredients,
+}: RecipeNewPageContentProps) {
   const [formRef, setFormRef] = useState<HTMLFormElement | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -25,11 +27,11 @@ export function IngredientNewPageContent({
   return (
     <>
       <PageHeader
-        title="Add New Ingredient"
+        title="Add New Recipe"
         sticky
         actions={
           <>
-            <Link href="/dashboard/ingredients" className="btn btn-ghost">
+            <Link href="/dashboard/recipes" className="btn btn-ghost">
               <ArrowLeft className="h-5 w-5 mr-2" />
               Back
             </Link>
@@ -42,21 +44,19 @@ export function IngredientNewPageContent({
               {isSaving ? (
                 <>
                   <span className="loading loading-spinner loading-sm"></span>
-                  Creating...
+                  Saving...
                 </>
               ) : (
-                <>
-                  <Save className="h-5 w-5 mr-2" />
-                  Create Ingredient
-                </>
+                'Create Recipe'
               )}
             </button>
           </>
         }
       />
 
-      <IngredientForm
+      <RecipeForm
         bakeryId={bakeryId}
+        availableIngredients={availableIngredients}
         onFormRefChange={setFormRef}
         onSavingChange={setIsSaving}
         showBottomActions={false}

@@ -1,9 +1,11 @@
 import { getCurrentUser } from '@/lib/clerk';
 import { redirect } from 'next/navigation';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { getRecipesByBakery } from '@/app/actions/recipe';
+import { RecipesTable } from '@/components/recipes/RecipesTable';
 import Link from 'next/link';
-import { Plus, Layers, ClipboardList } from 'lucide-react';
+import { Plus, ChefHat } from 'lucide-react';
 
 export default async function RecipesPage() {
   const user = await getCurrentUser();
@@ -20,148 +22,81 @@ export default async function RecipesPage() {
 
   if (!recipesResult.success) {
     return (
-      <div className="alert alert-error">
-        <span>{recipesResult.error}</span>
-      </div>
+      <>
+        <PageHeader
+          title="Recipes"
+          sticky
+        />
+        <div className="alert alert-error">
+          <span>{recipesResult.error}</span>
+        </div>
+      </>
     );
   }
 
   const recipes = recipesResult.data || [];
+
+  // Serialize Decimal values for client component
+  const serializedRecipes = recipes.map(recipe => ({
+    ...recipe,
+    totalCost: recipe.totalCost.toString(),
+  }));
+
   const totalRecipes = recipes.length;
   const totalCost = recipes.reduce((sum, r) => sum + Number(r.totalCost), 0).toFixed(2);
   const avgCost = totalRecipes > 0 ? (Number(totalCost) / totalRecipes).toFixed(2) : '0.00';
 
   return (
-    <div className="space-y-6">
-        <PageHeader
-          title="Recipes"
-          description="Manage your bakery recipes and costing"
-          actions={
+    <>
+      <PageHeader
+        title="Recipes"
+        sticky
+        actions={
+          <Link href="/dashboard/recipes/new" className="btn btn-primary">
+            <Plus className="h-5 w-5 mr-2" />
+            Add Recipe
+          </Link>
+        }
+      />
+
+      {recipes.length === 0 ? (
+        <EmptyState
+          icon={ChefHat}
+          title="No recipes yet"
+          description="Start by adding your first recipe to track costs and manage your bakery menu."
+          action={
             <Link href="/dashboard/recipes/new" className="btn btn-primary">
-              <Plus className="h-4 w-4" />
-              Add Recipe
+              <Plus className="h-5 w-5 mr-2" />
+              Add First Recipe
             </Link>
           }
         />
+      ) : (
+        <>
+          {/* Stats */}
+          <div className="stats stats-horizontal shadow w-full">
+            <div className="stat">
+              <div className="stat-title">Total Recipes</div>
+              <div className="stat-value text-primary">{totalRecipes}</div>
+              <div className="stat-desc">Active recipes</div>
+            </div>
 
-        {/* Stats */}
-        <div className="stats stats-horizontal shadow w-full">
-          <div className="stat">
-            <div className="stat-title">Total Recipes</div>
-            <div className="stat-value text-primary">{totalRecipes}</div>
-            <div className="stat-desc">Active recipes</div>
-          </div>
+            <div className="stat">
+              <div className="stat-title">Total Cost</div>
+              <div className="stat-value text-secondary">${totalCost}</div>
+              <div className="stat-desc">Combined ingredient cost</div>
+            </div>
 
-          <div className="stat">
-            <div className="stat-title">Total Cost</div>
-            <div className="stat-value text-secondary">${totalCost}</div>
-            <div className="stat-desc">Combined ingredient cost</div>
-          </div>
-
-          <div className="stat">
-            <div className="stat-title">Average Cost</div>
-            <div className="stat-value text-accent">${avgCost}</div>
-            <div className="stat-desc">Per recipe</div>
-          </div>
-        </div>
-
-        {/* Recipes List */}
-        {recipes.length === 0 ? (
-          <div className="card bg-base-100 shadow-xl">
-            <div className="card-body text-center py-12">
-              <h3 className="text-2xl font-bold mb-2">No recipes yet</h3>
-              <p className="text-base-content/70 mb-6">
-                Get started by adding your first recipe
-              </p>
-              <div>
-                <Link href="/dashboard/recipes/new" className="btn btn-primary">
-                  <Plus className="h-4 w-4" />
-                  Add Your First Recipe
-                </Link>
-              </div>
+            <div className="stat">
+              <div className="stat-title">Average Cost</div>
+              <div className="stat-value text-accent">${avgCost}</div>
+              <div className="stat-desc">Per recipe</div>
             </div>
           </div>
-        ) : (
-          <div className="card bg-base-100 shadow-xl">
-            <div className="card-body">
-              <div className="overflow-x-auto">
-                <table className="table table-zebra">
-                  <thead>
-                    <tr>
-                      <th>Recipe Name</th>
-                      <th>Yield</th>
-                      <th>Sections</th>
-                      <th>Total Cost</th>
-                      <th>Cost per Unit</th>
-                      <th>Bake Sheets</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {recipes.map((recipe) => {
-                      const yieldMatch = recipe.yield.match(/(\d+)/);
-                      const yieldNum = yieldMatch ? parseInt(yieldMatch[1]) : 1;
-                      const costPerUnit = yieldNum > 0 ? (Number(recipe.totalCost) / yieldNum).toFixed(2) : '0.00';
 
-                      return (
-                        <tr key={recipe.id}>
-                          <td>
-                            <Link
-                              href={`/dashboard/recipes/${recipe.id}`}
-                              className="font-semibold hover:text-primary"
-                            >
-                              {recipe.name}
-                            </Link>
-                            {recipe.description && (
-                              <p className="text-sm text-base-content/70 truncate max-w-xs">
-                                {recipe.description}
-                              </p>
-                            )}
-                          </td>
-                          <td>{recipe.yield}</td>
-                          <td>
-                            <span className="badge badge-info gap-1">
-                              <Layers className="h-3 w-3" />
-                              {recipe._count.sections}
-                            </span>
-                          </td>
-                          <td>
-                            <span className="font-semibold text-success">
-                              ${Number(recipe.totalCost).toFixed(2)}
-                            </span>
-                          </td>
-                          <td>
-                            <span className="text-sm">
-                              ${costPerUnit}
-                            </span>
-                          </td>
-                          <td>
-                            {recipe._count.bakeSheets > 0 ? (
-                              <span className="badge badge-secondary gap-1">
-                                <ClipboardList className="h-3 w-3" />
-                                {recipe._count.bakeSheets}
-                              </span>
-                            ) : (
-                              <span className="text-base-content/50">None</span>
-                            )}
-                          </td>
-                          <td>
-                            <Link
-                              href={`/dashboard/recipes/${recipe.id}/edit`}
-                              className="btn btn-ghost btn-xs"
-                            >
-                              Edit
-                            </Link>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        )}
-    </div>
+          <RecipesTable recipes={serializedRecipes} />
+        </>
+      )}
+    </>
   );
 }

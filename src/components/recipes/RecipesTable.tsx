@@ -3,38 +3,37 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { Layers, ClipboardList } from 'lucide-react';
 
-interface Ingredient {
+interface Recipe {
   id: string;
   name: string;
-  currentQty: string;
-  unit: string;
-  costPerUnit: string;
-  vendors: Array<{
-    vendor: {
-      id: string;
-      name: string;
-    };
-  }>;
+  description: string | null;
+  yield: string;
+  totalCost: string;
+  _count: {
+    sections: number;
+    bakeSheets: number;
+  };
 }
 
-interface IngredientsTableProps {
-  ingredients: Ingredient[];
+interface RecipesTableProps {
+  recipes: Recipe[];
 }
 
 const ITEMS_PER_PAGE = 10;
 
-export function IngredientsTable({ ingredients }: IngredientsTableProps) {
+export function RecipesTable({ recipes }: RecipesTableProps) {
   const router = useRouter();
   const [currentPage, setCurrentPage] = useState(1);
 
-  const totalPages = Math.ceil(ingredients.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(recipes.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const endIndex = startIndex + ITEMS_PER_PAGE;
-  const currentIngredients = ingredients.slice(startIndex, endIndex);
+  const currentRecipes = recipes.slice(startIndex, endIndex);
 
-  const handleRowClick = (ingredientId: string) => {
-    router.push(`/dashboard/ingredients/${ingredientId}`);
+  const handleRowClick = (recipeId: string) => {
+    router.push(`/dashboard/recipes/${recipeId}`);
   };
 
   const handlePageChange = (page: number) => {
@@ -47,63 +46,76 @@ export function IngredientsTable({ ingredients }: IngredientsTableProps) {
         <table className="table table-zebra">
           <thead>
             <tr>
-              <th>Name</th>
-              <th>Current Qty</th>
+              <th>Recipe Name</th>
+              <th>Yield</th>
+              <th>Sections</th>
+              <th>Total Cost</th>
               <th>Cost per Unit</th>
-              <th>Vendors</th>
+              <th>Bake Sheets</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {currentIngredients.map((ingredient) => {
-              const currentQty = Number(ingredient.currentQty);
-              const costPerUnit = Number(ingredient.costPerUnit);
-              const isLowStock = currentQty < 100;
+            {currentRecipes.map((recipe) => {
+              const yieldMatch = recipe.yield.match(/(\d+)/);
+              const yieldNum = yieldMatch ? parseInt(yieldMatch[1]) : 1;
+              const totalCost = Number(recipe.totalCost);
+              const costPerUnit = yieldNum > 0 ? (totalCost / yieldNum).toFixed(2) : '0.00';
 
               return (
                 <tr
-                  key={ingredient.id}
-                  onClick={() => handleRowClick(ingredient.id)}
+                  key={recipe.id}
+                  onClick={() => handleRowClick(recipe.id)}
                   className="hover cursor-pointer"
                 >
                   <td className="align-top">
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold">{ingredient.name}</span>
-                      {isLowStock && (
-                        <span className="badge badge-warning badge-sm">Low Stock</span>
+                    <div>
+                      <span className="font-bold">{recipe.name}</span>
+                      {recipe.description && (
+                        <p className="text-sm text-base-content/70 truncate max-w-xs">
+                          {recipe.description}
+                        </p>
                       )}
                     </div>
                   </td>
+                  <td className="align-top">{recipe.yield}</td>
                   <td className="align-top">
-                    <span className={isLowStock ? 'text-warning font-semibold' : ''}>
-                      {currentQty.toFixed(3)} {ingredient.unit}
+                    <span className="badge badge-info gap-1">
+                      <Layers className="h-3 w-3" />
+                      {recipe._count.sections}
                     </span>
                   </td>
-                  <td className="align-top">${costPerUnit.toFixed(2)}</td>
                   <td className="align-top">
-                    {ingredient.vendors.length > 0 ? (
-                      <div className="flex flex-wrap gap-1">
-                        {ingredient.vendors.map((iv) => (
-                          <span key={iv.vendor.id} className="badge badge-ghost badge-sm">
-                            {iv.vendor.name}
-                          </span>
-                        ))}
-                      </div>
+                    <span className="font-semibold text-success">
+                      ${totalCost.toFixed(2)}
+                    </span>
+                  </td>
+                  <td className="align-top">
+                    <span className="text-sm">
+                      ${costPerUnit}
+                    </span>
+                  </td>
+                  <td className="align-top">
+                    {recipe._count.bakeSheets > 0 ? (
+                      <span className="badge badge-secondary gap-1">
+                        <ClipboardList className="h-3 w-3" />
+                        {recipe._count.bakeSheets}
+                      </span>
                     ) : (
-                      <span className="text-base-content/40 italic">No vendors</span>
+                      <span className="text-base-content/50">None</span>
                     )}
                   </td>
                   <td className="align-top">
                     <div className="flex gap-2">
                       <Link
-                        href={`/dashboard/ingredients/${ingredient.id}`}
+                        href={`/dashboard/recipes/${recipe.id}`}
                         className="btn btn-ghost btn-sm"
                         onClick={(e) => e.stopPropagation()}
                       >
                         View
                       </Link>
                       <Link
-                        href={`/dashboard/ingredients/${ingredient.id}/edit`}
+                        href={`/dashboard/recipes/${recipe.id}/edit`}
                         className="btn btn-ghost btn-sm"
                         onClick={(e) => e.stopPropagation()}
                       >
