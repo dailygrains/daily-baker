@@ -1,7 +1,6 @@
 import { getCurrentUser } from '@/lib/clerk';
 import { redirect } from 'next/navigation';
-import { PageHeader } from '@/components/ui/PageHeader';
-import { RecipeForm } from '@/components/recipes/RecipeForm';
+import { RecipeEditPageContent } from '@/components/recipes/RecipeEditPageContent';
 import { getRecipeById } from '@/app/actions/recipe';
 import { db } from '@/lib/db';
 
@@ -29,6 +28,38 @@ export default async function EditRecipePage({
 
   const recipe = recipeResult.data;
 
+  // Serialize Decimal values for client component
+  const serializedRecipe = {
+    id: recipe.id,
+    name: recipe.name,
+    description: recipe.description,
+    yield: recipe.yield,
+    createdAt: recipe.createdAt,
+    updatedAt: recipe.updatedAt,
+    bakeryId: recipe.bakeryId,
+    totalCost: recipe.totalCost.toString(),
+    sections: recipe.sections.map(section => ({
+      id: section.id,
+      name: section.name,
+      order: section.order,
+      instructions: section.instructions,
+      recipeId: section.recipeId,
+      ingredients: section.ingredients.map(ing => ({
+        id: ing.id,
+        ingredientId: ing.ingredientId,
+        quantity: ing.quantity.toString(),
+        unit: ing.unit,
+        sectionId: ing.sectionId,
+        ingredient: {
+          id: ing.ingredient.id,
+          name: ing.ingredient.name,
+          unit: ing.ingredient.unit,
+          costPerUnit: ing.ingredient.costPerUnit.toString(),
+        },
+      })),
+    })),
+  };
+
   // Fetch available ingredients for the dropdown
   const ingredients = await db.ingredient.findMany({
     where: { bakeryId: user.bakeryId },
@@ -43,21 +74,10 @@ export default async function EditRecipePage({
   });
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-        <PageHeader
-          title="Edit Recipe"
-          description={`Update details for ${recipe.name}`}
-        />
-
-        <div className="card bg-base-100 shadow-xl">
-          <div className="card-body">
-            <RecipeForm
-              bakeryId={user.bakeryId}
-              recipe={recipe}
-              availableIngredients={ingredients}
-            />
-          </div>
-        </div>
-      </div>
+    <RecipeEditPageContent
+      bakeryId={user.bakeryId}
+      recipe={serializedRecipe}
+      availableIngredients={ingredients}
+    />
   );
 }

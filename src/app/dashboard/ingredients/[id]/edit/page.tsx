@@ -27,10 +27,17 @@ export default async function EditIngredientPage({
 
   const ingredient = ingredientResult.data;
 
+  // Serialize Decimal values for client component
+  const serializedIngredient = {
+    ...ingredient,
+    currentQty: ingredient.currentQty.toString(),
+    costPerUnit: ingredient.costPerUnit.toString(),
+  };
+
   return (
     <IngredientEditPageContent
       bakeryId={user.bakeryId}
-      ingredient={ingredient}
+      ingredient={serializedIngredient}
     />
   );
 }

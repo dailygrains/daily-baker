@@ -64,7 +64,7 @@ export function IngredientEditPageContent({
                 </>
               ) : (
                 <>
-                  <Save className="h-4 w-4" />
+                  <Save className="h-5 w-5 mr-2" />
                   Save Changes
                 </>
               )}

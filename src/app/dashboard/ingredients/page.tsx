@@ -21,6 +21,13 @@ export default async function IngredientsPage() {
   const ingredientsResult = await getIngredientsByBakery(user.bakeryId);
   const ingredients = ingredientsResult.success ? ingredientsResult.data! : [];
 
+  // Serialize Decimal values for client component
+  const serializedIngredients = ingredients.map(ingredient => ({
+    ...ingredient,
+    currentQty: ingredient.currentQty.toString(),
+    costPerUnit: ingredient.costPerUnit.toString(),
+  }));
+
   return (
     <>
       <PageHeader
@@ -47,9 +54,7 @@ export default async function IngredientsPage() {
           }
         />
       ) : (
-        <div className="space-y-6">
-          <IngredientsTable ingredients={ingredients} />
-
+        <>
           <div className="stats shadow w-full">
             <div className="stat">
               <div className="stat-figure text-primary">
@@ -79,7 +84,9 @@ export default async function IngredientsPage() {
               </div>
             </div>
           </div>
-        </div>
+
+          <IngredientsTable ingredients={serializedIngredients} />
+        </>
       )}
     </>
   );

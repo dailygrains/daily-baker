@@ -1,6 +1,7 @@
 import { getCurrentUser } from '@/lib/clerk';
 import { redirect } from 'next/navigation';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { MarkdownViewer } from '@/components/ui/MarkdownViewer';
 import { getRecipeById } from '@/app/actions/recipe';
 import Link from 'next/link';
 import { Edit, DollarSign, Layers, ClipboardList, Package } from 'lucide-react';
@@ -37,20 +38,22 @@ export default async function RecipeDetailPage({
   const costPerUnit = yieldNum > 0 ? (totalCost / yieldNum).toFixed(2) : '0.00';
 
   return (
-    <div className="space-y-6">
-        <PageHeader
-          title={recipe.name}
-          description={recipe.description || 'Recipe details and instructions'}
-          actions={
-            <Link
-              href={`/dashboard/recipes/${id}/edit`}
-              className="btn btn-primary btn-sm"
-            >
-              <Edit className="h-4 w-4" />
-              Edit
-            </Link>
-          }
-        />
+    <>
+      <PageHeader
+        title={recipe.name}
+        sticky
+        actions={
+          <Link
+            href={`/dashboard/recipes/${id}/edit`}
+            className="btn btn-primary"
+          >
+            <Edit className="h-5 w-5 mr-2" />
+            Edit
+          </Link>
+        }
+      />
+
+      <div className="space-y-6">
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Info Card */}
@@ -149,11 +152,10 @@ export default async function RecipeDetailPage({
                   {section.instructions && (
                     <div className="mt-4">
                       <h3 className="font-semibold mb-2">Instructions</h3>
-                      <div className="prose prose-sm max-w-none">
-                        <p className="whitespace-pre-line text-base-content/80">
-                          {section.instructions}
-                        </p>
-                      </div>
+                      <MarkdownViewer
+                        content={section.instructions}
+                        className="prose prose-sm max-w-none"
+                      />
                     </div>
                   )}
                 </div>
@@ -217,5 +219,6 @@ export default async function RecipeDetailPage({
           </div>
         </div>
       </div>
+    </>
   );
 }

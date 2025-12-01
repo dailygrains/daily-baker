@@ -1,8 +1,8 @@
 import { getCurrentUser } from '@/lib/clerk';
 import { redirect } from 'next/navigation';
-import { PageHeader } from '@/components/ui/PageHeader';
-import { RecipeForm } from '@/components/recipes/RecipeForm';
+import { RecipeNewPageContent } from '@/components/recipes/RecipeNewPageContent';
 import { db } from '@/lib/db';
+import { Plus } from 'lucide-react';
 import Link from 'next/link';
 
 export default async function NewRecipePage() {
@@ -29,30 +29,29 @@ export default async function NewRecipePage() {
     },
   });
 
-  return (
-    <div className="max-w-4xl mx-auto space-y-6">
-        <PageHeader
-          title="Add New Recipe"
-          description="Create a new recipe with ingredients and instructions"
-        />
-
+  if (ingredients.length === 0) {
+    return (
+      <div className="max-w-3xl mx-auto">
         <div className="card bg-base-100 shadow-xl">
-          <div className="card-body">
-            {ingredients.length === 0 ? (
-              <div className="text-center py-8">
-                <h3 className="text-xl font-bold mb-2">No ingredients available</h3>
-                <p className="text-base-content/70 mb-4">
-                  You need to add ingredients before creating recipes
-                </p>
-                <Link href="/dashboard/ingredients/new" className="btn btn-primary">
-                  Add Ingredients
-                </Link>
-              </div>
-            ) : (
-              <RecipeForm bakeryId={user.bakeryId} availableIngredients={ingredients} />
-            )}
+          <div className="card-body text-center py-8">
+            <h3 className="text-xl font-bold mb-2">No ingredients available</h3>
+            <p className="text-base-content/70 mb-4">
+              You need to add ingredients before creating recipes
+            </p>
+            <Link href="/dashboard/ingredients/new" className="btn btn-primary">
+              <Plus className="h-5 w-5 mr-2" />
+              Add Ingredients
+            </Link>
           </div>
         </div>
       </div>
+    );
+  }
+
+  return (
+    <RecipeNewPageContent
+      bakeryId={user.bakeryId}
+      availableIngredients={ingredients}
+    />
   );
 }

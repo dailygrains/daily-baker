@@ -3,14 +3,13 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Decimal } from '@prisma/client/runtime/library';
 
 interface Ingredient {
   id: string;
   name: string;
-  currentQty: Decimal | number | string;
+  currentQty: string;
   unit: string;
-  costPerUnit: Decimal | number | string;
+  costPerUnit: string;
   vendors: Array<{
     vendor: {
       id: string;

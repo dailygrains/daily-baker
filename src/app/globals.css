@@ -26,48 +26,331 @@ body {
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
 }
 
-/* MDX Editor Styling */
+/* MDX Editor Wrapper Styling (for edit mode) */
 .mdx-editor-wrapper {
   @apply border border-base-300 rounded-lg overflow-hidden bg-base-100;
 }
 
-.mdx-editor-wrapper ._toolbarRoot_p96os_1 {
-  @apply bg-base-200 border-b border-base-300;
-}
-
-.mdx-editor-wrapper ._editorRoot_p96os_1 {
-  @apply bg-base-100;
-}
-
-.mdx-editor-wrapper ._contentEditable_p96os_179 {
-  @apply text-base-content p-4;
+/* MDXEditor content area styling */
+.mdx-editor-wrapper .prose {
+  @apply text-base-content;
+  padding: 1rem;
   min-height: 200px;
 }
 
-.mdx-editor-wrapper ._button_p96os_69 {
-  @apply hover:bg-base-300 transition-colors;
-}
-
-.mdx-editor-wrapper ._selectTrigger_p96os_156 {
-  @apply bg-base-100 border-base-300;
-}
-
-.mdx-editor-wrapper code {
+.mdx-editor-wrapper .prose code {
   @apply bg-base-200 px-1 py-0.5 rounded text-sm;
 }
 
-.mdx-editor-wrapper pre {
+.mdx-editor-wrapper .prose pre {
   @apply bg-base-200 p-4 rounded-lg overflow-x-auto my-2;
 }
 
-.mdx-editor-wrapper table {
+.mdx-editor-wrapper .prose table {
   @apply table table-zebra w-full my-2;
 }
 
-.mdx-editor-wrapper th {
+.mdx-editor-wrapper .prose th {
   @apply bg-base-200;
 }
 
-.mdx-editor-wrapper a {
+.mdx-editor-wrapper .prose a {
   @apply link link-primary;
+}
+
+/* Markdown Viewer Styling (for read-only markdown) */
+.prose code {
+  @apply bg-base-200 px-1 py-0.5 rounded text-sm;
+}
+
+.prose pre {
+  @apply bg-base-200 p-4 rounded-lg overflow-x-auto my-2;
+}
+
+.prose pre code {
+  @apply bg-transparent p-0;
+}
+
+.prose table {
+  @apply table table-zebra w-full my-2;
+}
+
+.prose th {
+  @apply bg-base-200;
+}
+
+.prose a {
+  @apply link link-primary;
+}
+
+.prose blockquote {
+  @apply border-l-4 border-base-300 pl-4 italic;
+}
+
+.prose ul {
+  @apply list-disc ml-6 my-2;
+}
+
+.prose ol {
+  @apply list-decimal ml-6 my-2;
+}
+
+.prose li {
+  @apply my-1;
+}
+
+.prose h1 {
+  @apply text-3xl font-bold mt-6 mb-4;
+}
+
+.prose h2 {
+  @apply text-2xl font-bold mt-5 mb-3;
+}
+
+.prose h3 {
+  @apply text-xl font-bold mt-4 mb-2;
+}
+
+.prose h4 {
+  @apply text-lg font-bold mt-3 mb-2;
+}
+
+.prose p {
+  @apply my-2;
+}
+
+.prose hr {
+  @apply border-base-300 my-4;
+}
+
+/* MDXEditor Theming with DaisyUI CSS Variables */
+.mdxeditor {
+  /* Base colors - using DaisyUI theme variables */
+  --baseBase: oklch(var(--b1));
+  --baseBg: oklch(var(--b2));
+  --baseBgHover: oklch(var(--b3));
+  --baseBorder: oklch(var(--bc) / 0.2);
+  --baseBorderHover: oklch(var(--bc) / 0.3);
+  --baseText: oklch(var(--bc));
+  --baseTextContrast: oklch(var(--bc));
+
+  /* Accent colors - using primary colors */
+  --accentBase: oklch(var(--p));
+  --accentBg: oklch(var(--p) / 0.1);
+  --accentBgHover: oklch(var(--p) / 0.2);
+  --accentBorder: oklch(var(--p) / 0.3);
+  --accentBorderHover: oklch(var(--p) / 0.4);
+  --accentSolid: oklch(var(--p));
+  --accentSolidHover: oklch(var(--p) / 0.8);
+  --accentText: oklch(var(--p));
+  --accentTextContrast: oklch(var(--pc));
+}
+
+/* Dialog/Popup Styling - Target Radix UI primitives */
+.mdxeditor [data-radix-popper-content-wrapper] {
+  z-index: 50;
+}
+
+.mdxeditor [role="dialog"] {
+  background-color: oklch(var(--b1));
+  border: 1px solid oklch(var(--b3));
+  border-radius: 0.5rem;
+  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  padding: 1rem;
+  max-width: 24rem;
+}
+
+.mdxeditor [role="dialog"] input[type="text"],
+.mdxeditor [role="dialog"] input[type="url"] {
+  display: flex;
+  height: 3rem;
+  width: 100%;
+  border-radius: var(--rounded-btn, 0.5rem);
+  border-width: 1px;
+  border-color: oklch(var(--bc) / 0.2);
+  background-color: oklch(var(--b1));
+  padding-left: 1rem;
+  padding-right: 1rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+.mdxeditor [role="dialog"] input[type="text"]:focus,
+.mdxeditor [role="dialog"] input[type="url"]:focus {
+  outline: 2px solid oklch(var(--p));
+  outline-offset: 2px;
+}
+
+.mdxeditor [role="dialog"] button {
+  display: inline-flex;
+  height: 2rem;
+  min-height: 2rem;
+  flex-shrink: 0;
+  cursor: pointer;
+  user-select: none;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--rounded-btn, 0.5rem);
+  border-color: transparent;
+  border-color: oklch(var(--n) / var(--tw-border-opacity));
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  text-align: center;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 600;
+  text-decoration-line: none;
+  transition-duration: 200ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  border-width: var(--border-btn, 1px);
+  animation: button-pop var(--animation-btn, 0.25s) ease-out;
+  background-color: oklch(var(--n) / var(--tw-bg-opacity));
+  color: oklch(var(--nc) / var(--tw-text-opacity));
+  --tw-border-opacity: 1;
+  --tw-bg-opacity: 1;
+  --tw-text-opacity: 1;
+}
+
+.mdxeditor [role="dialog"] button:hover {
+  background-color: oklch(var(--nf, var(--n)) / var(--tw-bg-opacity));
+  border-color: oklch(var(--nf, var(--n)) / var(--tw-border-opacity));
+}
+
+.mdxeditor [role="dialog"] button[data-variant="primary"],
+.mdxeditor [role="dialog"] button:not([data-variant]) {
+  background-color: oklch(var(--p) / var(--tw-bg-opacity));
+  color: oklch(var(--pc) / var(--tw-text-opacity));
+  border-color: oklch(var(--p) / var(--tw-border-opacity));
+}
+
+.mdxeditor [role="dialog"] button[data-variant="primary"]:hover,
+.mdxeditor [role="dialog"] button:not([data-variant]):hover {
+  background-color: oklch(var(--pf, var(--p)) / var(--tw-bg-opacity));
+  border-color: oklch(var(--pf, var(--p)) / var(--tw-border-opacity));
+}
+
+.mdxeditor [role="dialog"] button[data-variant="secondary"] {
+  background-color: transparent;
+  color: currentColor;
+  border-color: transparent;
+}
+
+.mdxeditor [role="dialog"] button[data-variant="secondary"]:hover {
+  background-color: oklch(var(--bc) / 0.1);
+}
+
+/* Toolbar Button Improvements */
+.mdxeditor [data-toolbar-button] {
+  display: inline-flex;
+  height: 2rem;
+  min-height: 2rem;
+  flex-shrink: 0;
+  cursor: pointer;
+  user-select: none;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--rounded-btn, 0.5rem);
+  border-color: transparent;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  text-align: center;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 600;
+  text-decoration-line: none;
+  transition-duration: 200ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  border-width: var(--border-btn, 1px);
+  background-color: transparent;
+  color: currentColor;
+}
+
+.mdxeditor [data-toolbar-button]:hover {
+  background-color: oklch(var(--b2));
+}
+
+.mdxeditor [data-toolbar-button][data-state="on"] {
+  background-color: oklch(var(--b3));
+  color: oklch(var(--bc));
+}
+
+/* Block Type Select Dropdown */
+.mdxeditor select,
+.mdxeditor [role="combobox"] {
+  height: 2rem;
+  min-height: 2rem;
+  padding-left: 0.75rem;
+  padding-right: 2rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  border-radius: var(--rounded-btn, 0.5rem);
+  border: 1px solid oklch(var(--bc) / 0.2);
+  background-color: oklch(var(--b1));
+  color: oklch(var(--bc));
+  cursor: pointer;
+  transition-duration: 200ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mdxeditor select:hover,
+.mdxeditor [role="combobox"]:hover {
+  border-color: oklch(var(--bc) / 0.3);
+  background-color: oklch(var(--b2));
+}
+
+.mdxeditor select:focus,
+.mdxeditor [role="combobox"]:focus {
+  outline: 2px solid oklch(var(--p));
+  outline-offset: 2px;
+}
+
+/* Dropdown menu items */
+.mdxeditor [role="listbox"],
+.mdxeditor [role="menu"] {
+  background-color: oklch(var(--b1));
+  border: 1px solid oklch(var(--b3));
+  border-radius: 0.5rem;
+  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  padding: 0.25rem;
+  max-height: 20rem;
+  overflow-y: auto;
+}
+
+.mdxeditor [role="option"],
+.mdxeditor [role="menuitem"] {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: oklch(var(--bc));
+  cursor: pointer;
+  border-radius: 0.375rem;
+  transition-duration: 150ms;
+}
+
+.mdxeditor [role="option"]:hover,
+.mdxeditor [role="menuitem"]:hover {
+  background-color: oklch(var(--b2));
+}
+
+.mdxeditor [role="option"][data-state="checked"],
+.mdxeditor [role="option"][aria-selected="true"],
+.mdxeditor [role="menuitem"][data-state="checked"] {
+  background-color: oklch(var(--p) / 0.1);
+  color: oklch(var(--p));
+  font-weight: 600;
+}
+
+/* Form Field Patterns */
+.fieldset {
+  @apply mt-2;
+}
+
+.fieldset:first-child {
+  @apply mt-2;
+}
+
+.fieldset-legend {
+  @apply text-sm font-medium text-base-content/70 block;
 }
