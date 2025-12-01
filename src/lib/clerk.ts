@@ -63,7 +63,13 @@ export async function getCurrentUser() {
   // full multi-bakery support is implemented throughout the application.
 
   // Get selected bakery ID from cookie (for multi-bakery users)
-  const selectedBakeryId = await getBakeryCookie();
+  let selectedBakeryId: string | undefined;
+  try {
+    selectedBakeryId = await getBakeryCookie();
+  } catch (error) {
+    console.error('Failed to read bakery cookie:', error);
+    selectedBakeryId = undefined;
+  }
 
   // Find the selected bakery - don't default to first bakery
   // Platform admins must explicitly select a bakery
@@ -101,7 +107,8 @@ export async function getCurrentUser() {
   }
 
   // Log warning if user has multiple bakeries (helps identify when migration is needed)
-  if (user.bakeries.length > 1 && !user.isPlatformAdmin) {
+  // Only log in development to avoid production log clutter
+  if (process.env.NODE_ENV === 'development' && user.bakeries.length > 1 && !user.isPlatformAdmin) {
     console.warn(
       `User ${user.id} has ${user.bakeries.length} bakeries assigned. ` +
       `Using bakery: ${currentBakeryData?.name ?? 'none selected'} (${currentBakeryIdValue ?? 'null'})`
@@ -109,7 +116,8 @@ export async function getCurrentUser() {
   }
 
   // Log info for platform admins without selection
-  if (user.isPlatformAdmin && !currentBakeryIdValue) {
+  // Only log in development to avoid production log clutter
+  if (process.env.NODE_ENV === 'development' && user.isPlatformAdmin && !currentBakeryIdValue) {
     console.info(`Platform admin ${user.id} has no bakery selected`);
   }
 

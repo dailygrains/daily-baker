@@ -2,8 +2,12 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { ChevronDown, Building2, Check, AlertCircle } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 import { useToastStore } from '@/store/toast-store';
+import { selectBakeryAction } from '@/app/actions/bakery-selection';
+
+// Constants
+const DROPDOWN_CLOSE_DELAY_MS = 200;
+const TOAST_DURATION_PERSISTENT = 0;
 
 interface Bakery {
   id: string;
@@ -16,26 +20,35 @@ interface BakerySelectorProps {
 }
 
 export function BakerySelector({ bakeries, currentBakeryId }: BakerySelectorProps) {
-  const router = useRouter();
   const [pendingBakeryId, setPendingBakeryId] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const { addToast } = useToastStore();
   const warningToastIdRef = useRef<string | null>(null);
 
-  // Handle cookie setting in useEffect to satisfy ESLint
+  // Handle bakery selection using secure server action
   useEffect(() => {
     if (pendingBakeryId) {
-      document.cookie = `selectedBakeryId=${pendingBakeryId}; path=/; max-age=31536000; SameSite=Lax`;
-      router.refresh();
-      // No need to reset pendingBakeryId since page will refresh
+      selectBakeryAction(pendingBakeryId)
+        .then((result) => {
+          if (!result.success) {
+            addToast(result.error || 'Failed to update bakery selection', 'error');
+          }
+          // Page will refresh via revalidatePath in server action
+        })
+        .catch(() => {
+          addToast('Failed to update bakery selection', 'error');
+        })
+        .finally(() => {
+          setPendingBakeryId(null);
+        });
     }
-  }, [pendingBakeryId, router]);
+  }, [pendingBakeryId, addToast]);
 
   // Show toast notification if no bakery is selected (only once)
   useEffect(() => {
     if (bakeries.length > 0 && !currentBakeryId && !warningToastIdRef.current) {
       // Show persistent warning toast
-      const toastId = addToast('Please select a bakery to continue', 'warning', 0);
+      const toastId = addToast('Please select a bakery to continue', 'warning', TOAST_DURATION_PERSISTENT);
       warningToastIdRef.current = toastId;
     } else if (currentBakeryId && warningToastIdRef.current) {
       // Clear the ref when bakery is selected (toast will auto-clear on next render)
@@ -62,7 +75,7 @@ export function BakerySelector({ bakeries, currentBakeryId }: BakerySelectorProp
           role="button"
           className={`btn btn-sm w-full justify-between normal-case font-normal ${!currentBakery ? 'btn-warning' : 'btn-ghost'}`}
           onClick={() => setIsOpen(!isOpen)}
-          onBlur={() => setTimeout(() => setIsOpen(false), 200)}
+          onBlur={() => setTimeout(() => setIsOpen(false), DROPDOWN_CLOSE_DELAY_MS)}
         >
           <div className="flex items-center gap-2 flex-1 min-w-0">
             {!currentBakery ? (
