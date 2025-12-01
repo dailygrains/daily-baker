@@ -1,3 +1,5 @@
+'use client';
+
 import { UserButton } from '@clerk/nextjs';
 import Link from 'next/link';
 import {
@@ -118,7 +120,7 @@ export function DashboardLayout({
               <li>
                 <Link href="/dashboard/inventory" className="gap-3">
                   <BarChart3 className="h-5 w-5" />
-                  Inventory Overview
+                  Inventory
                 </Link>
               </li>
               <li>

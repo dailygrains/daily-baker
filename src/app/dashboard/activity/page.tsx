@@ -1,5 +1,4 @@
 import { getCurrentUser } from '@/lib/clerk';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { ActivityLogTable } from '@/components/activity/ActivityLogTable';
 import { getActivityLogs } from '@/app/actions/activity-log';
@@ -20,10 +19,8 @@ export default async function BakeryActivityPage() {
 
   if (!user.bakery) {
     return (
-      <DashboardLayout
-        bakeries={user.allBakeries}
-        currentBakeryId={user.bakeryId}
-      >
+      
+      <>
         <PageHeader
           title="Activity"
           description="Recent bakery activity"
@@ -50,7 +47,7 @@ export default async function BakeryActivityPage() {
             </div>
           </div>
         </div>
-      </DashboardLayout>
+      </>
     );
   }
 
@@ -58,12 +55,8 @@ export default async function BakeryActivityPage() {
 
   if (!logsResult.success) {
     return (
-      <DashboardLayout
-        bakeryName={user.bakery.name}
-        userRole={user.role?.name}
-        bakeries={user.allBakeries}
-        currentBakeryId={user.bakeryId}
-      >
+      
+      <>
         <PageHeader
           title="Activity"
           description="Recent bakery activity"
@@ -71,20 +64,16 @@ export default async function BakeryActivityPage() {
         <div className="alert alert-error">
           <span>{logsResult.error || 'Failed to load activity logs'}</span>
         </div>
-      </DashboardLayout>
+      </>
     );
   }
 
   const { logs, total } = logsResult.data!;
 
   return (
-    <DashboardLayout
-      bakeryName={user.bakery.name}
-      userRole={user.role?.name}
-      bakeries={user.allBakeries}
-      currentBakeryId={user.bakeryId}
-    >
-      <PageHeader
+    
+      <>
+        <PageHeader
         title="Activity"
         description={`Recent activity at ${user.bakery.name}`}
       />
@@ -112,6 +101,6 @@ export default async function BakeryActivityPage() {
           <ActivityLogTable logs={logs} showBakery={false} />
         </div>
       </div>
-    </DashboardLayout>
+    </>
   );
 }

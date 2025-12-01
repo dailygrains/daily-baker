@@ -1,6 +1,5 @@
 import { getCurrentUser } from '@/lib/clerk';
 import { redirect } from 'next/navigation';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { getRecipesByBakery } from '@/app/actions/recipe';
 import Link from 'next/link';
@@ -21,15 +20,9 @@ export default async function RecipesPage() {
 
   if (!recipesResult.success) {
     return (
-      <DashboardLayout
-        isPlatformAdmin={user.isPlatformAdmin}
-        bakeries={user.allBakeries}
-        currentBakeryId={user.bakeryId}
-      >
-        <div className="alert alert-error">
-          <span>{recipesResult.error}</span>
-        </div>
-      </DashboardLayout>
+      <div className="alert alert-error">
+        <span>{recipesResult.error}</span>
+      </div>
     );
   }
 
@@ -39,12 +32,7 @@ export default async function RecipesPage() {
   const avgCost = totalRecipes > 0 ? (Number(totalCost) / totalRecipes).toFixed(2) : '0.00';
 
   return (
-    <DashboardLayout
-      isPlatformAdmin={user.isPlatformAdmin}
-      bakeries={user.allBakeries}
-      currentBakeryId={user.bakeryId}
-    >
-      <div className="space-y-6">
+    <div className="space-y-6">
         <PageHeader
           title="Recipes"
           description="Manage your bakery recipes and costing"
@@ -174,7 +162,6 @@ export default async function RecipesPage() {
             </div>
           </div>
         )}
-      </div>
-    </DashboardLayout>
+    </div>
   );
 }

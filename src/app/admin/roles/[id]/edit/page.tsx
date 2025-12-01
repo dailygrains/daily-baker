@@ -1,5 +1,4 @@
 import { getCurrentUser } from '@/lib/clerk';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { RoleEditPageContent } from '@/components/role/RoleEditPageContent';
 import { getRoleById } from '@/app/actions/role';
@@ -25,27 +24,19 @@ export default async function EditRolePage({
 
   if (!roleResult.success || !roleResult.data) {
     return (
-      <DashboardLayout
-        userName={user.name || undefined}
-        userEmail={user.email}
-        isPlatformAdmin={true}
-        bakeries={user.allBakeries}
-        currentBakeryId={user.bakeryId}
-      >
+      
+      <>
         <PageHeader title="Edit Role" />
         <div className="alert alert-error">
           <span>{roleResult.error || 'Role not found'}</span>
         </div>
-      </DashboardLayout>
+      </>
     );
   }
 
   const role = roleResult.data;
 
   return (
-    <RoleEditPageContent
-      role={role}
-      isPlatformAdmin={user.isPlatformAdmin}
-    />
+    <RoleEditPageContent role={role} />
   );
 }

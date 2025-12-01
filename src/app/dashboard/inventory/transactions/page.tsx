@@ -1,6 +1,5 @@
 import { getCurrentUser } from '@/lib/clerk';
 import { redirect } from 'next/navigation';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { getInventoryTransactionsByBakery } from '@/app/actions/inventoryTransaction';
 import Link from 'next/link';
@@ -25,15 +24,9 @@ export default async function InventoryTransactionsPage() {
 
   if (!transactionsResult.success) {
     return (
-      <DashboardLayout
-        isPlatformAdmin={user.isPlatformAdmin}
-        bakeries={user.allBakeries}
-        currentBakeryId={user.bakeryId}
-      >
-        <div className="alert alert-error">
+      <div className="alert alert-error">
           <span>{transactionsResult.error}</span>
         </div>
-      </DashboardLayout>
     );
   }
 
@@ -71,12 +64,7 @@ export default async function InventoryTransactionsPage() {
   };
 
   return (
-    <DashboardLayout
-      isPlatformAdmin={user.isPlatformAdmin}
-      bakeries={user.allBakeries}
-      currentBakeryId={user.bakeryId}
-    >
-      <div className="space-y-6">
+    <div className="space-y-6">
         <PageHeader
           title="Inventory Transactions"
           description="Complete history of all inventory transactions"
@@ -166,6 +154,5 @@ export default async function InventoryTransactionsPage() {
           </div>
         </div>
       </div>
-    </DashboardLayout>
   );
 }

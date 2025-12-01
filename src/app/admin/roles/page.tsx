@@ -1,5 +1,4 @@
 import { getCurrentUser } from '@/lib/clerk';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { redirect } from 'next/navigation';
@@ -23,32 +22,22 @@ export default async function RolesPage() {
 
   if (!rolesResult.success) {
     return (
-      <DashboardLayout
-        userName={user.name || undefined}
-        userEmail={user.email}
-        isPlatformAdmin={true}
-        bakeries={user.allBakeries}
-        currentBakeryId={user.bakeryId}
-      >
+      
+      <>
         <PageHeader title="Platform Roles" />
         <div className="alert alert-error">
           <span>{rolesResult.error || 'Failed to load roles'}</span>
         </div>
-      </DashboardLayout>
+      </>
     );
   }
 
   const roles = rolesResult.data || [];
 
   return (
-    <DashboardLayout
-      userName={user.name || undefined}
-      userEmail={user.email}
-      isPlatformAdmin={true}
-        bakeries={user.allBakeries}
-        currentBakeryId={user.bakeryId}
-    >
-      <PageHeader
+    
+      <>
+        <PageHeader
         title="Platform Roles"
         sticky
         actions={
@@ -79,6 +68,6 @@ export default async function RolesPage() {
           }))}
         />
       )}
-    </DashboardLayout>
+    </>
   );
 }

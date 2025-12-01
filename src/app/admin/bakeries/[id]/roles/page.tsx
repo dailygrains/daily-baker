@@ -1,5 +1,4 @@
 import { getCurrentUser } from '@/lib/clerk';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { redirect } from 'next/navigation';
@@ -32,18 +31,13 @@ export default async function BakeryRolesPage({
 
   if (!bakeryResult.success || !bakeryResult.data) {
     return (
-      <DashboardLayout
-        userName={user.name || undefined}
-        userEmail={user.email}
-        isPlatformAdmin={true}
-        bakeries={user.allBakeries}
-        currentBakeryId={user.bakeryId}
-      >
+      
+      <>
         <PageHeader title="Roles" />
         <div className="alert alert-error">
           <span>{bakeryResult.error || 'Bakery not found'}</span>
         </div>
-      </DashboardLayout>
+      </>
     );
   }
 
@@ -51,14 +45,9 @@ export default async function BakeryRolesPage({
   const roles = rolesResult.success ? rolesResult.data || [] : [];
 
   return (
-    <DashboardLayout
-      userName={user.name || undefined}
-      userEmail={user.email}
-      isPlatformAdmin={true}
-        bakeries={user.allBakeries}
-        currentBakeryId={user.bakeryId}
-    >
-      <PageHeader
+    
+      <>
+        <PageHeader
         title="Platform Roles"
         description={`Manage platform-wide roles and permissions (viewed from ${bakery.name})`}
         actions={
@@ -144,6 +133,6 @@ export default async function BakeryRolesPage({
           ))}
         </div>
       )}
-    </DashboardLayout>
+    </>
   );
 }

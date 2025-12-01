@@ -1,6 +1,5 @@
 import { getCurrentUser } from '@/lib/clerk';
 import { redirect } from 'next/navigation';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { getIngredientById } from '@/app/actions/ingredient';
 import Link from 'next/link';
@@ -36,12 +35,9 @@ export default async function IngredientDetailPage({
   const isLowStock = currentQty < 100;
 
   return (
-    <DashboardLayout
-      isPlatformAdmin={user.isPlatformAdmin}
-      bakeries={user.allBakeries}
-      currentBakeryId={user.bakeryId}
-    >
-      <PageHeader
+    
+      <>
+        <PageHeader
         title={ingredient.name}
         sticky
         actions={
@@ -197,6 +193,6 @@ export default async function IngredientDetailPage({
           </div>
         )}
       </div>
-    </DashboardLayout>
+    </>
   );
 }

@@ -8,7 +8,6 @@ import { deleteRole } from '@/app/actions/role';
 import { useToast } from '@/contexts/ToastContext';
 import type { Role } from '@/generated/prisma';
 import { Trash2, Save, ArrowLeft } from 'lucide-react';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import Link from 'next/link';
 
 interface RoleEditPageContentProps {
@@ -17,10 +16,9 @@ interface RoleEditPageContentProps {
       users: number;
     };
   };
-  isPlatformAdmin: boolean;
 }
 
-export function RoleEditPageContent({ role, isPlatformAdmin }: RoleEditPageContentProps) {
+export function RoleEditPageContent({ role }: RoleEditPageContentProps) {
   const router = useRouter();
   const { showToast } = useToast();
   const [isDeleting, setIsDeleting] = useState(false);
@@ -57,7 +55,7 @@ export function RoleEditPageContent({ role, isPlatformAdmin }: RoleEditPageConte
   const canDelete = userCount === 0;
 
   return (
-    <DashboardLayout isPlatformAdmin={isPlatformAdmin}>
+    <>
       <PageHeader
         title={`Edit Platform Role: ${role.name}`}
         sticky
@@ -176,6 +174,6 @@ export function RoleEditPageContent({ role, isPlatformAdmin }: RoleEditPageConte
           </div>
         </>
       )}
-    </DashboardLayout>
+    </>
   );
 }

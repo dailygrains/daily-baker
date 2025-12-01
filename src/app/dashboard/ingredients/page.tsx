@@ -1,6 +1,5 @@
 import { getCurrentUser } from '@/lib/clerk';
 import { redirect } from 'next/navigation';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { getIngredientsByBakery } from '@/app/actions/ingredient';
@@ -23,11 +22,7 @@ export default async function IngredientsPage() {
   const ingredients = ingredientsResult.success ? ingredientsResult.data! : [];
 
   return (
-    <DashboardLayout
-      isPlatformAdmin={user.isPlatformAdmin}
-      bakeries={user.allBakeries}
-      currentBakeryId={user.bakeryId}
-    >
+    <>
       <PageHeader
         title="Ingredients"
         sticky
@@ -86,6 +81,6 @@ export default async function IngredientsPage() {
           </div>
         </div>
       )}
-    </DashboardLayout>
+    </>
   );
 }

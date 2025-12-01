@@ -1,6 +1,5 @@
 import { getCurrentUser } from '@/lib/clerk';
 import { redirect } from 'next/navigation';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { getVendorsByBakery } from '@/app/actions/vendor';
 import Link from 'next/link';
@@ -21,15 +20,9 @@ export default async function VendorsPage() {
 
   if (!vendorsResult.success) {
     return (
-      <DashboardLayout
-        isPlatformAdmin={user.isPlatformAdmin}
-        bakeries={user.allBakeries}
-        currentBakeryId={user.bakeryId}
-      >
-        <div className="alert alert-error">
+      <div className="alert alert-error">
           <span>{vendorsResult.error}</span>
         </div>
-      </DashboardLayout>
     );
   }
 
@@ -39,12 +32,7 @@ export default async function VendorsPage() {
   const vendorsWithPhone = vendors.filter((v) => v.phone).length;
 
   return (
-    <DashboardLayout
-      isPlatformAdmin={user.isPlatformAdmin}
-      bakeries={user.allBakeries}
-      currentBakeryId={user.bakeryId}
-    >
-      <div className="space-y-6">
+    <div className="space-y-6">
         <PageHeader
           title="Vendors"
           description="Manage your suppliers and service providers"
@@ -193,6 +181,5 @@ export default async function VendorsPage() {
           </div>
         )}
       </div>
-    </DashboardLayout>
   );
 }

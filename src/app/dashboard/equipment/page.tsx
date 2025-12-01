@@ -1,6 +1,5 @@
 import { getCurrentUser } from '@/lib/clerk';
 import { redirect } from 'next/navigation';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { getEquipmentByBakery } from '@/app/actions/equipment';
 import Link from 'next/link';
@@ -21,15 +20,9 @@ export default async function EquipmentPage() {
 
   if (!equipmentResult.success) {
     return (
-      <DashboardLayout
-        isPlatformAdmin={user.isPlatformAdmin}
-        bakeries={user.allBakeries}
-        currentBakeryId={user.bakeryId}
-      >
-        <div className="alert alert-error">
+      <div className="alert alert-error">
           <span>{equipmentResult.error}</span>
         </div>
-      </DashboardLayout>
     );
   }
 
@@ -60,12 +53,7 @@ export default async function EquipmentPage() {
   };
 
   return (
-    <DashboardLayout
-      isPlatformAdmin={user.isPlatformAdmin}
-      bakeries={user.allBakeries}
-      currentBakeryId={user.bakeryId}
-    >
-      <div className="space-y-6">
+    <div className="space-y-6">
         <PageHeader
           title="Equipment"
           description="Track and manage bakery equipment"
@@ -206,6 +194,5 @@ export default async function EquipmentPage() {
           </div>
         )}
       </div>
-    </DashboardLayout>
   );
 }

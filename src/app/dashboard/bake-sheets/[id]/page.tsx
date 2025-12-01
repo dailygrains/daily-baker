@@ -1,6 +1,5 @@
 import { getCurrentUser } from '@/lib/clerk';
 import { redirect } from 'next/navigation';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { getBakeSheetById } from '@/app/actions/bakeSheet';
 import Link from 'next/link';
@@ -36,12 +35,7 @@ export default async function BakeSheetDetailPage({
   const scaledCost = recipeTotalCost * scale;
 
   return (
-    <DashboardLayout
-        isPlatformAdmin={user.isPlatformAdmin}
-        bakeries={user.allBakeries}
-        currentBakeryId={user.bakeryId}
-      >
-      <div className="space-y-6">
+    <div className="space-y-6">
         <PageHeader
           title={`${bakeSheet.quantity} of ${bakeSheet.recipe.name}`}
           description={`Bake sheet details${bakeSheet.completed ? ' (Completed)' : ''}`}
@@ -285,6 +279,5 @@ export default async function BakeSheetDetailPage({
           </div>
         )}
       </div>
-    </DashboardLayout>
   );
 }

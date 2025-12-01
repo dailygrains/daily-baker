@@ -1,6 +1,5 @@
 import { getCurrentUser } from '@/lib/clerk';
 import { redirect } from 'next/navigation';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { getVendorById } from '@/app/actions/vendor';
 import Link from 'next/link';
@@ -34,12 +33,7 @@ export default async function VendorDetailPage({
   const equipmentCount = vendor._count.equipment;
 
   return (
-    <DashboardLayout
-        isPlatformAdmin={user.isPlatformAdmin}
-        bakeries={user.allBakeries}
-        currentBakeryId={user.bakeryId}
-      >
-      <div className="space-y-6">
+    <div className="space-y-6">
         <PageHeader
           title={vendor.name}
           description="Vendor details and linked items"
@@ -267,6 +261,5 @@ export default async function VendorDetailPage({
           </div>
         )}
       </div>
-    </DashboardLayout>
   );
 }

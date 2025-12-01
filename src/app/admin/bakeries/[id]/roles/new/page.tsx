@@ -1,5 +1,4 @@
 import { getCurrentUser } from '@/lib/clerk';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { RoleForm } from '@/components/role/RoleForm';
 import { getBakeryById } from '@/app/actions/bakery';
@@ -27,32 +26,22 @@ export default async function NewRolePage({
 
   if (!bakeryResult.success || !bakeryResult.data) {
     return (
-      <DashboardLayout
-        userName={user.name || undefined}
-        userEmail={user.email}
-        isPlatformAdmin={true}
-        bakeries={user.allBakeries}
-        currentBakeryId={user.bakeryId}
-      >
+      
+      <>
         <PageHeader title="Create Role" />
         <div className="alert alert-error">
           <span>{bakeryResult.error || 'Bakery not found'}</span>
         </div>
-      </DashboardLayout>
+      </>
     );
   }
 
   const bakery = bakeryResult.data;
 
   return (
-    <DashboardLayout
-      userName={user.name || undefined}
-      userEmail={user.email}
-      isPlatformAdmin={true}
-        bakeries={user.allBakeries}
-        currentBakeryId={user.bakeryId}
-    >
-      <PageHeader
+    
+      <>
+        <PageHeader
         title="Create Platform Role"
         description="Define a new platform-wide role with specific permissions"
         actions={
@@ -64,6 +53,6 @@ export default async function NewRolePage({
       />
 
       <RoleForm bakery={bakery} mode="create" />
-    </DashboardLayout>
+    </>
   );
 }

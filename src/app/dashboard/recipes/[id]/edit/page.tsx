@@ -1,6 +1,5 @@
 import { getCurrentUser } from '@/lib/clerk';
 import { redirect } from 'next/navigation';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { RecipeForm } from '@/components/recipes/RecipeForm';
 import { getRecipeById } from '@/app/actions/recipe';
@@ -44,12 +43,7 @@ export default async function EditRecipePage({
   });
 
   return (
-    <DashboardLayout
-      isPlatformAdmin={user.isPlatformAdmin}
-      bakeries={user.allBakeries}
-      currentBakeryId={user.bakeryId}
-    >
-      <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6">
         <PageHeader
           title="Edit Recipe"
           description={`Update details for ${recipe.name}`}
@@ -65,6 +59,5 @@ export default async function EditRecipePage({
           </div>
         </div>
       </div>
-    </DashboardLayout>
   );
 }

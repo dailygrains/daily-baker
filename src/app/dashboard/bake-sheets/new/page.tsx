@@ -1,6 +1,5 @@
 import { getCurrentUser } from '@/lib/clerk';
 import { redirect } from 'next/navigation';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { BakeSheetForm } from '@/components/bakeSheets/BakeSheetForm';
 import { db } from '@/lib/db';
@@ -36,23 +35,17 @@ export default async function NewBakeSheetPage() {
   }));
 
   return (
-    <DashboardLayout
-        isPlatformAdmin={user.isPlatformAdmin}
-        bakeries={user.allBakeries}
-        currentBakeryId={user.bakeryId}
-      >
-      <div className="max-w-2xl mx-auto space-y-6">
-        <PageHeader
-          title="New Bake Sheet"
-          description="Create a production run for a recipe"
-        />
+    <div className="max-w-2xl mx-auto space-y-6">
+      <PageHeader
+        title="New Bake Sheet"
+        description="Create a production run for a recipe"
+      />
 
-        <div className="card bg-base-100 shadow-xl">
-          <div className="card-body">
-            <BakeSheetForm bakeryId={user.bakeryId} recipes={recipesForForm} />
-          </div>
+      <div className="card bg-base-100 shadow-xl">
+        <div className="card-body">
+          <BakeSheetForm bakeryId={user.bakeryId} recipes={recipesForForm} />
         </div>
       </div>
-    </DashboardLayout>
+    </div>
   );
 }

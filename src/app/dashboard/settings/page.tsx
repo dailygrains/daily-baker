@@ -1,5 +1,4 @@
 import { getCurrentUser } from '@/lib/clerk';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { redirect } from 'next/navigation';
 import { getBakeryById } from '@/app/actions/bakery';
@@ -15,11 +14,7 @@ export default async function SettingsPage() {
   // Platform admins have different settings
   if (user.isPlatformAdmin) {
     return (
-      <DashboardLayout
-        isPlatformAdmin={true}
-        bakeries={user.allBakeries}
-        currentBakeryId={user.bakeryId}
-      >
+      <>
         <PageHeader
           title="Platform Settings"
           description="Configure platform-wide settings"
@@ -33,17 +28,15 @@ export default async function SettingsPage() {
             </p>
           </div>
         </div>
-      </DashboardLayout>
+      </>
     );
   }
 
   // Regular users must be assigned to a bakery
   if (!user.bakery) {
     return (
-      <DashboardLayout
-        bakeries={user.allBakeries}
-        currentBakeryId={user.bakeryId}
-      >
+      
+      <>
         <PageHeader
           title="Settings"
           description="Configure your bakery settings"
@@ -56,7 +49,7 @@ export default async function SettingsPage() {
             <div className="text-sm">You must be assigned to a bakery to access settings.</div>
           </div>
         </div>
-      </DashboardLayout>
+      </>
     );
   }
 
@@ -64,12 +57,8 @@ export default async function SettingsPage() {
 
   if (!bakeryResult.success || !bakeryResult.data) {
     return (
-      <DashboardLayout
-        bakeryName={user.bakery.name}
-        userRole={user.role?.name}
-        bakeries={user.allBakeries}
-        currentBakeryId={user.bakeryId}
-      >
+      
+      <>
         <PageHeader
           title="Settings"
           description="Configure your bakery settings"
@@ -77,20 +66,16 @@ export default async function SettingsPage() {
         <div className="alert alert-error">
           <span>{bakeryResult.error || 'Failed to load bakery settings'}</span>
         </div>
-      </DashboardLayout>
+      </>
     );
   }
 
   const bakery = bakeryResult.data;
 
   return (
-    <DashboardLayout
-      bakeryName={user.bakery.name}
-      userRole={user.role?.name}
-      bakeries={user.allBakeries}
-      currentBakeryId={user.bakeryId}
-    >
-      <PageHeader
+    
+      <>
+        <PageHeader
         title="Bakery Settings"
         description="Update your bakery information and preferences"
       />
@@ -104,6 +89,6 @@ export default async function SettingsPage() {
       </div>
 
       <BakeryForm bakery={bakery} mode="edit" redirectPath="/dashboard/settings" />
-    </DashboardLayout>
+    </>
   );
 }

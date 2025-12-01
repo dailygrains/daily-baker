@@ -31,9 +31,6 @@ export default async function EditIngredientPage({
     <IngredientEditPageContent
       bakeryId={user.bakeryId}
       ingredient={ingredient}
-      isPlatformAdmin={user.isPlatformAdmin}
-      bakeries={user.allBakeries}
-      currentBakeryId={user.bakeryId}
     />
   );
 }

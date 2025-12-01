@@ -1,6 +1,6 @@
 import { currentUser } from '@clerk/nextjs/server';
-import { cookies } from 'next/headers';
 import { prisma } from './prisma';
+import { getBakeryCookie } from './cookies';
 
 /**
  * Get the current user from Clerk and sync with database
@@ -63,14 +63,28 @@ export async function getCurrentUser() {
   // full multi-bakery support is implemented throughout the application.
 
   // Get selected bakery ID from cookie (for multi-bakery users)
-  const cookieStore = await cookies();
-  const selectedBakeryId = cookieStore.get('selectedBakeryId')?.value;
+  let selectedBakeryId: string | undefined;
+  try {
+    selectedBakeryId = await getBakeryCookie();
+  } catch (error) {
+    console.error('Failed to read bakery cookie:', error);
+    selectedBakeryId = undefined;
+  }
 
-  // Find the selected bakery or fall back to first bakery
-  let currentBakery = user.bakeries[0];
-  let currentBakeryData = currentBakery?.bakery;
-  let currentBakeryIdValue = currentBakery?.bakeryId;
+  // Find the selected bakery - don't default to first bakery
+  // Platform admins must explicitly select a bakery
+  // Regular users with only one bakery can auto-select it
+  let currentBakery = user.bakeries.length > 0 ? user.bakeries[0] : undefined;
+  let currentBakeryData: (typeof user.bakeries[0]['bakery']) | undefined = undefined;
+  let currentBakeryIdValue: string | undefined = undefined;
 
+  // Auto-select for regular users with exactly one bakery
+  if (!user.isPlatformAdmin && user.bakeries.length === 1 && currentBakery) {
+    currentBakeryData = currentBakery.bakery;
+    currentBakeryIdValue = currentBakery.bakeryId;
+  }
+
+  // Override with cookie selection if present
   if (selectedBakeryId) {
     if (user.isPlatformAdmin) {
       // Platform admins can select any bakery, even if not assigned
@@ -81,7 +95,7 @@ export async function getCurrentUser() {
         currentBakeryData = selectedBakery;
         currentBakeryIdValue = selectedBakery.id;
       }
-    } else if (user.bakeries.length > 1) {
+    } else {
       // Regular users can only select from their assigned bakeries
       const selected = user.bakeries.find(ub => ub.bakeryId === selectedBakeryId);
       if (selected) {
@@ -93,11 +107,18 @@ export async function getCurrentUser() {
   }
 
   // Log warning if user has multiple bakeries (helps identify when migration is needed)
-  if (user.bakeries.length > 1 && !user.isPlatformAdmin) {
+  // Only log in development to avoid production log clutter
+  if (process.env.NODE_ENV === 'development' && user.bakeries.length > 1 && !user.isPlatformAdmin) {
     console.warn(
       `User ${user.id} has ${user.bakeries.length} bakeries assigned. ` +
-      `Using bakery: ${currentBakeryData?.name} (${currentBakeryIdValue})`
+      `Using bakery: ${currentBakeryData?.name ?? 'none selected'} (${currentBakeryIdValue ?? 'null'})`
     );
+  }
+
+  // Log info for platform admins without selection
+  // Only log in development to avoid production log clutter
+  if (process.env.NODE_ENV === 'development' && user.isPlatformAdmin && !currentBakeryIdValue) {
+    console.info(`Platform admin ${user.id} has no bakery selected`);
   }
 
   // Platform admins should see ALL bakeries, not just assigned ones

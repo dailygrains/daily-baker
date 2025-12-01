@@ -1,6 +1,5 @@
 import { getCurrentUser } from '@/lib/clerk';
 import { redirect } from 'next/navigation';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { getRecipeById } from '@/app/actions/recipe';
 import Link from 'next/link';
@@ -38,12 +37,7 @@ export default async function RecipeDetailPage({
   const costPerUnit = yieldNum > 0 ? (totalCost / yieldNum).toFixed(2) : '0.00';
 
   return (
-    <DashboardLayout
-      isPlatformAdmin={user.isPlatformAdmin}
-      bakeries={user.allBakeries}
-      currentBakeryId={user.bakeryId}
-    >
-      <div className="space-y-6">
+    <div className="space-y-6">
         <PageHeader
           title={recipe.name}
           description={recipe.description || 'Recipe details and instructions'}
@@ -223,6 +217,5 @@ export default async function RecipeDetailPage({
           </div>
         </div>
       </div>
-    </DashboardLayout>
   );
 }

@@ -2,7 +2,6 @@ import { getCurrentUser } from '@/lib/clerk';
 import { getBakeryById } from '@/app/actions/bakery';
 import { redirect } from 'next/navigation';
 import { BakeryEditPageContent } from '@/components/bakery/BakeryEditPageContent';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/ui/PageHeader';
 
 export default async function EditBakeryPage({
@@ -25,23 +24,19 @@ export default async function EditBakeryPage({
 
   if (!result.success || !result.data) {
     return (
-      <DashboardLayout isPlatformAdmin={true}
-        bakeries={user.allBakeries}
-        currentBakeryId={user.bakeryId}>
+      
+      <>
         <PageHeader title="Edit Bakery" />
         <div className="alert alert-error">
           <span>{result.error || 'Bakery not found'}</span>
         </div>
-      </DashboardLayout>
+      </>
     );
   }
 
   const bakery = result.data;
 
   return (
-    <BakeryEditPageContent
-      bakery={bakery}
-      isPlatformAdmin={user.isPlatformAdmin}
-    />
+    <BakeryEditPageContent bakery={bakery} />
   );
 }

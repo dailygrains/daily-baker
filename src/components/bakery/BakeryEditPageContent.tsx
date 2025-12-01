@@ -8,16 +8,14 @@ import { deleteBakery } from '@/app/actions/bakery';
 import { useToast } from '@/contexts/ToastContext';
 import type { Bakery } from '@/generated/prisma';
 import { Trash2, Save } from 'lucide-react';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 
 interface BakeryEditPageContentProps {
   bakery: Bakery & { _count: { users: number } };
-  isPlatformAdmin: boolean;
 }
 
-export function BakeryEditPageContent({ bakery, isPlatformAdmin }: BakeryEditPageContentProps) {
+export function BakeryEditPageContent({ bakery }: BakeryEditPageContentProps) {
   const router = useRouter();
   const { showToast } = useToast();
   const [isDeleting, setIsDeleting] = useState(false);
@@ -54,7 +52,7 @@ export function BakeryEditPageContent({ bakery, isPlatformAdmin }: BakeryEditPag
   const canDelete = userCount === 0;
 
   return (
-    <DashboardLayout isPlatformAdmin={isPlatformAdmin}>
+    <>
       <PageHeader
         title={`Edit ${bakery.name}`}
         sticky
@@ -173,6 +171,6 @@ export function BakeryEditPageContent({ bakery, isPlatformAdmin }: BakeryEditPag
           </div>
         </>
       )}
-    </DashboardLayout>
+    </>
   );
 }
