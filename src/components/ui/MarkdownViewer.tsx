@@ -8,7 +8,9 @@ interface MarkdownViewerProps {
 export function MarkdownViewer({ content, className = '' }: MarkdownViewerProps) {
   return (
     <div className={className}>
-      <Markdown>{content}</Markdown>
+      <Markdown options={{ forceBlock: true, disableParsingRawHTML: true }}>
+        {content}
+      </Markdown>
     </div>
   );
 }

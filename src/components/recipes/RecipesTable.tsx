@@ -40,6 +40,13 @@ export function RecipesTable({ recipes }: RecipesTableProps) {
     setCurrentPage(page);
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent, recipeId: string) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handleRowClick(recipeId);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="overflow-x-auto">
@@ -66,7 +73,11 @@ export function RecipesTable({ recipes }: RecipesTableProps) {
                 <tr
                   key={recipe.id}
                   onClick={() => handleRowClick(recipe.id)}
+                  onKeyDown={(e) => handleKeyDown(e, recipe.id)}
                   className="hover cursor-pointer"
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`View ${recipe.name} recipe details`}
                 >
                   <td className="align-top">
                     <div>
