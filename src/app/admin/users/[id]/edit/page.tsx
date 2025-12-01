@@ -49,7 +49,6 @@ export default async function EditUserPage({
       user={user}
       bakeries={bakeries}
       roles={roles}
-      isPlatformAdmin={currentUser.isPlatformAdmin}
     />
   );
 }

@@ -23,14 +23,12 @@ interface UserEditPageContentProps {
   };
   bakeries: Bakery[];
   roles: Role[];
-  isPlatformAdmin: boolean;
 }
 
 export function UserEditPageContent({
   user,
   bakeries,
   roles,
-  isPlatformAdmin,
 }: UserEditPageContentProps) {
   const router = useRouter();
   const { showToast } = useToast();

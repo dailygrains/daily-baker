@@ -1,6 +1,6 @@
 import { currentUser } from '@clerk/nextjs/server';
-import { cookies } from 'next/headers';
 import { prisma } from './prisma';
+import { getBakeryCookie } from './cookies';
 
 /**
  * Get the current user from Clerk and sync with database
@@ -63,20 +63,19 @@ export async function getCurrentUser() {
   // full multi-bakery support is implemented throughout the application.
 
   // Get selected bakery ID from cookie (for multi-bakery users)
-  const cookieStore = await cookies();
-  const selectedBakeryId = cookieStore.get('selectedBakeryId')?.value;
+  const selectedBakeryId = await getBakeryCookie();
 
   // Find the selected bakery - don't default to first bakery
   // Platform admins must explicitly select a bakery
   // Regular users with only one bakery can auto-select it
-  let currentBakery = user.bakeries[0];
-  let currentBakeryData: typeof currentBakery.bakery | undefined = undefined;
+  let currentBakery = user.bakeries.length > 0 ? user.bakeries[0] : undefined;
+  let currentBakeryData: (typeof user.bakeries[0]['bakery']) | undefined = undefined;
   let currentBakeryIdValue: string | undefined = undefined;
 
   // Auto-select for regular users with exactly one bakery
-  if (!user.isPlatformAdmin && user.bakeries.length === 1) {
-    currentBakeryData = currentBakery?.bakery;
-    currentBakeryIdValue = currentBakery?.bakeryId;
+  if (!user.isPlatformAdmin && user.bakeries.length === 1 && currentBakery) {
+    currentBakeryData = currentBakery.bakery;
+    currentBakeryIdValue = currentBakery.bakeryId;
   }
 
   // Override with cookie selection if present

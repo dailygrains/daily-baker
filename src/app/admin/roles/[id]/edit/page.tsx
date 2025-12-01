@@ -37,9 +37,6 @@ export default async function EditRolePage({
   const role = roleResult.data;
 
   return (
-    <RoleEditPageContent
-      role={role}
-      isPlatformAdmin={user.isPlatformAdmin}
-    />
+    <RoleEditPageContent role={role} />
   );
 }

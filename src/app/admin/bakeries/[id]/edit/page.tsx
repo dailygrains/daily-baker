@@ -37,9 +37,6 @@ export default async function EditBakeryPage({
   const bakery = result.data;
 
   return (
-    <BakeryEditPageContent
-      bakery={bakery}
-      isPlatformAdmin={user.isPlatformAdmin}
-    />
+    <BakeryEditPageContent bakery={bakery} />
   );
 }

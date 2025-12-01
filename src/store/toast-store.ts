@@ -11,14 +11,16 @@ export interface Toast {
 
 interface ToastStore {
   toasts: Toast[];
-  addToast: (message: string, type?: ToastType, duration?: number) => void;
+  timeouts: Map<string, NodeJS.Timeout>;
+  addToast: (message: string, type?: ToastType, duration?: number) => string;
   removeToast: (id: string) => void;
 }
 
-export const useToastStore = create<ToastStore>((set) => ({
+export const useToastStore = create<ToastStore>((set, get) => ({
   toasts: [],
+  timeouts: new Map(),
   addToast: (message, type = 'info', duration = 5000) => {
-    const id = Math.random().toString(36).substring(7);
+    const id = crypto.randomUUID();
     const toast: Toast = { id, message, type, duration };
 
     set((state) => ({
@@ -26,14 +28,24 @@ export const useToastStore = create<ToastStore>((set) => ({
     }));
 
     if (duration > 0) {
-      setTimeout(() => {
-        set((state) => ({
-          toasts: state.toasts.filter((t) => t.id !== id),
-        }));
+      const timeoutId = setTimeout(() => {
+        get().removeToast(id);
       }, duration);
+
+      get().timeouts.set(id, timeoutId);
     }
+
+    return id;
   },
   removeToast: (id) => {
+    const { timeouts } = get();
+    const timeoutId = timeouts.get(id);
+
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+      timeouts.delete(id);
+    }
+
     set((state) => ({
       toasts: state.toasts.filter((t) => t.id !== id),
     }));

@@ -13,10 +13,9 @@ import { ArrowLeft } from 'lucide-react';
 
 interface BakeryEditPageContentProps {
   bakery: Bakery & { _count: { users: number } };
-  isPlatformAdmin: boolean;
 }
 
-export function BakeryEditPageContent({ bakery, isPlatformAdmin }: BakeryEditPageContentProps) {
+export function BakeryEditPageContent({ bakery }: BakeryEditPageContentProps) {
   const router = useRouter();
   const { showToast } = useToast();
   const [isDeleting, setIsDeleting] = useState(false);

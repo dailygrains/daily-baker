@@ -14,7 +14,6 @@ export default async function SettingsPage() {
   // Platform admins have different settings
   if (user.isPlatformAdmin) {
     return (
-      
       <>
         <PageHeader
           title="Platform Settings"

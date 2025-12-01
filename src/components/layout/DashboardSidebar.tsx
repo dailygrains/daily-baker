@@ -11,7 +11,6 @@ import {
   ShoppingCart,
   Users,
   Settings,
-  Menu,
   Wheat,
   Mail,
   Activity,

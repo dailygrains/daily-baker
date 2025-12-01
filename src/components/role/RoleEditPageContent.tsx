@@ -16,10 +16,9 @@ interface RoleEditPageContentProps {
       users: number;
     };
   };
-  isPlatformAdmin: boolean;
 }
 
-export function RoleEditPageContent({ role, isPlatformAdmin }: RoleEditPageContentProps) {
+export function RoleEditPageContent({ role }: RoleEditPageContentProps) {
   const router = useRouter();
   const { showToast } = useToast();
   const [isDeleting, setIsDeleting] = useState(false);
