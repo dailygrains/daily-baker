@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const createBakeSheetSchema = z.object({
+export const createProductionSheetSchema = z.object({
   bakeryId: z.string().cuid(),
   recipeId: z.string().cuid('Invalid recipe'),
   scale: z
@@ -14,7 +14,7 @@ export const createBakeSheetSchema = z.object({
   notes: z.string().max(2000, 'Notes too long').optional().nullable(),
 });
 
-export const updateBakeSheetSchema = z.object({
+export const updateProductionSheetSchema = z.object({
   id: z.string().cuid(),
   scale: z.number().positive('Scale must be positive').max(100, 'Scale too large').optional(),
   quantity: z
@@ -25,10 +25,10 @@ export const updateBakeSheetSchema = z.object({
   notes: z.string().max(2000, 'Notes too long').optional().nullable(),
 });
 
-export const completeBakeSheetSchema = z.object({
+export const completeProductionSheetSchema = z.object({
   id: z.string().cuid(),
 });
 
-export type CreateBakeSheetInput = z.infer<typeof createBakeSheetSchema>;
-export type UpdateBakeSheetInput = z.infer<typeof updateBakeSheetSchema>;
-export type CompleteBakeSheetInput = z.infer<typeof completeBakeSheetSchema>;
+export type CreateProductionSheetInput = z.infer<typeof createProductionSheetSchema>;
+export type UpdateProductionSheetInput = z.infer<typeof updateProductionSheetSchema>;
+export type CompleteProductionSheetInput = z.infer<typeof completeProductionSheetSchema>;

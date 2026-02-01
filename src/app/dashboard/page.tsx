@@ -290,7 +290,7 @@ export default async function DashboardPage() {
             <div className="stat-figure text-primary">
               <Calendar className="h-8 w-8" />
             </div>
-            <div className="stat-title">Today&apos;s Bake Sheets</div>
+            <div className="stat-title">Today&apos;s Production Sheets</div>
             <div className="stat-value text-primary">1</div>
             <div className="stat-desc">1 in progress</div>
           </div>
@@ -337,9 +337,9 @@ export default async function DashboardPage() {
       <div className="mt-6">
         <h2 className="text-xl font-bold mb-4">Quick Actions</h2>
         <div className="grid gap-4 md:grid-cols-3">
-          <Link href="/dashboard/bake-sheets" className="card bg-base-100 shadow-sm hover:shadow-md transition-shadow">
+          <Link href="/dashboard/production-sheets" className="card bg-base-100 shadow-sm hover:shadow-md transition-shadow">
             <div className="card-body">
-              <h3 className="card-title text-lg">View Bake Sheets</h3>
+              <h3 className="card-title text-lg">View Production Sheets</h3>
               <p className="text-sm text-base-content/60">See today&apos;s production schedule</p>
             </div>
           </Link>

@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createBakeSheet } from '@/app/actions/bakeSheet';
+import { createProductionSheet } from '@/app/actions/productionSheet';
+import { AlertTriangle } from 'lucide-react';
 
 type Recipe = {
   id: string;
@@ -10,15 +11,25 @@ type Recipe = {
   totalCost: number | null;
 };
 
-type BakeSheetFormProps = {
+type InventoryWarning = {
+  ingredientId: string;
+  ingredientName: string;
+  required: number;
+  available: number;
+  shortfall: number;
+  unit: string;
+};
+
+type ProductionSheetFormProps = {
   bakeryId: string;
   recipes: Recipe[];
 };
 
-export function BakeSheetForm({ bakeryId, recipes }: BakeSheetFormProps) {
+export function ProductionSheetForm({ bakeryId, recipes }: ProductionSheetFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [warnings, setWarnings] = useState<InventoryWarning[] | null>(null);
   const [selectedRecipeId, setSelectedRecipeId] = useState('');
 
   // Get selected recipe
@@ -27,6 +38,7 @@ export function BakeSheetForm({ bakeryId, recipes }: BakeSheetFormProps) {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
+    setWarnings(null);
     setIsSubmitting(true);
 
     const formData = new FormData(e.currentTarget);
@@ -39,13 +51,24 @@ export function BakeSheetForm({ bakeryId, recipes }: BakeSheetFormProps) {
       notes: (formData.get('notes') as string) || null,
     };
 
-    const result = await createBakeSheet(data);
+    const result = await createProductionSheet(data);
 
     if (result.success) {
-      router.push('/dashboard/bake-sheets');
-      router.refresh();
+      // Show warnings briefly if any, then redirect
+      if (result.warnings && result.warnings.length > 0) {
+        setWarnings(result.warnings);
+        setIsSubmitting(false);
+        // Auto-redirect after showing warnings
+        setTimeout(() => {
+          router.push('/dashboard/production-sheets');
+          router.refresh();
+        }, 3000);
+      } else {
+        router.push('/dashboard/production-sheets');
+        router.refresh();
+      }
     } else {
-      setError(result.error || 'Failed to create bake sheet');
+      setError(result.error || 'Failed to create production sheet');
       setIsSubmitting(false);
     }
   };
@@ -55,6 +78,23 @@ export function BakeSheetForm({ bakeryId, recipes }: BakeSheetFormProps) {
       {error && (
         <div className="alert alert-error">
           <span>{error}</span>
+        </div>
+      )}
+
+      {warnings && warnings.length > 0 && (
+        <div className="alert alert-warning">
+          <AlertTriangle className="h-5 w-5" />
+          <div>
+            <h3 className="font-bold">Production sheet created with inventory warnings</h3>
+            <p className="text-sm mb-2">Redirecting to production sheets list...</p>
+            <ul className="text-sm list-disc list-inside">
+              {warnings.map((w) => (
+                <li key={w.ingredientId}>
+                  <strong>{w.ingredientName}</strong>: need {w.required.toFixed(2)} {w.unit}, have {w.available.toFixed(2)} {w.unit} (short {w.shortfall.toFixed(2)})
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       )}
 
@@ -80,7 +120,7 @@ export function BakeSheetForm({ bakeryId, recipes }: BakeSheetFormProps) {
         </select>
         <label className="label">
           <span className="label-text-alt text-base-content/70">
-            Choose the recipe for this bake sheet
+            Choose the recipe for this production sheet
           </span>
         </label>
       </div>
@@ -142,7 +182,7 @@ export function BakeSheetForm({ bakeryId, recipes }: BakeSheetFormProps) {
         <textarea
           name="notes"
           className="textarea textarea-bordered h-24"
-          placeholder="Add any notes about this bake sheet..."
+          placeholder="Add any notes about this production sheet..."
         />
         <label className="label">
           <span className="label-text-alt text-base-content/70">
@@ -172,7 +212,7 @@ export function BakeSheetForm({ bakeryId, recipes }: BakeSheetFormProps) {
               Creating...
             </>
           ) : (
-            'Create Bake Sheet'
+            'Create Production Sheet'
           )}
         </button>
       </div>

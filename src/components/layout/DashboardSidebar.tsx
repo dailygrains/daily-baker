@@ -100,11 +100,11 @@ export function DashboardSidebar({
             </li>
             <li>
               <Link
-                href="/dashboard/bake-sheets"
-                className={`gap-3 ${isActive('/dashboard/bake-sheets') ? 'active' : ''}`}
+                href="/dashboard/production-sheets"
+                className={`gap-3 ${isActive('/dashboard/production-sheets') ? 'active' : ''}`}
               >
                 <Briefcase className="h-5 w-5" />
-                Bake Sheets
+                Production Sheets
               </Link>
             </li>
 

@@ -75,7 +75,7 @@ export async function getUserById(id: string) {
         role: true,
         _count: {
           select: {
-            inventoryTransactions: true,
+            inventoryUsages: true,
             sentInvitations: true,
           },
         },
@@ -392,7 +392,7 @@ export async function deleteUser(id: string) {
         },
         _count: {
           select: {
-            inventoryTransactions: true,
+            inventoryUsages: true,
             sentInvitations: true,
           },
         },
@@ -407,13 +407,13 @@ export async function deleteUser(id: string) {
     }
 
     // Check for constraints
-    const transactionCount = user._count.inventoryTransactions;
+    const usageCount = user._count.inventoryUsages;
     const invitationCount = user._count.sentInvitations;
 
-    if (transactionCount > 0 || invitationCount > 0) {
+    if (usageCount > 0 || invitationCount > 0) {
       const reasons = [];
-      if (transactionCount > 0) {
-        reasons.push(`${transactionCount} inventory transaction${transactionCount === 1 ? '' : 's'}`);
+      if (usageCount > 0) {
+        reasons.push(`${usageCount} inventory usage record${usageCount === 1 ? '' : 's'}`);
       }
       if (invitationCount > 0) {
         reasons.push(`${invitationCount} sent invitation${invitationCount === 1 ? '' : 's'}`);

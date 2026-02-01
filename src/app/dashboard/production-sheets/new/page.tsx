@@ -1,10 +1,10 @@
 import { getCurrentUser } from '@/lib/clerk';
 import { redirect } from 'next/navigation';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { BakeSheetForm } from '@/components/bakeSheets/BakeSheetForm';
+import { ProductionSheetForm } from '@/components/productionSheets/ProductionSheetForm';
 import { db } from '@/lib/db';
 
-export default async function NewBakeSheetPage() {
+export default async function NewProductionSheetPage() {
   const user = await getCurrentUser();
 
   if (!user) {
@@ -37,13 +37,13 @@ export default async function NewBakeSheetPage() {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <PageHeader
-        title="New Bake Sheet"
+        title="New Production Sheet"
         description="Create a production run for a recipe"
       />
 
       <div className="card bg-base-100 shadow-xl">
         <div className="card-body">
-          <BakeSheetForm bakeryId={user.bakeryId} recipes={recipesForForm} />
+          <ProductionSheetForm bakeryId={user.bakeryId} recipes={recipesForForm} />
         </div>
       </div>
     </div>

@@ -33,7 +33,7 @@ interface RecipeEditPageContentProps {
           id: string;
           name: string;
           unit: string;
-          costPerUnit: string;
+          costPerUnit?: number;
         };
       }>;
     }>;

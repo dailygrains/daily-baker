@@ -2,16 +2,16 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { completeBakeSheet } from '@/app/actions/bakeSheet';
+import { completeProductionSheet } from '@/app/actions/productionSheet';
 import { CheckCircle2 } from 'lucide-react';
 
-type CompleteBakeSheetButtonProps = {
-  bakeSheetId: string;
+type CompleteProductionSheetButtonProps = {
+  productionSheetId: string;
 };
 
-export function CompleteBakeSheetButton({
-  bakeSheetId,
-}: CompleteBakeSheetButtonProps) {
+export function CompleteProductionSheetButton({
+  productionSheetId,
+}: CompleteProductionSheetButtonProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -20,7 +20,7 @@ export function CompleteBakeSheetButton({
     // Confirm action
     if (
       !confirm(
-        'Are you sure you want to mark this bake sheet as completed? This will deduct ingredients from inventory and cannot be undone.'
+        'Are you sure you want to mark this production sheet as completed? This will deduct ingredients from inventory and cannot be undone.'
       )
     ) {
       return;
@@ -29,12 +29,12 @@ export function CompleteBakeSheetButton({
     setError(null);
     setIsSubmitting(true);
 
-    const result = await completeBakeSheet({ id: bakeSheetId });
+    const result = await completeProductionSheet({ id: productionSheetId });
 
     if (result.success) {
       router.refresh();
     } else {
-      setError(result.error || 'Failed to complete bake sheet');
+      setError(result.error || 'Failed to complete production sheet');
       setIsSubmitting(false);
     }
   };

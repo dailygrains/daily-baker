@@ -151,8 +151,7 @@ export default async function VendorDetailPage({
                   <thead>
                     <tr>
                       <th>Name</th>
-                      <th>Current Qty</th>
-                      <th>Cost per Unit</th>
+                      <th>Unit</th>
                       <th>Actions</th>
                     </tr>
                   </thead>
@@ -167,10 +166,7 @@ export default async function VendorDetailPage({
                             {iv.ingredient.name}
                           </Link>
                         </td>
-                        <td>
-                          {Number(iv.ingredient.currentQty).toFixed(3)} {iv.ingredient.unit}
-                        </td>
-                        <td>${Number(iv.ingredient.costPerUnit).toFixed(2)}</td>
+                        <td>{iv.ingredient.unit}</td>
                         <td>
                           <Link
                             href={`/dashboard/ingredients/${iv.ingredient.id}`}
@@ -178,6 +174,53 @@ export default async function VendorDetailPage({
                           >
                             View
                           </Link>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Recent Purchases from this Vendor */}
+        {vendor.inventoryLots && vendor.inventoryLots.length > 0 && (
+          <div className="card bg-base-100 shadow-xl">
+            <div className="card-body">
+              <h2 className="card-title">Recent Purchases</h2>
+              <div className="overflow-x-auto">
+                <table className="table table-zebra">
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Ingredient</th>
+                      <th>Quantity</th>
+                      <th>Cost/Unit</th>
+                      <th>Remaining</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {vendor.inventoryLots.map((lot) => (
+                      <tr key={lot.id}>
+                        <td>{formatDistanceToNow(new Date(lot.purchasedAt), { addSuffix: true })}</td>
+                        <td>
+                          <Link
+                            href={`/dashboard/ingredients/${lot.inventory.ingredient.id}`}
+                            className="font-semibold hover:text-primary"
+                          >
+                            {lot.inventory.ingredient.name}
+                          </Link>
+                        </td>
+                        <td>
+                          {lot.purchaseQty.toFixed(2)} {lot.purchaseUnit}
+                        </td>
+                        <td>${lot.costPerUnit.toFixed(2)}/{lot.purchaseUnit}</td>
+                        <td>
+                          {lot.remainingQty.toFixed(2)} {lot.purchaseUnit}
+                          {lot.remainingQty <= 0 && (
+                            <span className="badge badge-ghost badge-sm ml-2">Depleted</span>
+                          )}
                         </td>
                       </tr>
                     ))}

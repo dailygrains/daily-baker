@@ -15,7 +15,7 @@ type RecipeWithSections = Omit<Recipe, 'totalCost'> & {
     ingredients: (Omit<RecipeSectionIngredient, 'quantity' | 'ingredient'> & {
       quantity: string | RecipeSectionIngredient['quantity'];
       ingredient: Pick<Ingredient, 'id' | 'name' | 'unit'> & {
-        costPerUnit: string | Ingredient['costPerUnit'];
+        costPerUnit?: number; // Computed from inventory weighted average
       };
     })[];
   })[];

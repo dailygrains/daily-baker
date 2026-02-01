@@ -11,10 +11,12 @@ import {
 } from '@/lib/validations/recipe';
 import { revalidatePath } from 'next/cache';
 import { Decimal } from '@prisma/client/runtime/library';
-import { convertUnits } from '@/lib/unitConversion';
+import { convertQuantity } from '@/lib/unitConvert';
+import { getWeightedAverageCost, type InventoryWithLots } from '@/lib/inventory';
 
 /**
  * Calculate total cost of a recipe based on ingredients
+ * Uses weighted average cost from FIFO lot-based inventory
  */
 async function calculateRecipeCost(
   sections: Array<{
@@ -29,35 +31,67 @@ async function calculateRecipeCost(
 
   for (const section of sections) {
     for (const ing of section.ingredients) {
-      // Fetch ingredient cost
+      // Fetch ingredient with inventory for weighted average cost
       const ingredient = await db.ingredient.findUnique({
         where: { id: ing.ingredientId },
-        select: { costPerUnit: true, unit: true },
+        include: {
+          inventory: {
+            include: {
+              lots: {
+                where: { remainingQty: { gt: 0 } },
+              },
+            },
+          },
+        },
       });
 
       if (ingredient) {
-        // Convert quantity to ingredient's unit if necessary
+        // Get weighted average cost from inventory
+        let costPerUnit = 0;
+        let displayUnit = ingredient.unit;
+
+        if (ingredient.inventory && ingredient.inventory.lots.length > 0) {
+          const inventoryForCalc: InventoryWithLots = {
+            id: ingredient.inventory.id,
+            displayUnit: ingredient.inventory.displayUnit,
+            lots: ingredient.inventory.lots.map((lot) => ({
+              id: lot.id,
+              purchaseQty: lot.purchaseQty,
+              remainingQty: lot.remainingQty,
+              purchaseUnit: lot.purchaseUnit,
+              costPerUnit: lot.costPerUnit,
+              purchasedAt: lot.purchasedAt,
+              expiresAt: lot.expiresAt,
+              vendorId: lot.vendorId,
+              notes: lot.notes,
+            })),
+          };
+
+          costPerUnit = getWeightedAverageCost(inventoryForCalc);
+          displayUnit = ingredient.inventory.displayUnit;
+        }
+
+        // Convert quantity to display unit if necessary
         let adjustedQuantity = ing.quantity;
-        if (ing.unit !== ingredient.unit) {
-          const converted = await convertUnits(
+        if (ing.unit !== displayUnit) {
+          const converted = convertQuantity(
             ing.quantity,
             ing.unit,
-            ingredient.unit
+            displayUnit
           );
 
           if (converted !== null) {
             adjustedQuantity = converted;
           } else {
             // If conversion fails, log warning and use original quantity
-            // This allows recipes to be created even without conversions
             console.warn(
-              `Cannot convert from ${ing.unit} to ${ingredient.unit} for ingredient cost calculation`
+              `Cannot convert from ${ing.unit} to ${displayUnit} for ingredient cost calculation`
             );
           }
         }
 
-        // Calculate cost: costPerUnit is in ingredient's unit, so we use the adjusted quantity
-        const cost = Number(ingredient.costPerUnit) * adjustedQuantity;
+        // Calculate cost using weighted average cost per display unit
+        const cost = costPerUnit * adjustedQuantity;
         totalCost += cost;
       }
     }
@@ -279,7 +313,7 @@ export async function deleteRecipe(id: string) {
       include: {
         _count: {
           select: {
-            bakeSheets: true,
+            productionSheets: true,
           },
         },
       },
@@ -297,11 +331,11 @@ export async function deleteRecipe(id: string) {
       };
     }
 
-    // Check if recipe is used in bake sheets
-    if (recipe._count.bakeSheets > 0) {
+    // Check if recipe is used in production sheets
+    if (recipe._count.productionSheets > 0) {
       return {
         success: false,
-        error: `Cannot delete recipe with ${recipe._count.bakeSheets} bake sheet(s). Please remove from bake sheets first.`,
+        error: `Cannot delete recipe with ${recipe._count.productionSheets} production sheet(s). Please remove from production sheets first.`,
       };
     }
 
@@ -360,7 +394,7 @@ export async function getRecipesByBakery(bakeryId: string) {
         _count: {
           select: {
             sections: true,
-            bakeSheets: true,
+            productionSheets: true,
           },
         },
       },
@@ -381,6 +415,7 @@ export async function getRecipesByBakery(bakeryId: string) {
 
 /**
  * Get a single recipe by ID
+ * Includes inventory data for calculating weighted average costs
  */
 export async function getRecipeById(id: string) {
   try {
@@ -398,11 +433,14 @@ export async function getRecipeById(id: string) {
             ingredients: {
               include: {
                 ingredient: {
-                  select: {
-                    id: true,
-                    name: true,
-                    unit: true,
-                    costPerUnit: true,
+                  include: {
+                    inventory: {
+                      include: {
+                        lots: {
+                          where: { remainingQty: { gt: 0 } },
+                        },
+                      },
+                    },
                   },
                 },
               },
@@ -415,7 +453,7 @@ export async function getRecipeById(id: string) {
         _count: {
           select: {
             sections: true,
-            bakeSheets: true,
+            productionSheets: true,
           },
         },
       },
@@ -433,7 +471,47 @@ export async function getRecipeById(id: string) {
       };
     }
 
-    return { success: true, data: recipe };
+    // Transform the data to include calculated costPerUnit from inventory
+    const transformedRecipe = {
+      ...recipe,
+      sections: recipe.sections.map((section) => ({
+        ...section,
+        ingredients: section.ingredients.map((ing) => {
+          // Calculate weighted average cost from inventory
+          let costPerUnit = 0;
+          if (ing.ingredient.inventory && ing.ingredient.inventory.lots.length > 0) {
+            const inventoryForCalc: InventoryWithLots = {
+              id: ing.ingredient.inventory.id,
+              displayUnit: ing.ingredient.inventory.displayUnit,
+              lots: ing.ingredient.inventory.lots.map((lot) => ({
+                id: lot.id,
+                purchaseQty: lot.purchaseQty,
+                remainingQty: lot.remainingQty,
+                purchaseUnit: lot.purchaseUnit,
+                costPerUnit: lot.costPerUnit,
+                purchasedAt: lot.purchasedAt,
+                expiresAt: lot.expiresAt,
+                vendorId: lot.vendorId,
+                notes: lot.notes,
+              })),
+            };
+            costPerUnit = getWeightedAverageCost(inventoryForCalc);
+          }
+
+          return {
+            ...ing,
+            ingredient: {
+              id: ing.ingredient.id,
+              name: ing.ingredient.name,
+              unit: ing.ingredient.inventory?.displayUnit ?? ing.ingredient.unit,
+              costPerUnit: costPerUnit,
+            },
+          };
+        }),
+      })),
+    };
+
+    return { success: true, data: transformedRecipe };
   } catch (error) {
     console.error('Failed to fetch recipe:', error);
     return {

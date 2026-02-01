@@ -35,9 +35,10 @@ model Bakery {
   users        UserBakery[]
   recipes      Recipe[]
   ingredients  Ingredient[]
+  inventories  Inventory[]
   vendors      Vendor[]
   equipment    Equipment[]
-  bakeSheets   BakeSheet[]
+  productionSheets   ProductionSheet[]
   invitations  Invitation[]
   activityLogs ActivityLog[]
 
@@ -59,11 +60,11 @@ model User {
   lastLoginAt     DateTime?
 
   // Relations
-  bakeries              UserBakery[]
-  inventoryTransactions InventoryTransaction[]
-  completedBakeSheets   BakeSheet[]            @relation("CompletedBy")
-  sentInvitations       Invitation[]           @relation("InvitationCreator")
-  activityLogs          ActivityLog[]
+  bakeries            UserBakery[]
+  inventoryUsages     InventoryUsage[]
+  completedProductionSheets ProductionSheet[]      @relation("CompletedBy")
+  sentInvitations     Invitation[]     @relation("InvitationCreator")
+  activityLogs        ActivityLog[]
 
   @@index([isPlatformAdmin])
   @@index([clerkId])
@@ -146,7 +147,7 @@ model Recipe {
 
   // Relations
   sections   RecipeSection[]
-  bakeSheets BakeSheet[]
+  productionSheets ProductionSheet[]
 
   @@index([bakeryId])
   @@index([name])
@@ -186,57 +187,102 @@ model RecipeSectionIngredient {
 }
 
 // ============================================================================
-// INGREDIENT & INVENTORY SYSTEM
+// INGREDIENT & INVENTORY SYSTEM (FIFO Lot-Based)
 // ============================================================================
 
 model Ingredient {
-  id          String   @id @default(cuid())
-  bakeryId    String
-  bakery      Bakery   @relation(fields: [bakeryId], references: [id], onDelete: Cascade)
-  name        String
-  currentQty  Decimal  @default(0) @db.Decimal(10, 3)
-  unit        String // "g", "ml", "kg"
-  costPerUnit Decimal  @db.Decimal(10, 2) // For recipe costing
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(cuid())
+  bakeryId  String
+  bakery    Bakery   @relation(fields: [bakeryId], references: [id], onDelete: Cascade)
+  name      String
+  unit      String // Reference unit for recipes (e.g., "g", "ml", "kg")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  vendors      IngredientVendor[]
-  transactions InventoryTransaction[]
-  recipeUses   RecipeSectionIngredient[]
+  vendors    IngredientVendor[]
+  recipeUses RecipeSectionIngredient[]
+  inventory  Inventory? // One-to-one with Inventory for lot tracking
 
   @@index([bakeryId])
   @@index([name])
   @@map("ingredients")
 }
 
-model InventoryTransaction {
-  id           String          @id @default(cuid())
-  ingredientId String
-  ingredient   Ingredient      @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
-  type         TransactionType
-  quantity     Decimal         @db.Decimal(10, 3)
-  unit         String
-  notes        String?         @db.Text
-  bakeSheetId  String?
-  bakeSheet    BakeSheet?      @relation(fields: [bakeSheetId], references: [id], onDelete: SetNull)
-  createdBy    String
-  creator      User            @relation(fields: [createdBy], references: [id], onDelete: Restrict)
-  createdAt    DateTime        @default(now())
+// Master inventory configuration per ingredient
+model Inventory {
+  id           String   @id @default(cuid())
+  bakeryId     String
+  bakery       Bakery   @relation(fields: [bakeryId], references: [id], onDelete: Cascade)
+  ingredientId String   @unique // One inventory record per ingredient
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+  displayUnit  String   // Main unit for display/aggregates (e.g., "kg")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  @@index([ingredientId])
-  @@index([type])
-  @@index([bakeSheetId])
-  @@index([createdBy])
-  @@index([createdAt])
-  @@map("inventory_transactions")
+  // Relations
+  lots InventoryLot[]
+
+  @@index([bakeryId])
+  @@map("inventories")
 }
 
-enum TransactionType {
-  RECEIVE
-  USE
-  ADJUST
-  WASTE
+// Individual purchase lots (FIFO tracking)
+model InventoryLot {
+  id           String    @id @default(cuid())
+  inventoryId  String
+  inventory    Inventory @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
+
+  // Purchase info
+  purchaseQty  Decimal   @db.Decimal(10, 3) // Original quantity purchased
+  remainingQty Decimal   @db.Decimal(10, 3) // Current remaining quantity
+  purchaseUnit String    // Unit at purchase (may differ from display unit)
+  costPerUnit  Decimal   @db.Decimal(10, 4) // Cost per purchase unit
+
+  // Tracking
+  purchasedAt DateTime  @default(now()) // For FIFO ordering
+  expiresAt   DateTime? // Optional expiration date for perishables
+  vendorId    String?   // Optional vendor link
+  vendor      Vendor?   @relation(fields: [vendorId], references: [id], onDelete: SetNull)
+  notes       String?   @db.Text
+  createdAt   DateTime  @default(now())
+
+  // Relations
+  usages InventoryUsage[]
+
+  @@index([inventoryId])
+  @@index([purchasedAt])
+  @@index([expiresAt])
+  @@index([vendorId])
+  @@map("inventory_lots")
+}
+
+// Usage tracking (links consumption to specific lots)
+model InventoryUsage {
+  id          String      @id @default(cuid())
+  lotId       String
+  lot         InventoryLot @relation(fields: [lotId], references: [id], onDelete: Cascade)
+  quantity    Decimal     @db.Decimal(10, 3) // Amount actually deducted from this lot (in lot's unit)
+  shortfall   Decimal     @default(0) @db.Decimal(10, 3) // Amount that couldn't be fulfilled (requested - available)
+  reason      UsageReason
+  productionSheetId String?     // Link to production sheet if from production
+  productionSheet   ProductionSheet?  @relation(fields: [productionSheetId], references: [id], onDelete: SetNull)
+  notes       String?     @db.Text
+  createdBy   String
+  creator     User        @relation(fields: [createdBy], references: [id], onDelete: Restrict)
+  createdAt   DateTime    @default(now())
+
+  @@index([lotId])
+  @@index([productionSheetId])
+  @@index([createdBy])
+  @@index([createdAt])
+  @@map("inventory_usages")
+}
+
+enum UsageReason {
+  USE    // Normal production usage
+  WASTE  // Spoilage/loss
+  ADJUST // Manual correction (can be negative)
 }
 
 // ============================================================================
@@ -256,9 +302,10 @@ model Vendor {
   updatedAt DateTime @updatedAt
 
   // Relations
-  contacts    VendorContact[]
-  ingredients IngredientVendor[]
-  equipment   Equipment[]
+  contacts      VendorContact[]
+  ingredients   IngredientVendor[]
+  equipment     Equipment[]
+  inventoryLots InventoryLot[]
 
   @@index([bakeryId])
   @@index([name])
@@ -329,10 +376,10 @@ enum EquipmentStatus {
 }
 
 // ============================================================================
-// BAKE SHEET SYSTEM
+// PRODUCTION SHEET SYSTEM
 // ============================================================================
 
-model BakeSheet {
+model ProductionSheet {
   id          String    @id @default(cuid())
   bakeryId    String
   bakery      Bakery    @relation(fields: [bakeryId], references: [id], onDelete: Cascade)
@@ -349,13 +396,13 @@ model BakeSheet {
   updatedAt   DateTime  @updatedAt
 
   // Relations
-  transactions InventoryTransaction[]
+  usages InventoryUsage[]
 
   @@index([bakeryId])
   @@index([recipeId])
   @@index([completed])
   @@index([createdAt])
-  @@map("bake_sheets")
+  @@map("production_sheets")
 }
 
 // ============================================================================

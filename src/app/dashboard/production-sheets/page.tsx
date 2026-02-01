@@ -1,12 +1,12 @@
 import { getCurrentUser } from '@/lib/clerk';
 import { redirect } from 'next/navigation';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { getBakeSheetsByBakery } from '@/app/actions/bakeSheet';
+import { getProductionSheetsByBakery } from '@/app/actions/productionSheet';
 import Link from 'next/link';
 import { Plus, Briefcase, CheckCircle2, Clock } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
-export default async function BakeSheetsPage() {
+export default async function ProductionSheetsPage() {
   const user = await getCurrentUser();
 
   if (!user) {
@@ -17,34 +17,34 @@ export default async function BakeSheetsPage() {
     redirect('/dashboard');
   }
 
-  const bakeSheetsResult = await getBakeSheetsByBakery(user.bakeryId);
+  const productionSheetsResult = await getProductionSheetsByBakery(user.bakeryId);
 
-  if (!bakeSheetsResult.success) {
+  if (!productionSheetsResult.success) {
     return (
       <div className="alert alert-error">
-          <span>{bakeSheetsResult.error}</span>
+          <span>{productionSheetsResult.error}</span>
         </div>
     );
   }
 
-  const bakeSheets = bakeSheetsResult.data || [];
+  const productionSheets = productionSheetsResult.data || [];
 
   // Separate pending and completed
-  const pendingBakeSheets = bakeSheets.filter((bs) => !bs.completed);
-  const completedBakeSheets = bakeSheets.filter((bs) => bs.completed);
+  const pendingProductionSheets = productionSheets.filter((ps) => !ps.completed);
+  const completedProductionSheets = productionSheets.filter((ps) => ps.completed);
 
   return (
     <div className="space-y-6">
         <PageHeader
-          title="Bake Sheets"
+          title="Production Sheets"
           description="Manage production runs and track ingredient usage"
           actions={
             <Link
-              href="/dashboard/bake-sheets/new"
+              href="/dashboard/production-sheets/new"
               className="btn btn-primary btn-sm"
             >
               <Plus className="h-4 w-4" />
-              New Bake Sheet
+              New Production Sheet
             </Link>
           }
         />
@@ -56,7 +56,7 @@ export default async function BakeSheetsPage() {
               <Clock className="h-8 w-8" />
             </div>
             <div className="stat-title">Pending</div>
-            <div className="stat-value text-warning">{pendingBakeSheets.length}</div>
+            <div className="stat-value text-warning">{pendingProductionSheets.length}</div>
             <div className="stat-desc">Waiting to be completed</div>
           </div>
 
@@ -65,7 +65,7 @@ export default async function BakeSheetsPage() {
               <CheckCircle2 className="h-8 w-8" />
             </div>
             <div className="stat-title">Completed</div>
-            <div className="stat-value text-success">{completedBakeSheets.length}</div>
+            <div className="stat-value text-success">{completedProductionSheets.length}</div>
             <div className="stat-desc">Production runs finished</div>
           </div>
 
@@ -74,16 +74,16 @@ export default async function BakeSheetsPage() {
               <Briefcase className="h-8 w-8" />
             </div>
             <div className="stat-title">Total</div>
-            <div className="stat-value text-primary">{bakeSheets.length}</div>
-            <div className="stat-desc">All bake sheets</div>
+            <div className="stat-value text-primary">{productionSheets.length}</div>
+            <div className="stat-desc">All production sheets</div>
           </div>
         </div>
 
-        {/* Pending Bake Sheets */}
-        {pendingBakeSheets.length > 0 && (
+        {/* Pending Production Sheets */}
+        {pendingProductionSheets.length > 0 && (
           <div className="card bg-base-100 shadow-xl">
             <div className="card-body">
-              <h2 className="card-title">Pending Bake Sheets</h2>
+              <h2 className="card-title">Pending Production Sheets</h2>
 
               <div className="overflow-x-auto">
                 <table className="table">
@@ -97,30 +97,30 @@ export default async function BakeSheetsPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {pendingBakeSheets.map((bakeSheet) => (
-                      <tr key={bakeSheet.id}>
+                    {pendingProductionSheets.map((productionSheet) => (
+                      <tr key={productionSheet.id}>
                         <td>
                           <Link
-                            href={`/dashboard/bake-sheets/${bakeSheet.id}`}
+                            href={`/dashboard/production-sheets/${productionSheet.id}`}
                             className="font-semibold hover:text-primary"
                           >
-                            {bakeSheet.recipe.name}
+                            {productionSheet.recipe.name}
                           </Link>
                         </td>
-                        <td>{bakeSheet.quantity}</td>
+                        <td>{productionSheet.quantity}</td>
                         <td>
                           <span className="badge badge-outline">
-                            {Number(bakeSheet.scale).toFixed(2)}x
+                            {Number(productionSheet.scale).toFixed(2)}x
                           </span>
                         </td>
                         <td className="text-sm text-base-content/70">
-                          {formatDistanceToNow(new Date(bakeSheet.createdAt), {
+                          {formatDistanceToNow(new Date(productionSheet.createdAt), {
                             addSuffix: true,
                           })}
                         </td>
                         <td>
                           <Link
-                            href={`/dashboard/bake-sheets/${bakeSheet.id}`}
+                            href={`/dashboard/production-sheets/${productionSheet.id}`}
                             className="btn btn-sm btn-ghost"
                           >
                             View
@@ -135,11 +135,11 @@ export default async function BakeSheetsPage() {
           </div>
         )}
 
-        {/* Completed Bake Sheets */}
-        {completedBakeSheets.length > 0 && (
+        {/* Completed Production Sheets */}
+        {completedProductionSheets.length > 0 && (
           <div className="card bg-base-100 shadow-xl">
             <div className="card-body">
-              <h2 className="card-title">Completed Bake Sheets</h2>
+              <h2 className="card-title">Completed Production Sheets</h2>
 
               <div className="overflow-x-auto">
                 <table className="table">
@@ -154,34 +154,34 @@ export default async function BakeSheetsPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {completedBakeSheets.map((bakeSheet) => (
-                      <tr key={bakeSheet.id}>
+                    {completedProductionSheets.map((productionSheet) => (
+                      <tr key={productionSheet.id}>
                         <td>
                           <Link
-                            href={`/dashboard/bake-sheets/${bakeSheet.id}`}
+                            href={`/dashboard/production-sheets/${productionSheet.id}`}
                             className="font-semibold hover:text-primary"
                           >
-                            {bakeSheet.recipe.name}
+                            {productionSheet.recipe.name}
                           </Link>
                         </td>
-                        <td>{bakeSheet.quantity}</td>
+                        <td>{productionSheet.quantity}</td>
                         <td>
                           <span className="badge badge-outline">
-                            {Number(bakeSheet.scale).toFixed(2)}x
+                            {Number(productionSheet.scale).toFixed(2)}x
                           </span>
                         </td>
                         <td className="text-sm text-base-content/70">
-                          {bakeSheet.completedAt &&
-                            formatDistanceToNow(new Date(bakeSheet.completedAt), {
+                          {productionSheet.completedAt &&
+                            formatDistanceToNow(new Date(productionSheet.completedAt), {
                               addSuffix: true,
                             })}
                         </td>
                         <td className="text-sm text-base-content/70">
-                          {bakeSheet.completer?.name || 'Unknown'}
+                          {productionSheet.completer?.name || 'Unknown'}
                         </td>
                         <td>
                           <Link
-                            href={`/dashboard/bake-sheets/${bakeSheet.id}`}
+                            href={`/dashboard/production-sheets/${productionSheet.id}`}
                             className="btn btn-sm btn-ghost"
                           >
                             View
@@ -197,21 +197,21 @@ export default async function BakeSheetsPage() {
         )}
 
         {/* Empty State */}
-        {bakeSheets.length === 0 && (
+        {productionSheets.length === 0 && (
           <div className="card bg-base-100 shadow-xl">
             <div className="card-body">
               <div className="text-center py-12">
                 <Briefcase className="h-16 w-16 mx-auto text-base-content/30 mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No bake sheets yet</h3>
+                <h3 className="text-lg font-semibold mb-2">No production sheets yet</h3>
                 <p className="text-base-content/70 mb-4">
-                  Create a bake sheet to start a production run
+                  Create a production sheet to start a production run
                 </p>
                 <Link
-                  href="/dashboard/bake-sheets/new"
+                  href="/dashboard/production-sheets/new"
                   className="btn btn-primary"
                 >
                   <Plus className="h-4 w-4" />
-                  Create Bake Sheet
+                  Create Production Sheet
                 </Link>
               </div>
             </div>

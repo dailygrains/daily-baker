@@ -17,7 +17,7 @@ interface UserEditPageContentProps {
     }[];
     role: Role | null;
     _count: {
-      inventoryTransactions: number;
+      inventoryUsages: number;
       sentInvitations: number;
     };
   };
@@ -62,15 +62,15 @@ export function UserEditPageContent({
     }
   }
 
-  const transactionCount = user._count?.inventoryTransactions ?? 0;
+  const usageCount = user._count?.inventoryUsages ?? 0;
   const invitationCount = user._count?.sentInvitations ?? 0;
-  const canDelete = transactionCount === 0 && invitationCount === 0;
+  const canDelete = usageCount === 0 && invitationCount === 0;
 
   let deleteReason = '';
   if (!canDelete) {
     const reasons = [];
-    if (transactionCount > 0) {
-      reasons.push(`${transactionCount} inventory transaction${transactionCount === 1 ? '' : 's'}`);
+    if (usageCount > 0) {
+      reasons.push(`${usageCount} inventory usage record${usageCount === 1 ? '' : 's'}`);
     }
     if (invitationCount > 0) {
       reasons.push(`${invitationCount} sent invitation${invitationCount === 1 ? '' : 's'}`);

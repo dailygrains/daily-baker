@@ -54,7 +54,7 @@ export default async function EditRecipePage({
           id: ing.ingredient.id,
           name: ing.ingredient.name,
           unit: ing.ingredient.unit,
-          costPerUnit: ing.ingredient.costPerUnit.toString(),
+          costPerUnit: Number(ing.ingredient.costPerUnit),
         },
       })),
     })),

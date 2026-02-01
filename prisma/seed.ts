@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { PrismaClient, EquipmentStatus, TransactionType } from '../src/generated/prisma';
+import { PrismaClient, EquipmentStatus, UsageReason } from '../src/generated/prisma';
 
 const prisma = new PrismaClient();
 
@@ -9,8 +9,10 @@ async function main() {
   // Clean existing data in development
   if (process.env.NODE_ENV === 'development') {
     console.log('🗑️  Cleaning existing data...');
-    await prisma.bakeSheet.deleteMany();
-    await prisma.inventoryTransaction.deleteMany();
+    await prisma.productionSheet.deleteMany();
+    await prisma.inventoryUsage.deleteMany();
+    await prisma.inventoryLot.deleteMany();
+    await prisma.inventory.deleteMany();
     await prisma.recipeSectionIngredient.deleteMany();
     await prisma.recipeSection.deleteMany();
     await prisma.recipe.deleteMany();
@@ -291,9 +293,7 @@ async function main() {
     data: {
       bakeryId: artisanBakery.id,
       name: 'Bread Flour (Organic)',
-      currentQty: 250,
       unit: 'kg',
-      costPerUnit: 2.50,
     },
   });
 
@@ -301,9 +301,7 @@ async function main() {
     data: {
       bakeryId: artisanBakery.id,
       name: 'Whole Wheat Flour',
-      currentQty: 100,
       unit: 'kg',
-      costPerUnit: 3.00,
     },
   });
 
@@ -311,9 +309,7 @@ async function main() {
     data: {
       bakeryId: artisanBakery.id,
       name: 'Rye Flour',
-      currentQty: 50,
       unit: 'kg',
-      costPerUnit: 3.50,
     },
   });
 
@@ -321,9 +317,7 @@ async function main() {
     data: {
       bakeryId: artisanBakery.id,
       name: 'Sea Salt',
-      currentQty: 20,
       unit: 'kg',
-      costPerUnit: 8.00,
     },
   });
 
@@ -331,9 +325,7 @@ async function main() {
     data: {
       bakeryId: artisanBakery.id,
       name: 'Filtered Water',
-      currentQty: 500,
       unit: 'L',
-      costPerUnit: 0.01,
     },
   });
 
@@ -341,9 +333,7 @@ async function main() {
     data: {
       bakeryId: artisanBakery.id,
       name: 'Active Dry Yeast',
-      currentQty: 5,
       unit: 'kg',
-      costPerUnit: 15.00,
     },
   });
 
@@ -351,9 +341,7 @@ async function main() {
     data: {
       bakeryId: artisanBakery.id,
       name: 'Unsalted Butter (Organic)',
-      currentQty: 30,
       unit: 'kg',
-      costPerUnit: 12.00,
     },
   });
 
@@ -361,9 +349,7 @@ async function main() {
     data: {
       bakeryId: artisanBakery.id,
       name: 'Whole Milk',
-      currentQty: 40,
       unit: 'L',
-      costPerUnit: 2.00,
     },
   });
 
@@ -371,9 +357,7 @@ async function main() {
     data: {
       bakeryId: artisanBakery.id,
       name: 'Large Eggs (Organic)',
-      currentQty: 600,
       unit: 'unit',
-      costPerUnit: 0.50,
     },
   });
 
@@ -381,9 +365,7 @@ async function main() {
     data: {
       bakeryId: artisanBakery.id,
       name: 'Granulated Sugar',
-      currentQty: 75,
       unit: 'kg',
-      costPerUnit: 2.00,
     },
   });
 
@@ -704,66 +686,272 @@ async function main() {
   console.log(`✅ Created ${3} recipes with sections\n`);
 
   // ==========================================================================
-  // Create Inventory Transactions
+  // Create Inventory with Lots (FIFO system)
   // ==========================================================================
-  console.log('📦 Creating inventory transactions...');
+  console.log('📦 Creating inventory with lots...');
 
-  // Simulate receiving orders
-  await prisma.inventoryTransaction.create({
+  // Create inventory records for each ingredient and add lots
+  const breadFlourInventory = await prisma.inventory.create({
     data: {
+      bakeryId: artisanBakery.id,
       ingredientId: breadFlour.id,
-      type: TransactionType.RECEIVE,
-      quantity: 250,
-      unit: 'kg',
-      notes: 'Weekly flour delivery from Northwest Grain',
-      createdBy: artisanManager.id,
+      displayUnit: 'kg',
+      lots: {
+        create: [
+          {
+            purchaseQty: 100,
+            remainingQty: 50, // 50kg used
+            purchaseUnit: 'kg',
+            costPerUnit: 2.40,
+            purchasedAt: new Date('2025-01-01'),
+            vendorId: flourVendor.id,
+            notes: 'First delivery of the year',
+          },
+          {
+            purchaseQty: 150,
+            remainingQty: 150,
+            purchaseUnit: 'kg',
+            costPerUnit: 2.50,
+            purchasedAt: new Date('2025-01-10'),
+            vendorId: flourVendor.id,
+            notes: 'Weekly flour delivery from Northwest Grain',
+          },
+        ],
+      },
     },
   });
 
-  await prisma.inventoryTransaction.create({
+  const wholeWheatInventory = await prisma.inventory.create({
     data: {
-      ingredientId: butter.id,
-      type: TransactionType.RECEIVE,
-      quantity: 30,
-      unit: 'kg',
-      notes: 'Monthly butter order from Valley Fresh Dairy',
-      createdBy: artisanManager.id,
-    },
-  });
-
-  // Simulate usage from production
-  await prisma.inventoryTransaction.create({
-    data: {
-      ingredientId: breadFlour.id,
-      type: TransactionType.USE,
-      quantity: 50,
-      unit: 'kg',
-      notes: 'Used in sourdough production - Week 1',
-      createdBy: artisanBaker.id,
-    },
-  });
-
-  // Simulate waste/adjustment
-  await prisma.inventoryTransaction.create({
-    data: {
+      bakeryId: artisanBakery.id,
       ingredientId: wholeWheatFlour.id,
-      type: TransactionType.ADJUST,
-      quantity: -5,
-      unit: 'kg',
-      notes: 'Inventory count adjustment - damaged bag',
-      createdBy: artisanManager.id,
+      displayUnit: 'kg',
+      lots: {
+        create: [
+          {
+            purchaseQty: 100,
+            remainingQty: 95, // 5kg adjustment
+            purchaseUnit: 'kg',
+            costPerUnit: 3.00,
+            purchasedAt: new Date('2025-01-05'),
+            vendorId: flourVendor.id,
+            notes: 'Whole wheat flour delivery',
+          },
+        ],
+      },
     },
   });
 
-  console.log(`✅ Created ${4} inventory transactions\n`);
+  await prisma.inventory.create({
+    data: {
+      bakeryId: artisanBakery.id,
+      ingredientId: _ryeFlour.id,
+      displayUnit: 'kg',
+      lots: {
+        create: [
+          {
+            purchaseQty: 50,
+            remainingQty: 50,
+            purchaseUnit: 'kg',
+            costPerUnit: 3.50,
+            purchasedAt: new Date('2025-01-03'),
+            vendorId: flourVendor.id,
+            notes: 'Rye flour for specialty breads',
+          },
+        ],
+      },
+    },
+  });
+
+  await prisma.inventory.create({
+    data: {
+      bakeryId: artisanBakery.id,
+      ingredientId: salt.id,
+      displayUnit: 'kg',
+      lots: {
+        create: [
+          {
+            purchaseQty: 20,
+            remainingQty: 20,
+            purchaseUnit: 'kg',
+            costPerUnit: 8.00,
+            purchasedAt: new Date('2025-01-02'),
+            vendorId: flourVendor.id,
+          },
+        ],
+      },
+    },
+  });
+
+  await prisma.inventory.create({
+    data: {
+      bakeryId: artisanBakery.id,
+      ingredientId: water.id,
+      displayUnit: 'L',
+      lots: {
+        create: [
+          {
+            purchaseQty: 500,
+            remainingQty: 500,
+            purchaseUnit: 'L',
+            costPerUnit: 0.01,
+            purchasedAt: new Date('2025-01-01'),
+          },
+        ],
+      },
+    },
+  });
+
+  await prisma.inventory.create({
+    data: {
+      bakeryId: artisanBakery.id,
+      ingredientId: yeast.id,
+      displayUnit: 'kg',
+      lots: {
+        create: [
+          {
+            purchaseQty: 5,
+            remainingQty: 5,
+            purchaseUnit: 'kg',
+            costPerUnit: 15.00,
+            purchasedAt: new Date('2025-01-08'),
+            expiresAt: new Date('2025-03-08'),
+            vendorId: flourVendor.id,
+            notes: 'Active dry yeast - refrigerate',
+          },
+        ],
+      },
+    },
+  });
+
+  await prisma.inventory.create({
+    data: {
+      bakeryId: artisanBakery.id,
+      ingredientId: butter.id,
+      displayUnit: 'kg',
+      lots: {
+        create: [
+          {
+            purchaseQty: 30,
+            remainingQty: 30,
+            purchaseUnit: 'kg',
+            costPerUnit: 12.00,
+            purchasedAt: new Date('2025-01-12'),
+            expiresAt: new Date('2025-02-12'),
+            vendorId: dairyVendor.id,
+            notes: 'Monthly butter order from Valley Fresh Dairy',
+          },
+        ],
+      },
+    },
+  });
+
+  await prisma.inventory.create({
+    data: {
+      bakeryId: artisanBakery.id,
+      ingredientId: milk.id,
+      displayUnit: 'L',
+      lots: {
+        create: [
+          {
+            purchaseQty: 40,
+            remainingQty: 40,
+            purchaseUnit: 'L',
+            costPerUnit: 2.00,
+            purchasedAt: new Date('2025-01-14'),
+            expiresAt: new Date('2025-01-28'),
+            vendorId: dairyVendor.id,
+          },
+        ],
+      },
+    },
+  });
+
+  await prisma.inventory.create({
+    data: {
+      bakeryId: artisanBakery.id,
+      ingredientId: eggs.id,
+      displayUnit: 'unit',
+      lots: {
+        create: [
+          {
+            purchaseQty: 600,
+            remainingQty: 600,
+            purchaseUnit: 'unit',
+            costPerUnit: 0.50,
+            purchasedAt: new Date('2025-01-15'),
+            expiresAt: new Date('2025-02-15'),
+            vendorId: dairyVendor.id,
+          },
+        ],
+      },
+    },
+  });
+
+  await prisma.inventory.create({
+    data: {
+      bakeryId: artisanBakery.id,
+      ingredientId: sugar.id,
+      displayUnit: 'kg',
+      lots: {
+        create: [
+          {
+            purchaseQty: 75,
+            remainingQty: 75,
+            purchaseUnit: 'kg',
+            costPerUnit: 2.00,
+            purchasedAt: new Date('2025-01-05'),
+            vendorId: flourVendor.id,
+          },
+        ],
+      },
+    },
+  });
+
+  // Create some usage records (simulating FIFO consumption from bread flour)
+  const oldestBreadFlourLot = await prisma.inventoryLot.findFirst({
+    where: { inventory: { ingredientId: breadFlour.id } },
+    orderBy: { purchasedAt: 'asc' },
+  });
+
+  if (oldestBreadFlourLot) {
+    await prisma.inventoryUsage.create({
+      data: {
+        lotId: oldestBreadFlourLot.id,
+        quantity: 50,
+        reason: UsageReason.USE,
+        notes: 'Used in sourdough production - Week 1',
+        createdBy: artisanBaker.id,
+      },
+    });
+  }
+
+  // Create adjustment record for whole wheat
+  const wholeWheatLot = await prisma.inventoryLot.findFirst({
+    where: { inventory: { ingredientId: wholeWheatFlour.id } },
+  });
+
+  if (wholeWheatLot) {
+    await prisma.inventoryUsage.create({
+      data: {
+        lotId: wholeWheatLot.id,
+        quantity: 5,
+        reason: UsageReason.ADJUST,
+        notes: 'Inventory count adjustment - damaged bag',
+        createdBy: artisanManager.id,
+      },
+    });
+  }
+
+  console.log(`✅ Created ${10} inventory records with lots\n`);
 
   // ==========================================================================
-  // Create Bake Sheets
+  // Create Production Sheets
   // ==========================================================================
-  console.log('🥖 Creating bake sheets...');
+  console.log('🥖 Creating production sheets...');
 
-  // Completed bake sheet
-  await prisma.bakeSheet.create({
+  // Completed production sheet
+  await prisma.productionSheet.create({
     data: {
       recipeId: sourdoughRecipe.id,
       bakeryId: artisanBakery.id,
@@ -776,8 +964,8 @@ async function main() {
     },
   });
 
-  // In-progress bake sheet
-  await prisma.bakeSheet.create({
+  // In-progress production sheet
+  await prisma.productionSheet.create({
     data: {
       recipeId: wholeWheatRecipe.id,
       bakeryId: artisanBakery.id,
@@ -788,8 +976,8 @@ async function main() {
     },
   });
 
-  // Scheduled bake sheet
-  await prisma.bakeSheet.create({
+  // Scheduled production sheet
+  await prisma.productionSheet.create({
     data: {
       recipeId: croissantRecipe.id,
       bakeryId: artisanBakery.id,
@@ -800,7 +988,7 @@ async function main() {
     },
   });
 
-  console.log(`✅ Created ${3} bake sheets\n`);
+  console.log(`✅ Created ${3} production sheets\n`);
 
   // ==========================================================================
   // Summary
@@ -818,8 +1006,9 @@ async function main() {
   console.log(`✅ Recipes: 3`);
   console.log(`✅ Recipe Sections: 5`);
   console.log(`✅ Unit Conversions: 14`);
-  console.log(`✅ Inventory Transactions: 4`);
-  console.log(`✅ Bake Sheets: 3`);
+  console.log(`✅ Inventory Records: 10`);
+  console.log(`✅ Inventory Lots: 12`);
+  console.log(`✅ Production Sheets: 3`);
   console.log('\n📧 Login Credentials (Development Only):');
   console.log('----------------------------------------');
   console.log('Platform Admin: admin@dailybaker.com');

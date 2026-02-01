@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { getIngredientById } from '@/app/actions/ingredient';
 import Link from 'next/link';
-import { Edit, Package, TrendingUp, DollarSign } from 'lucide-react';
+import { Edit, Package, DollarSign, Boxes, AlertTriangle, TrendingDown, Plus, AlertCircle } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 export default async function IngredientDetailPage({
@@ -29,25 +29,68 @@ export default async function IngredientDetailPage({
   }
 
   const ingredient = ingredientResult.data;
-  const currentQty = Number(ingredient.currentQty);
-  const costPerUnit = Number(ingredient.costPerUnit);
+  const currentQty = ingredient.currentQty;
+  const costPerUnit = ingredient.costPerUnit;
   const totalValue = currentQty * costPerUnit;
   const isLowStock = currentQty < 100;
 
+  // Get lot count and active lots
+  const lots = ingredient.inventory?.lots || [];
+  const activeLots = lots.filter((lot) => lot.remainingQty > 0);
+
+  // Collect all recent usages across lots
+  const allUsages = lots
+    .flatMap((lot) =>
+      lot.usages.map((usage) => ({
+        ...usage,
+        shortfall: Number(usage.shortfall) || 0,
+        quantity: Number(usage.quantity),
+        lot: {
+          id: lot.id,
+          purchaseUnit: lot.purchaseUnit,
+          vendor: lot.vendor,
+        },
+      }))
+    )
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, 10);
+
+  // Get usage reason badge class
+  const getUsageReasonBadgeClass = (reason: string) => {
+    switch (reason) {
+      case 'USE':
+        return 'badge-info';
+      case 'ADJUST':
+        return 'badge-warning';
+      case 'WASTE':
+        return 'badge-error';
+      default:
+        return 'badge-ghost';
+    }
+  };
+
   return (
-    
-      <>
-        <PageHeader
+    <>
+      <PageHeader
         title={ingredient.name}
         sticky
         actions={
-          <Link
-            href={`/dashboard/ingredients/${id}/edit`}
-            className="btn btn-primary"
-          >
-            <Edit className="h-5 w-5 mr-2" />
-            Edit
-          </Link>
+          <div className="flex gap-2">
+            <Link
+              href={`/dashboard/inventory/lots/new?ingredientId=${id}`}
+              className="btn btn-secondary"
+            >
+              <Plus className="h-5 w-5 mr-2" />
+              Add Inventory
+            </Link>
+            <Link
+              href={`/dashboard/ingredients/${id}/edit`}
+              className="btn btn-primary"
+            >
+              <Edit className="h-5 w-5 mr-2" />
+              Edit
+            </Link>
+          </div>
         }
       />
 
@@ -69,7 +112,7 @@ export default async function IngredientDetailPage({
                 </div>
 
                 <div>
-                  <p className="text-sm text-base-content/70">Cost per Unit</p>
+                  <p className="text-sm text-base-content/70">Weighted Avg Cost</p>
                   <p className="text-2xl font-bold">${costPerUnit.toFixed(2)}</p>
                   <p className="text-sm text-base-content/70 mt-1">per {ingredient.unit}</p>
                 </div>
@@ -84,9 +127,13 @@ export default async function IngredientDetailPage({
                   {ingredient.vendors.length > 0 ? (
                     <div className="flex flex-wrap gap-1 mt-1">
                       {ingredient.vendors.map((iv) => (
-                        <span key={iv.vendor.id} className="badge badge-ghost">
+                        <Link
+                          key={iv.vendor.id}
+                          href={`/dashboard/vendors/${iv.vendor.id}`}
+                          className="badge badge-ghost hover:badge-primary"
+                        >
                           {iv.vendor.name}
-                        </span>
+                        </Link>
                       ))}
                     </div>
                   ) : (
@@ -129,66 +176,202 @@ export default async function IngredientDetailPage({
                 </div>
                 <div className="stat-title">Total Value</div>
                 <div className="stat-value text-secondary">${totalValue.toFixed(2)}</div>
-                <div className="stat-desc">At current prices</div>
+                <div className="stat-desc">Weighted average cost</div>
               </div>
 
               <div className="stat">
                 <div className="stat-figure text-accent">
-                  <TrendingUp className="h-8 w-8" />
+                  <Boxes className="h-8 w-8" />
                 </div>
-                <div className="stat-title">Transactions</div>
-                <div className="stat-value text-accent">{ingredient.transactions.length}</div>
-                <div className="stat-desc">Recent activity</div>
+                <div className="stat-title">Inventory Lots</div>
+                <div className="stat-value text-accent">{activeLots.length}</div>
+                <div className="stat-desc">{lots.length} total ({lots.length - activeLots.length} depleted)</div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Recent Transactions */}
-        {ingredient.transactions.length > 0 && (
-          <div>
-            <h2 className="text-xl font-semibold mb-4">Recent Transactions</h2>
-            <div className="overflow-x-auto">
-              <table className="table table-zebra">
-                <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>Type</th>
-                    <th>Quantity</th>
-                    <th>Notes</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {ingredient.transactions.map((transaction) => (
-                    <tr key={transaction.id}>
-                      <td className="align-top">
-                        {formatDistanceToNow(new Date(transaction.createdAt), {
-                          addSuffix: true,
-                        })}
-                      </td>
-                      <td className="align-top">
-                        <span
-                          className={`badge ${
-                            transaction.type === 'RECEIVE'
-                              ? 'badge-success'
-                              : transaction.type === 'USE'
-                                ? 'badge-info'
-                                : transaction.type === 'ADJUST'
-                                  ? 'badge-warning'
-                                  : 'badge-error'
-                          }`}
-                        >
-                          {transaction.type}
-                        </span>
-                      </td>
-                      <td className="align-top">
-                        {Number(transaction.quantity).toFixed(3)} {transaction.unit}
-                      </td>
-                      <td className="align-top">{transaction.notes || '-'}</td>
+        {/* Inventory Lots */}
+        <div className="card bg-base-100 shadow-xl">
+          <div className="card-body">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="card-title">Inventory Lots (FIFO)</h2>
+              <Link
+                href={`/dashboard/inventory/lots/new?ingredientId=${id}`}
+                className="btn btn-primary btn-sm"
+              >
+                <Plus className="h-4 w-4" />
+                Add Lot
+              </Link>
+            </div>
+
+            {lots.length === 0 ? (
+              <div className="text-center py-8">
+                <Boxes className="h-12 w-12 mx-auto text-base-content/30 mb-2" />
+                <p className="text-base-content/70">No inventory lots</p>
+                <p className="text-sm text-base-content/50 mb-4">
+                  Add purchase lots to track inventory
+                </p>
+                <Link
+                  href={`/dashboard/inventory/lots/new?ingredientId=${id}`}
+                  className="btn btn-primary btn-sm"
+                >
+                  Add First Lot
+                </Link>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="table table-zebra">
+                  <thead>
+                    <tr>
+                      <th>Purchase Date</th>
+                      <th>Vendor</th>
+                      <th>Original Qty</th>
+                      <th>Remaining</th>
+                      <th>Cost/Unit</th>
+                      <th>Expires</th>
+                      <th>Status</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {lots.map((lot) => {
+                      const isDepleted = lot.remainingQty <= 0;
+                      const isExpiringSoon = lot.expiresAt &&
+                        new Date(lot.expiresAt).getTime() - Date.now() < 7 * 24 * 60 * 60 * 1000;
+                      const isExpired = lot.expiresAt && new Date(lot.expiresAt) < new Date();
+
+                      return (
+                        <tr key={lot.id} className={isDepleted ? 'opacity-50' : ''}>
+                          <td>
+                            {formatDistanceToNow(new Date(lot.purchasedAt), {
+                              addSuffix: true,
+                            })}
+                          </td>
+                          <td>
+                            {lot.vendor ? (
+                              <Link
+                                href={`/dashboard/vendors/${lot.vendor.id}`}
+                                className="hover:text-primary"
+                              >
+                                {lot.vendor.name}
+                              </Link>
+                            ) : (
+                              <span className="text-base-content/50">-</span>
+                            )}
+                          </td>
+                          <td>
+                            {lot.purchaseQty.toFixed(2)} {lot.purchaseUnit}
+                          </td>
+                          <td>
+                            <span className={lot.remainingQty <= 0 ? 'text-base-content/50' : 'font-semibold'}>
+                              {lot.remainingQty.toFixed(2)} {lot.purchaseUnit}
+                            </span>
+                          </td>
+                          <td>${lot.costPerUnit.toFixed(2)}/{lot.purchaseUnit}</td>
+                          <td>
+                            {lot.expiresAt ? (
+                              <span className={`flex items-center gap-1 ${isExpired ? 'text-error' : isExpiringSoon ? 'text-warning' : ''}`}>
+                                {(isExpired || isExpiringSoon) && <AlertTriangle className="h-3 w-3" />}
+                                {formatDistanceToNow(new Date(lot.expiresAt), { addSuffix: true })}
+                              </span>
+                            ) : (
+                              <span className="text-base-content/50">-</span>
+                            )}
+                          </td>
+                          <td>
+                            {isDepleted ? (
+                              <span className="badge badge-ghost">Depleted</span>
+                            ) : isExpired ? (
+                              <span className="badge badge-error">Expired</span>
+                            ) : isExpiringSoon ? (
+                              <span className="badge badge-warning">Expiring Soon</span>
+                            ) : (
+                              <span className="badge badge-success">Active</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Recent Activity */}
+        {allUsages.length > 0 && (
+          <div className="card bg-base-100 shadow-xl">
+            <div className="card-body">
+              <h2 className="card-title">Recent Activity</h2>
+              <div className="overflow-x-auto">
+                <table className="table table-zebra">
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Type</th>
+                      <th>Quantity</th>
+                      <th>Shortfall</th>
+                      <th>From Lot</th>
+                      <th>By</th>
+                      <th>Related To</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {allUsages.map((usage) => {
+                      const hasShortfall = (usage.shortfall ?? 0) > 0;
+                      return (
+                        <tr key={usage.id} className={hasShortfall ? 'bg-warning/10' : ''}>
+                          <td className="align-top">
+                            {formatDistanceToNow(new Date(usage.createdAt), {
+                              addSuffix: true,
+                            })}
+                          </td>
+                          <td className="align-top">
+                            <span className={`badge ${getUsageReasonBadgeClass(usage.reason)} gap-1`}>
+                              <TrendingDown className="h-3 w-3" />
+                              {usage.reason}
+                            </span>
+                          </td>
+                          <td className="align-top">
+                            {usage.quantity.toFixed(3)} {usage.lot.purchaseUnit}
+                          </td>
+                          <td className="align-top">
+                            {hasShortfall ? (
+                              <span className="badge badge-warning gap-1">
+                                <AlertCircle className="h-3 w-3" />
+                                {(usage.shortfall ?? 0).toFixed(3)}
+                              </span>
+                            ) : (
+                              <span className="text-base-content/50">-</span>
+                            )}
+                          </td>
+                          <td className="align-top text-sm text-base-content/70">
+                            {usage.lot.vendor?.name || 'Unknown vendor'}
+                          </td>
+                          <td className="align-top text-sm">
+                            {usage.creator?.name || 'Unknown'}
+                          </td>
+                          <td className="align-top">
+                            {usage.productionSheet ? (
+                              <Link
+                                href={`/dashboard/production-sheets/${usage.productionSheet.id}`}
+                                className="link link-primary text-sm"
+                              >
+                                {usage.productionSheet.recipe?.name || 'Production sheet'}
+                              </Link>
+                            ) : (
+                              <span className="text-sm text-base-content/50">
+                                {usage.notes || '-'}
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         )}

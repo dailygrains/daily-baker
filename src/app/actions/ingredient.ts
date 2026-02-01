@@ -10,7 +10,55 @@ import {
   type CreateIngredientInput,
   type UpdateIngredientInput,
 } from '@/lib/validations/ingredient';
-import { Decimal } from '@prisma/client/runtime/library';
+import {
+  getTotalQuantity,
+  getWeightedAverageCost,
+  type InventoryWithLots,
+} from '@/lib/inventory';
+
+/**
+ * Helper to calculate inventory aggregates for an ingredient
+ */
+function calculateInventoryAggregates(inventory: {
+  id: string;
+  displayUnit: string;
+  lots: Array<{
+    id: string;
+    purchaseQty: { toNumber: () => number } | number;
+    remainingQty: { toNumber: () => number } | number;
+    purchaseUnit: string;
+    costPerUnit: { toNumber: () => number } | number;
+    purchasedAt: Date;
+    expiresAt: Date | null;
+    vendorId: string | null;
+    notes: string | null;
+  }>;
+} | null): { currentQty: number; costPerUnit: number } {
+  if (!inventory || !inventory.lots.length) {
+    return { currentQty: 0, costPerUnit: 0 };
+  }
+
+  const inventoryForCalc: InventoryWithLots = {
+    id: inventory.id,
+    displayUnit: inventory.displayUnit,
+    lots: inventory.lots.map((lot) => ({
+      id: lot.id,
+      purchaseQty: typeof lot.purchaseQty === 'number' ? lot.purchaseQty : lot.purchaseQty.toNumber(),
+      remainingQty: typeof lot.remainingQty === 'number' ? lot.remainingQty : lot.remainingQty.toNumber(),
+      purchaseUnit: lot.purchaseUnit,
+      costPerUnit: typeof lot.costPerUnit === 'number' ? lot.costPerUnit : lot.costPerUnit.toNumber(),
+      purchasedAt: lot.purchasedAt,
+      expiresAt: lot.expiresAt,
+      vendorId: lot.vendorId,
+      notes: lot.notes,
+    })),
+  };
+
+  return {
+    currentQty: getTotalQuantity(inventoryForCalc),
+    costPerUnit: getWeightedAverageCost(inventoryForCalc),
+  };
+}
 
 export async function createIngredient(data: CreateIngredientInput) {
   try {
@@ -38,9 +86,7 @@ export async function createIngredient(data: CreateIngredientInput) {
       data: {
         bakeryId: validatedData.bakeryId,
         name: validatedData.name,
-        currentQty: new Decimal(validatedData.currentQty),
         unit: validatedData.unit,
-        costPerUnit: new Decimal(validatedData.costPerUnit),
       },
       include: {
         vendors: {
@@ -65,13 +111,13 @@ export async function createIngredient(data: CreateIngredientInput) {
 
     revalidatePath('/dashboard/ingredients');
 
-    // Serialize Decimal fields for client components
+    // Return with computed aggregates (0 for new ingredients)
     return {
       success: true,
       data: {
         ...ingredient,
-        currentQty: ingredient.currentQty.toNumber(),
-        costPerUnit: ingredient.costPerUnit.toNumber(),
+        currentQty: 0,
+        costPerUnit: 0,
       },
     };
   } catch (error) {
@@ -100,6 +146,13 @@ export async function updateIngredient(data: UpdateIngredientInput) {
     // Check if ingredient exists and user has access
     const existingIngredient = await db.ingredient.findUnique({
       where: { id: validatedData.id },
+      include: {
+        inventory: {
+          include: {
+            lots: true,
+          },
+        },
+      },
     });
 
     if (!existingIngredient) {
@@ -118,20 +171,18 @@ export async function updateIngredient(data: UpdateIngredientInput) {
 
     const { id, ...updateData } = validatedData;
 
-    // Convert numbers to Decimal if present
-    const prismaUpdateData: Record<string, unknown> = {};
-    if (updateData.name !== undefined) prismaUpdateData.name = updateData.name;
-    if (updateData.currentQty !== undefined) prismaUpdateData.currentQty = new Decimal(updateData.currentQty);
-    if (updateData.unit !== undefined) prismaUpdateData.unit = updateData.unit;
-    if (updateData.costPerUnit !== undefined) prismaUpdateData.costPerUnit = new Decimal(updateData.costPerUnit);
-
     const ingredient = await db.ingredient.update({
       where: { id },
-      data: prismaUpdateData,
+      data: updateData,
       include: {
         vendors: {
           include: {
             vendor: true,
+          },
+        },
+        inventory: {
+          include: {
+            lots: true,
           },
         },
       },
@@ -152,13 +203,15 @@ export async function updateIngredient(data: UpdateIngredientInput) {
     revalidatePath('/dashboard/ingredients');
     revalidatePath(`/dashboard/ingredients/${id}`);
 
-    // Serialize Decimal fields for client components
+    // Calculate aggregates from inventory
+    const aggregates = calculateInventoryAggregates(ingredient.inventory);
+
     return {
       success: true,
       data: {
         ...ingredient,
-        currentQty: ingredient.currentQty.toNumber(),
-        costPerUnit: ingredient.costPerUnit.toNumber(),
+        currentQty: aggregates.currentQty,
+        costPerUnit: aggregates.costPerUnit,
       },
     };
   } catch (error) {
@@ -185,10 +238,18 @@ export async function deleteIngredient(id: string) {
     const ingredient = await db.ingredient.findUnique({
       where: { id },
       include: {
+        inventory: {
+          include: {
+            _count: {
+              select: {
+                lots: true,
+              },
+            },
+          },
+        },
         _count: {
           select: {
             recipeUses: true,
-            transactions: true,
           },
         },
       },
@@ -213,6 +274,14 @@ export async function deleteIngredient(id: string) {
       return {
         success: false,
         error: `Cannot delete ingredient with ${ingredient._count.recipeUses} recipe usage(s). Please remove from recipes first.`,
+      };
+    }
+
+    // Check if ingredient has inventory lots
+    if (ingredient.inventory && ingredient.inventory._count.lots > 0) {
+      return {
+        success: false,
+        error: `Cannot delete ingredient with ${ingredient.inventory._count.lots} inventory lot(s). Please remove inventory first.`,
       };
     }
 
@@ -277,9 +346,14 @@ export async function getIngredientsByBakery(bakeryId: string) {
             },
           },
         },
-        _count: {
-          select: {
-            transactions: true,
+        inventory: {
+          include: {
+            lots: true,
+            _count: {
+              select: {
+                lots: true,
+              },
+            },
           },
         },
       },
@@ -288,14 +362,20 @@ export async function getIngredientsByBakery(bakeryId: string) {
       },
     });
 
-    // Serialize Decimal fields for client components
+    // Calculate aggregates from inventory for each ingredient
     return {
       success: true,
-      data: ingredients.map(ingredient => ({
-        ...ingredient,
-        currentQty: ingredient.currentQty.toNumber(),
-        costPerUnit: ingredient.costPerUnit.toNumber(),
-      })),
+      data: ingredients.map(ingredient => {
+        const aggregates = calculateInventoryAggregates(ingredient.inventory);
+        return {
+          ...ingredient,
+          currentQty: aggregates.currentQty,
+          costPerUnit: aggregates.costPerUnit,
+          _count: {
+            lots: ingredient.inventory?._count?.lots ?? 0,
+          },
+        };
+      }),
     };
   } catch (error) {
     console.error('Error fetching ingredients:', error);
@@ -325,11 +405,25 @@ export async function getIngredientById(id: string) {
             vendor: true,
           },
         },
-        transactions: {
-          orderBy: {
-            createdAt: 'desc',
+        inventory: {
+          include: {
+            lots: {
+              orderBy: {
+                purchasedAt: 'asc',
+              },
+              include: {
+                vendor: { select: { id: true, name: true } },
+                usages: {
+                  orderBy: { createdAt: 'desc' },
+                  take: 5,
+                  include: {
+                    creator: { select: { id: true, name: true } },
+                    productionSheet: { select: { id: true, recipe: { select: { name: true } } } },
+                  },
+                },
+              },
+            },
           },
-          take: 10,
         },
         _count: {
           select: {
@@ -353,17 +447,29 @@ export async function getIngredientById(id: string) {
       };
     }
 
+    // Calculate aggregates from inventory
+    const aggregates = calculateInventoryAggregates(ingredient.inventory);
+
     // Serialize Decimal fields for client components
     return {
       success: true,
       data: {
         ...ingredient,
-        currentQty: ingredient.currentQty.toNumber(),
-        costPerUnit: ingredient.costPerUnit.toNumber(),
-        transactions: ingredient.transactions?.map(t => ({
-          ...t,
-          quantity: t.quantity.toNumber(),
-        })),
+        currentQty: aggregates.currentQty,
+        costPerUnit: aggregates.costPerUnit,
+        inventory: ingredient.inventory ? {
+          ...ingredient.inventory,
+          lots: ingredient.inventory.lots.map(lot => ({
+            ...lot,
+            purchaseQty: Number(lot.purchaseQty),
+            remainingQty: Number(lot.remainingQty),
+            costPerUnit: Number(lot.costPerUnit),
+            usages: lot.usages.map(u => ({
+              ...u,
+              quantity: Number(u.quantity),
+            })),
+          })),
+        } : null,
       },
     };
   } catch (error) {

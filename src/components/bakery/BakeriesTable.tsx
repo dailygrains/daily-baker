@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { formatPhoneNumber } from '@/lib/utils/phone';
+import { Pagination, usePageSize } from '@/components/ui/Pagination';
 
 interface Bakery {
   id: string;
@@ -22,23 +23,18 @@ interface BakeriesTableProps {
   bakeries: Bakery[];
 }
 
-const ITEMS_PER_PAGE = 10;
-
 export function BakeriesTable({ bakeries }: BakeriesTableProps) {
   const router = useRouter();
   const [currentPage, setCurrentPage] = useState(1);
+  const { itemsPerPage, setItemsPerPage, isInitialized } = usePageSize();
 
-  const totalPages = Math.ceil(bakeries.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const effectiveItemsPerPage = itemsPerPage === Infinity ? bakeries.length : itemsPerPage;
+  const startIndex = (currentPage - 1) * effectiveItemsPerPage;
+  const endIndex = startIndex + effectiveItemsPerPage;
   const currentBakeries = bakeries.slice(startIndex, endIndex);
 
   const handleRowClick = (bakeryId: string) => {
     router.push(`/admin/bakeries/${bakeryId}/edit`);
-  };
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
   };
 
   return (
@@ -95,36 +91,14 @@ export function BakeriesTable({ bakeries }: BakeriesTableProps) {
         </table>
       </div>
 
-      {totalPages > 1 && (
-        <div className="flex justify-center">
-          <div className="join">
-            <button
-              className="join-item btn btn-sm"
-              onClick={() => handlePageChange(currentPage - 1)}
-              disabled={currentPage === 1}
-            >
-              «
-            </button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-              <button
-                key={page}
-                className={`join-item btn btn-sm ${
-                  currentPage === page ? 'btn-active' : ''
-                }`}
-                onClick={() => handlePageChange(page)}
-              >
-                {page}
-              </button>
-            ))}
-            <button
-              className="join-item btn btn-sm"
-              onClick={() => handlePageChange(currentPage + 1)}
-              disabled={currentPage === totalPages}
-            >
-              »
-            </button>
-          </div>
-        </div>
+      {isInitialized && (
+        <Pagination
+          totalItems={bakeries.length}
+          currentPage={currentPage}
+          onPageChange={setCurrentPage}
+          itemsPerPage={itemsPerPage}
+          onItemsPerPageChange={setItemsPerPage}
+        />
       )}
     </div>
   );

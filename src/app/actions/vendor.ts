@@ -279,9 +279,7 @@ export async function getVendorById(id: string) {
               select: {
                 id: true,
                 name: true,
-                currentQty: true,
                 unit: true,
-                costPerUnit: true,
               },
             },
           },
@@ -302,10 +300,35 @@ export async function getVendorById(id: string) {
             name: 'asc',
           },
         },
+        inventoryLots: {
+          select: {
+            id: true,
+            purchaseQty: true,
+            remainingQty: true,
+            purchaseUnit: true,
+            costPerUnit: true,
+            purchasedAt: true,
+            inventory: {
+              select: {
+                ingredient: {
+                  select: {
+                    id: true,
+                    name: true,
+                  },
+                },
+              },
+            },
+          },
+          orderBy: {
+            purchasedAt: 'desc',
+          },
+          take: 10, // Last 10 purchases from this vendor
+        },
         _count: {
           select: {
             ingredients: true,
             equipment: true,
+            inventoryLots: true,
           },
         },
       },
@@ -328,17 +351,19 @@ export async function getVendorById(id: string) {
       success: true,
       data: {
         ...vendor,
-        ingredients: vendor.ingredients.map(iv => ({
+        ingredients: vendor.ingredients.map((iv) => ({
           ...iv,
-          ingredient: {
-            ...iv.ingredient,
-            currentQty: iv.ingredient.currentQty.toNumber(),
-            costPerUnit: iv.ingredient.costPerUnit.toNumber(),
-          },
+          ingredient: iv.ingredient,
         })),
-        equipment: vendor.equipment.map(e => ({
+        equipment: vendor.equipment.map((e) => ({
           ...e,
-          cost: e.cost ? e.cost.toNumber() : null,
+          cost: e.cost ? Number(e.cost) : null,
+        })),
+        inventoryLots: vendor.inventoryLots.map((lot) => ({
+          ...lot,
+          purchaseQty: Number(lot.purchaseQty),
+          remainingQty: Number(lot.remainingQty),
+          costPerUnit: Number(lot.costPerUnit),
         })),
       },
     };

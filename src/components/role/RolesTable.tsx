@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Pagination, usePageSize } from '@/components/ui/Pagination';
 
 interface Role {
   id: string;
@@ -17,8 +18,6 @@ interface RolesTableProps {
   roles: Role[];
 }
 
-const ITEMS_PER_PAGE = 10;
-
 // Define the same permissions as in RoleForm to ensure consistency
 const KNOWN_PERMISSIONS = [
   'recipes.read',
@@ -26,9 +25,9 @@ const KNOWN_PERMISSIONS = [
   'recipes.delete',
   'ingredients.read',
   'ingredients.write',
-  'bake-sheets.read',
-  'bake-sheets.write',
-  'bake-sheets.complete',
+  'production-sheets.read',
+  'production-sheets.write',
+  'production-sheets.complete',
   'vendors.read',
   'vendors.write',
   'team.read',
@@ -40,18 +39,15 @@ const KNOWN_PERMISSIONS = [
 export function RolesTable({ roles }: RolesTableProps) {
   const router = useRouter();
   const [currentPage, setCurrentPage] = useState(1);
+  const { itemsPerPage, setItemsPerPage, isInitialized } = usePageSize();
 
-  const totalPages = Math.ceil(roles.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const effectiveItemsPerPage = itemsPerPage === Infinity ? roles.length : itemsPerPage;
+  const startIndex = (currentPage - 1) * effectiveItemsPerPage;
+  const endIndex = startIndex + effectiveItemsPerPage;
   const currentRoles = roles.slice(startIndex, endIndex);
 
   const handleRowClick = (roleId: string) => {
     router.push(`/admin/roles/${roleId}/edit`);
-  };
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
   };
 
   const getEnabledPermissionsCount = (permissions: Record<string, boolean>) => {
@@ -103,36 +99,14 @@ export function RolesTable({ roles }: RolesTableProps) {
         </table>
       </div>
 
-      {totalPages > 1 && (
-        <div className="flex justify-center">
-          <div className="join">
-            <button
-              className="join-item btn btn-sm"
-              onClick={() => handlePageChange(currentPage - 1)}
-              disabled={currentPage === 1}
-            >
-              «
-            </button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-              <button
-                key={page}
-                className={`join-item btn btn-sm ${
-                  currentPage === page ? 'btn-active' : ''
-                }`}
-                onClick={() => handlePageChange(page)}
-              >
-                {page}
-              </button>
-            ))}
-            <button
-              className="join-item btn btn-sm"
-              onClick={() => handlePageChange(currentPage + 1)}
-              disabled={currentPage === totalPages}
-            >
-              »
-            </button>
-          </div>
-        </div>
+      {isInitialized && (
+        <Pagination
+          totalItems={roles.length}
+          currentPage={currentPage}
+          onPageChange={setCurrentPage}
+          itemsPerPage={itemsPerPage}
+          onItemsPerPageChange={setItemsPerPage}
+        />
       )}
     </div>
   );

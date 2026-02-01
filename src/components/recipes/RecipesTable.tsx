@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Layers, ClipboardList } from 'lucide-react';
+import { Pagination, usePageSize } from '@/components/ui/Pagination';
 
 interface Recipe {
   id: string;
@@ -13,7 +14,7 @@ interface Recipe {
   totalCost: string;
   _count: {
     sections: number;
-    bakeSheets: number;
+    productionSheets: number;
   };
 }
 
@@ -21,23 +22,18 @@ interface RecipesTableProps {
   recipes: Recipe[];
 }
 
-const ITEMS_PER_PAGE = 10;
-
 export function RecipesTable({ recipes }: RecipesTableProps) {
   const router = useRouter();
   const [currentPage, setCurrentPage] = useState(1);
+  const { itemsPerPage, setItemsPerPage, isInitialized } = usePageSize();
 
-  const totalPages = Math.ceil(recipes.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const effectiveItemsPerPage = itemsPerPage === Infinity ? recipes.length : itemsPerPage;
+  const startIndex = (currentPage - 1) * effectiveItemsPerPage;
+  const endIndex = startIndex + effectiveItemsPerPage;
   const currentRecipes = recipes.slice(startIndex, endIndex);
 
   const handleRowClick = (recipeId: string) => {
     router.push(`/dashboard/recipes/${recipeId}`);
-  };
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent, recipeId: string) => {
@@ -58,7 +54,7 @@ export function RecipesTable({ recipes }: RecipesTableProps) {
               <th>Sections</th>
               <th>Total Cost</th>
               <th>Cost per Unit</th>
-              <th>Bake Sheets</th>
+              <th>Production Sheets</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -107,10 +103,10 @@ export function RecipesTable({ recipes }: RecipesTableProps) {
                     </span>
                   </td>
                   <td className="align-top">
-                    {recipe._count.bakeSheets > 0 ? (
+                    {recipe._count.productionSheets > 0 ? (
                       <span className="badge badge-secondary gap-1">
                         <ClipboardList className="h-3 w-3" />
-                        {recipe._count.bakeSheets}
+                        {recipe._count.productionSheets}
                       </span>
                     ) : (
                       <span className="text-base-content/50">None</span>
@@ -141,40 +137,14 @@ export function RecipesTable({ recipes }: RecipesTableProps) {
         </table>
       </div>
 
-      {totalPages > 1 && (
-        <div className="flex justify-center">
-          <div className="join">
-            <button
-              className="join-item btn btn-sm"
-              onClick={() => handlePageChange(currentPage - 1)}
-              disabled={currentPage === 1}
-              aria-label="Previous page"
-            >
-              «
-            </button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-              <button
-                key={page}
-                className={`join-item btn btn-sm ${
-                  currentPage === page ? 'btn-active' : ''
-                }`}
-                onClick={() => handlePageChange(page)}
-                aria-label={`Go to page ${page}`}
-                aria-current={currentPage === page ? 'page' : undefined}
-              >
-                {page}
-              </button>
-            ))}
-            <button
-              className="join-item btn btn-sm"
-              onClick={() => handlePageChange(currentPage + 1)}
-              disabled={currentPage === totalPages}
-              aria-label="Next page"
-            >
-              »
-            </button>
-          </div>
-        </div>
+      {isInitialized && (
+        <Pagination
+          totalItems={recipes.length}
+          currentPage={currentPage}
+          onPageChange={setCurrentPage}
+          itemsPerPage={itemsPerPage}
+          onItemsPerPageChange={setItemsPerPage}
+        />
       )}
     </div>
   );

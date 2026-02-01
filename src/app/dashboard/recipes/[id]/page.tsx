@@ -6,6 +6,7 @@ import { getRecipeById } from '@/app/actions/recipe';
 import Link from 'next/link';
 import { Edit, DollarSign, Layers, ClipboardList, Package } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { calculateIngredientCost, formatUnit } from '@/lib/unitConvert';
 
 export default async function RecipeDetailPage({
   params,
@@ -30,7 +31,19 @@ export default async function RecipeDetailPage({
   }
 
   const recipe = recipeResult.data;
-  const totalCost = Number(recipe.totalCost);
+
+  // Calculate total cost on-the-fly from ingredients with proper unit conversion
+  const totalCost = recipe.sections.reduce((sectionSum, section) => {
+    return sectionSum + section.ingredients.reduce((ingSum, ing) => {
+      const cost = calculateIngredientCost(
+        Number(ing.quantity),
+        ing.unit,
+        Number(ing.ingredient.costPerUnit),
+        ing.ingredient.unit
+      );
+      return ingSum + (cost ?? 0);
+    }, 0);
+  }, 0);
 
   // Calculate cost per unit
   const yieldMatch = recipe.yield.match(/(\d+)/);
@@ -120,7 +133,16 @@ export default async function RecipeDetailPage({
                             {section.ingredients.map((ing) => {
                               const quantity = Number(ing.quantity);
                               const costPerUnit = Number(ing.ingredient.costPerUnit);
-                              const totalIngredientCost = quantity * costPerUnit;
+                              const ingredientUnit = ing.ingredient.unit;
+                              const recipeUnit = ing.unit;
+
+                              // Calculate cost with proper unit conversion
+                              const totalIngredientCost = calculateIngredientCost(
+                                quantity,
+                                recipeUnit,
+                                costPerUnit,
+                                ingredientUnit
+                              );
 
                               return (
                                 <tr key={ing.id}>
@@ -133,11 +155,15 @@ export default async function RecipeDetailPage({
                                     </Link>
                                   </td>
                                   <td>
-                                    {quantity.toFixed(3)} {ing.unit}
+                                    {quantity.toFixed(3)} {formatUnit(recipeUnit)}
                                   </td>
-                                  <td>${costPerUnit.toFixed(2)}</td>
+                                  <td>
+                                    ${costPerUnit.toFixed(2)}/{formatUnit(ingredientUnit)}
+                                  </td>
                                   <td className="font-semibold">
-                                    ${totalIngredientCost.toFixed(2)}
+                                    {totalIngredientCost !== null
+                                      ? `$${totalIngredientCost.toFixed(2)}`
+                                      : 'N/A'}
                                   </td>
                                 </tr>
                               );
@@ -190,9 +216,9 @@ export default async function RecipeDetailPage({
                 <div className="stat-figure text-accent">
                   <ClipboardList className="h-8 w-8" />
                 </div>
-                <div className="stat-title">Bake Sheets</div>
+                <div className="stat-title">Production Sheets</div>
                 <div className="stat-value text-accent">
-                  {recipe._count.bakeSheets}
+                  {recipe._count.productionSheets}
                 </div>
                 <div className="stat-desc">Times used</div>
               </div>

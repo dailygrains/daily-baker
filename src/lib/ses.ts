@@ -239,9 +239,9 @@ Log in to Daily Baker to update inventory or create a purchase order.
 }
 
 /**
- * Send bake sheet completion notification
+ * Send production sheet completion notification
  */
-export async function sendBakeSheetCompleted(params: {
+export async function sendProductionSheetCompleted(params: {
   toEmail: string;
   bakeryName: string;
   recipeName: string;
@@ -266,7 +266,7 @@ export async function sendBakeSheetCompleted(params: {
 <body>
   <div class="container">
     <div class="header">
-      <h1>✅ Bake Sheet Completed</h1>
+      <h1>✅ Production Sheet Completed</h1>
     </div>
     <div class="content">
       <h2>${bakeryName} - Production Update</h2>
@@ -287,7 +287,7 @@ export async function sendBakeSheetCompleted(params: {
   `;
 
   const textBody = `
-✅ BAKE SHEET COMPLETED
+✅ PRODUCTION SHEET COMPLETED
 
 ${bakeryName} - Production Update
 
@@ -304,7 +304,7 @@ Log in to Daily Baker to view updated inventory levels.
 
   await sendHtmlEmail({
     to: toEmail,
-    subject: `Bake Sheet Completed: ${recipeName}`,
+    subject: `Production Sheet Completed: ${recipeName}`,
     html,
     textBody,
   });

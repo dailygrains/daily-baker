@@ -107,9 +107,9 @@ export function DashboardLayout({
                 </Link>
               </li>
               <li>
-                <Link href="/dashboard/bake-sheets" className="gap-3">
+                <Link href="/dashboard/production-sheets" className="gap-3">
                   <Briefcase className="h-5 w-5" />
-                  Bake Sheets
+                  Production Sheets
                 </Link>
               </li>
 

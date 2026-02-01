@@ -1,13 +1,13 @@
 import { getCurrentUser } from '@/lib/clerk';
 import { redirect } from 'next/navigation';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { getBakeSheetById } from '@/app/actions/bakeSheet';
+import { getProductionSheetById } from '@/app/actions/productionSheet';
 import Link from 'next/link';
-import { CheckCircle2, Package, Clock } from 'lucide-react';
+import { CheckCircle2, Package, Clock, AlertTriangle } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import { CompleteBakeSheetButton } from '@/components/bakeSheets/CompleteBakeSheetButton';
+import { CompleteProductionSheetButton } from '@/components/productionSheets/CompleteProductionSheetButton';
 
-export default async function BakeSheetDetailPage({
+export default async function ProductionSheetDetailPage({
   params,
 }: {
   params: Promise<{ id: string }>;
@@ -23,25 +23,25 @@ export default async function BakeSheetDetailPage({
     redirect('/dashboard');
   }
 
-  const bakeSheetResult = await getBakeSheetById(id);
+  const productionSheetResult = await getProductionSheetById(id);
 
-  if (!bakeSheetResult.success || !bakeSheetResult.data) {
-    redirect('/dashboard/bake-sheets');
+  if (!productionSheetResult.success || !productionSheetResult.data) {
+    redirect('/dashboard/production-sheets');
   }
 
-  const bakeSheet = bakeSheetResult.data;
-  const scale = Number(bakeSheet.scale);
-  const recipeTotalCost = Number(bakeSheet.recipe.totalCost || 0);
+  const productionSheet = productionSheetResult.data;
+  const scale = Number(productionSheet.scale);
+  const recipeTotalCost = Number(productionSheet.recipe.totalCost || 0);
   const scaledCost = recipeTotalCost * scale;
 
   return (
     <div className="space-y-6">
         <PageHeader
-          title={`${bakeSheet.quantity} of ${bakeSheet.recipe.name}`}
-          description={`Bake sheet details${bakeSheet.completed ? ' (Completed)' : ''}`}
+          title={`${productionSheet.quantity} of ${productionSheet.recipe.name}`}
+          description={`Production sheet details${productionSheet.completed ? ' (Completed)' : ''}`}
           actions={
-            !bakeSheet.completed && (
-              <CompleteBakeSheetButton bakeSheetId={id} />
+            !productionSheet.completed && (
+              <CompleteProductionSheetButton productionSheetId={id} />
             )
           }
         />
@@ -50,12 +50,12 @@ export default async function BakeSheetDetailPage({
           {/* Main Info Card */}
           <div className="lg:col-span-2 card bg-base-100 shadow-xl">
             <div className="card-body">
-              <h2 className="card-title">Bake Sheet Information</h2>
+              <h2 className="card-title">Production Sheet Information</h2>
 
               <div className="grid grid-cols-2 gap-4 mt-4">
                 <div>
                   <p className="text-sm text-base-content/70">Status</p>
-                  {bakeSheet.completed ? (
+                  {productionSheet.completed ? (
                     <span className="badge badge-success badge-lg mt-1 gap-2">
                       <CheckCircle2 className="h-4 w-4" />
                       Completed
@@ -71,16 +71,16 @@ export default async function BakeSheetDetailPage({
                 <div>
                   <p className="text-sm text-base-content/70">Recipe</p>
                   <Link
-                    href={`/dashboard/recipes/${bakeSheet.recipe.id}`}
+                    href={`/dashboard/recipes/${productionSheet.recipe.id}`}
                     className="text-lg font-semibold hover:text-primary"
                   >
-                    {bakeSheet.recipe.name}
+                    {productionSheet.recipe.name}
                   </Link>
                 </div>
 
                 <div>
                   <p className="text-sm text-base-content/70">Quantity</p>
-                  <p className="text-2xl font-bold">{bakeSheet.quantity}</p>
+                  <p className="text-2xl font-bold">{productionSheet.quantity}</p>
                 </div>
 
                 <div>
@@ -91,33 +91,33 @@ export default async function BakeSheetDetailPage({
                   </p>
                 </div>
 
-                {bakeSheet.completed && bakeSheet.completedAt && (
+                {productionSheet.completed && productionSheet.completedAt && (
                   <>
                     <div>
                       <p className="text-sm text-base-content/70">Completed</p>
                       <p className="text-lg">
-                        {formatDistanceToNow(new Date(bakeSheet.completedAt), {
+                        {formatDistanceToNow(new Date(productionSheet.completedAt), {
                           addSuffix: true,
                         })}
                       </p>
                     </div>
 
-                    {bakeSheet.completer && (
+                    {productionSheet.completer && (
                       <div>
                         <p className="text-sm text-base-content/70">Completed By</p>
                         <p className="text-lg font-semibold">
-                          {bakeSheet.completer.name || bakeSheet.completer.email}
+                          {productionSheet.completer.name || productionSheet.completer.email}
                         </p>
                       </div>
                     )}
                   </>
                 )}
 
-                {!bakeSheet.completed && (
+                {!productionSheet.completed && (
                   <div>
                     <p className="text-sm text-base-content/70">Created</p>
                     <p className="text-lg">
-                      {formatDistanceToNow(new Date(bakeSheet.createdAt), {
+                      {formatDistanceToNow(new Date(productionSheet.createdAt), {
                         addSuffix: true,
                       })}
                     </p>
@@ -125,11 +125,11 @@ export default async function BakeSheetDetailPage({
                 )}
               </div>
 
-              {bakeSheet.notes && (
+              {productionSheet.notes && (
                 <div className="mt-4 pt-4 border-t border-base-300">
                   <p className="text-sm text-base-content/70 mb-2">Notes</p>
                   <p className="whitespace-pre-line text-base-content/80">
-                    {bakeSheet.notes}
+                    {productionSheet.notes}
                   </p>
                 </div>
               )}
@@ -172,7 +172,7 @@ export default async function BakeSheetDetailPage({
               Quantities shown are scaled by {scale.toFixed(2)}x
             </p>
 
-            {bakeSheet.recipe.sections.map((section) => (
+            {productionSheet.recipe.sections.map((section) => (
               <div key={section.id} className="mb-6 last:mb-0">
                 <h3 className="font-semibold text-lg mb-2">{section.name}</h3>
 
@@ -182,15 +182,13 @@ export default async function BakeSheetDetailPage({
                       <tr>
                         <th>Ingredient</th>
                         <th>Required</th>
-                        <th>Available</th>
-                        <th>Status</th>
+                        <th>Unit</th>
+                        <th>Stock</th>
                       </tr>
                     </thead>
                     <tbody>
                       {section.ingredients.map((recipeIng) => {
                         const requiredQty = Number(recipeIng.quantity) * scale;
-                        const availableQty = Number(recipeIng.ingredient.currentQty);
-                        const hasSufficient = availableQty >= requiredQty;
 
                         return (
                           <tr key={recipeIng.id}>
@@ -206,14 +204,15 @@ export default async function BakeSheetDetailPage({
                               {requiredQty.toFixed(3)} {recipeIng.unit}
                             </td>
                             <td className="font-mono">
-                              {availableQty.toFixed(3)} {recipeIng.ingredient.unit}
+                              {recipeIng.ingredient.unit}
                             </td>
                             <td>
-                              {hasSufficient ? (
-                                <span className="badge badge-success">OK</span>
-                              ) : (
-                                <span className="badge badge-error">Insufficient</span>
-                              )}
+                              <Link
+                                href={`/dashboard/ingredients/${recipeIng.ingredient.id}`}
+                                className="btn btn-ghost btn-xs"
+                              >
+                                View Stock
+                              </Link>
                             </td>
                           </tr>
                         );
@@ -235,14 +234,22 @@ export default async function BakeSheetDetailPage({
           </div>
         </div>
 
-        {/* Inventory Transactions (if completed) */}
-        {bakeSheet.completed && bakeSheet.transactions.length > 0 && (
+        {/* Inventory Usages (if completed) */}
+        {productionSheet.completed && productionSheet.usages && productionSheet.usages.length > 0 && (
           <div className="card bg-base-100 shadow-xl">
             <div className="card-body">
-              <h2 className="card-title">Inventory Transactions</h2>
+              <h2 className="card-title">Inventory Used</h2>
               <p className="text-sm text-base-content/70 mb-4">
-                Ingredients deducted when this bake sheet was completed
+                Ingredients deducted (FIFO) when this production sheet was completed
               </p>
+
+              {/* Shortfall warning if any */}
+              {productionSheet.usages.some((u) => Number(u.shortfall) > 0) && (
+                <div className="alert alert-warning mb-4">
+                  <AlertTriangle className="h-5 w-5" />
+                  <span>Some ingredients had insufficient inventory when this production sheet was completed</span>
+                </div>
+              )}
 
               <div className="overflow-x-auto">
                 <table className="table">
@@ -250,28 +257,46 @@ export default async function BakeSheetDetailPage({
                     <tr>
                       <th>Ingredient</th>
                       <th>Quantity Used</th>
+                      <th>Shortfall</th>
+                      <th>From Lot</th>
                       <th>Notes</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {bakeSheet.transactions.map((transaction) => (
-                      <tr key={transaction.id}>
-                        <td>
-                          <Link
-                            href={`/dashboard/ingredients/${transaction.ingredient.id}`}
-                            className="hover:text-primary"
-                          >
-                            {transaction.ingredient.name}
-                          </Link>
-                        </td>
-                        <td className="font-mono">
-                          {Number(transaction.quantity).toFixed(3)} {transaction.unit}
-                        </td>
-                        <td className="text-sm text-base-content/70">
-                          {transaction.notes || '-'}
-                        </td>
-                      </tr>
-                    ))}
+                    {productionSheet.usages.map((usage) => {
+                      const hasShortfall = Number(usage.shortfall) > 0;
+                      return (
+                        <tr key={usage.id} className={hasShortfall ? 'bg-warning/10' : ''}>
+                          <td>
+                            <Link
+                              href={`/dashboard/ingredients/${usage.lot.inventory.ingredient.id}`}
+                              className="hover:text-primary"
+                            >
+                              {usage.lot.inventory.ingredient.name}
+                            </Link>
+                          </td>
+                          <td className="font-mono">
+                            {Number(usage.quantity).toFixed(3)} {usage.lot.purchaseUnit}
+                          </td>
+                          <td>
+                            {hasShortfall ? (
+                              <span className="badge badge-warning gap-1">
+                                <AlertTriangle className="h-3 w-3" />
+                                {Number(usage.shortfall).toFixed(3)} {usage.lot.purchaseUnit}
+                              </span>
+                            ) : (
+                              <span className="text-base-content/50">-</span>
+                            )}
+                          </td>
+                          <td className="text-sm text-base-content/70">
+                            {formatDistanceToNow(new Date(usage.lot.purchasedAt), { addSuffix: true })}
+                          </td>
+                          <td className="text-sm text-base-content/70">
+                            {usage.notes || '-'}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
