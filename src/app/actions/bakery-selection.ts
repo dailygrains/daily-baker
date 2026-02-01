@@ -18,13 +18,13 @@ export async function selectBakeryAction(bakeryId: string) {
       return { success: false, error: 'Not authenticated' };
     }
 
-    // Verify bakery exists
+    // Verify bakery exists and is active
     const bakery = await prisma.bakery.findUnique({
-      where: { id: bakeryId },
+      where: { id: bakeryId, isActive: true },
     });
 
     if (!bakery) {
-      return { success: false, error: 'Bakery not found' };
+      return { success: false, error: 'Bakery not found or inactive' };
     }
 
     // Platform admins can select any bakery

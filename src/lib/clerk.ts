@@ -71,9 +71,9 @@ export async function getCurrentUser() {
     selectedBakeryId = undefined;
   }
 
-  // Find the selected bakery - don't default to first bakery
-  // Platform admins must explicitly select a bakery
-  // Regular users with only one bakery can auto-select it
+  // Find the selected bakery based on cookie or auto-selection
+  // Regular users with only one bakery: auto-select it
+  // Platform admins: use cookie selection, or auto-select first active bakery
   let currentBakery = user.bakeries.length > 0 ? user.bakeries[0] : undefined;
   let currentBakeryData: (typeof user.bakeries[0]['bakery']) | undefined = undefined;
   let currentBakeryIdValue: string | undefined = undefined;
@@ -87,9 +87,9 @@ export async function getCurrentUser() {
   // Override with cookie selection if present
   if (selectedBakeryId) {
     if (user.isPlatformAdmin) {
-      // Platform admins can select any bakery, even if not assigned
+      // Platform admins can select any active bakery, even if not assigned
       const selectedBakery = await prisma.bakery.findUnique({
-        where: { id: selectedBakeryId },
+        where: { id: selectedBakeryId, isActive: true },
       });
       if (selectedBakery) {
         currentBakeryData = selectedBakery;
@@ -115,16 +115,17 @@ export async function getCurrentUser() {
     );
   }
 
-  // Log info for platform admins without selection
+  // Log info for platform admins without selection (should be rare now with auto-select)
   // Only log in development to avoid production log clutter
   if (process.env.NODE_ENV === 'development' && user.isPlatformAdmin && !currentBakeryIdValue) {
-    console.info(`Platform admin ${user.id} has no bakery selected`);
+    console.info(`Platform admin ${user.id} has no bakery selected (no active bakeries in system)`);
   }
 
-  // Platform admins should see ALL bakeries, not just assigned ones
+  // Platform admins should see ALL active bakeries, not just assigned ones
   let allBakeries;
   if (user.isPlatformAdmin) {
     const allSystemBakeries = await prisma.bakery.findMany({
+      where: { isActive: true },
       select: {
         id: true,
         name: true,
@@ -134,6 +135,12 @@ export async function getCurrentUser() {
       },
     });
     allBakeries = allSystemBakeries;
+
+    // Auto-select first bakery for platform admins if no valid selection exists
+    if (!currentBakeryIdValue && allSystemBakeries.length > 0) {
+      currentBakeryData = allSystemBakeries[0] as typeof currentBakeryData;
+      currentBakeryIdValue = allSystemBakeries[0].id;
+    }
   } else {
     // Regular users only see their assigned bakeries
     allBakeries = user.bakeries.map(ub => ({

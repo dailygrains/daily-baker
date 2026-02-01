@@ -72,13 +72,14 @@ Production-ready multi-tenant bakery operations management system built with Nex
 **Dependencies:** Core bakery features
 
 #### Sub-stream 5A: Inventory System
-- Transaction-based inventory
+- FIFO inventory tracking with lot management
 - Inventory transaction history
 - Automatic inventory deduction
 - Low stock indicators
+- Unit conversion system
 
-#### Sub-stream 5B: Bake Sheet Management
-- Bake sheet CRUD
+#### Sub-stream 5B: Production Sheet Management
+- Production sheet CRUD (formerly Bake Sheets)
 - Scaling/multiplier logic
 - Completion workflow
 - Inventory integration
@@ -168,8 +169,8 @@ Production-ready multi-tenant bakery operations management system built with Nex
 ### Phase 4: Advanced Features (Week 4-5)
 **Parallel Streams:** 5A, 5B, 5C, 8
 **Deliverables:**
-- ✅ Inventory transactions
-- ✅ Bake sheet system
+- ✅ FIFO inventory system with lot tracking
+- ✅ Production sheet system (formerly Bake Sheets)
 - ✅ MDX editor with S3 uploads
 - ✅ Mobile-optimized views
 
@@ -221,8 +222,8 @@ Testing (Stream 9) - Runs parallel with all streams
 - **All:** Responsive design as features complete
 
 ### Week 4-5: Advanced Features
-- **Dev 1:** Inventory system (Stream 5A)
-- **Dev 2:** Bake sheets (Stream 5B)
+- **Dev 1:** FIFO Inventory system (Stream 5A)
+- **Dev 2:** Production sheets (Stream 5B)
 - **Dev 3:** MDX editor (Stream 5C)
 
 ### Week 6: Polish & Production
@@ -268,8 +269,8 @@ Testing (Stream 9) - Runs parallel with all streams
 - ✅ Search/filter functional
 
 ### Phase 4
-- ✅ Inventory transactions track correctly
-- ✅ Bake sheet completion deducts inventory
+- ✅ FIFO inventory transactions track correctly
+- ✅ Production sheet completion deducts inventory
 - ✅ MDX editor uploads to S3
 - ✅ Unit conversions accurate
 
