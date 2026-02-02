@@ -75,22 +75,13 @@ export default async function IngredientDetailPage({
         title={ingredient.name}
         sticky
         actions={
-          <div className="flex gap-2">
-            <Link
-              href={`/dashboard/inventory/lots/new?ingredientId=${id}`}
-              className="btn btn-secondary"
-            >
-              <Plus className="h-5 w-5 mr-2" />
-              Add Inventory
-            </Link>
-            <Link
-              href={`/dashboard/ingredients/${id}/edit`}
-              className="btn btn-primary"
-            >
-              <Edit className="h-5 w-5 mr-2" />
-              Edit
-            </Link>
-          </div>
+          <Link
+            href={`/dashboard/ingredients/${id}/edit`}
+            className="btn btn-primary"
+          >
+            <Edit className="h-5 w-5 mr-2" />
+            Edit
+          </Link>
         }
       />
 

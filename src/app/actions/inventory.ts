@@ -101,7 +101,7 @@ export async function addInventoryLot(data: AddInventoryLotInput) {
 
     // Log activity
     await createActivityLog({
-      userId: currentUser.id,
+      userId: currentUser.id!,
       action: 'CREATE',
       entityType: 'inventory_lot',
       entityId: result.id,
@@ -219,7 +219,7 @@ export async function useInventory(data: UseInventoryInput, createdBy?: string) 
             shortfall: new Decimal(0),
             reason: validatedData.reason,
             productionSheetId: validatedData.productionSheetId,
-            createdBy: createdBy || currentUser.id,
+            createdBy: createdBy || currentUser.id!,
             notes: validatedData.notes,
           },
         });
@@ -261,7 +261,7 @@ export async function useInventory(data: UseInventoryInput, createdBy?: string) 
 
     // Log activity
     await createActivityLog({
-      userId: currentUser.id,
+      userId: currentUser.id!,
       action: 'UPDATE',
       entityType: 'inventory',
       entityId: ingredient.inventory.id,
@@ -355,7 +355,7 @@ export async function adjustInventory(data: AdjustInventoryInput) {
           lotId: lot.id,
           quantity: new Decimal(Math.abs(validatedData.quantity)),
           reason: 'ADJUST',
-          createdBy: currentUser.id,
+          createdBy: currentUser.id!,
           notes: validatedData.notes,
         },
       });
@@ -375,7 +375,7 @@ export async function adjustInventory(data: AdjustInventoryInput) {
 
     // Log activity
     await createActivityLog({
-      userId: currentUser.id,
+      userId: currentUser.id!,
       action: 'UPDATE',
       entityType: 'inventory_lot',
       entityId: lot.id,
@@ -469,7 +469,7 @@ export async function updateInventoryLot(data: UpdateInventoryLotInput) {
 
     // Log activity
     await createActivityLog({
-      userId: currentUser.id,
+      userId: currentUser.id!,
       action: 'UPDATE',
       entityType: 'inventory_lot',
       entityId: lot.id,
@@ -664,7 +664,7 @@ export async function deleteInventoryLot(lotId: string) {
 
     // Log activity
     await createActivityLog({
-      userId: currentUser.id,
+      userId: currentUser.id!,
       action: 'DELETE',
       entityType: 'inventory_lot',
       entityId: lot.id,

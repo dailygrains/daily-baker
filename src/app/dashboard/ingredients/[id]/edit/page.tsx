@@ -32,6 +32,7 @@ export default async function EditIngredientPage({
     ...ingredient,
     currentQty: ingredient.currentQty.toString(),
     costPerUnit: ingredient.costPerUnit.toString(),
+    lowStockThreshold: ingredient.lowStockThreshold ?? null,
   };
 
   return (

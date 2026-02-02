@@ -114,15 +114,6 @@ export function DashboardSidebar({
             </li>
             <li>
               <Link
-                href="/dashboard/inventory"
-                className={`gap-3 ${isActive('/dashboard/inventory') ? 'active' : ''}`}
-              >
-                <BarChart3 className="h-5 w-5" />
-                Inventory
-              </Link>
-            </li>
-            <li>
-              <Link
                 href="/dashboard/ingredients"
                 className={`gap-3 ${isActive('/dashboard/ingredients') ? 'active' : ''}`}
               >
@@ -132,11 +123,11 @@ export function DashboardSidebar({
             </li>
             <li>
               <Link
-                href="/dashboard/vendors"
-                className={`gap-3 ${isActive('/dashboard/vendors') ? 'active' : ''}`}
+                href="/dashboard/inventory"
+                className={`gap-3 ${isActive('/dashboard/inventory') ? 'active' : ''}`}
               >
-                <ShoppingCart className="h-5 w-5" />
-                Vendors
+                <BarChart3 className="h-5 w-5" />
+                Inventory
               </Link>
             </li>
             <li>
@@ -146,6 +137,15 @@ export function DashboardSidebar({
               >
                 <Wrench className="h-5 w-5" />
                 Equipment
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/dashboard/vendors"
+                className={`gap-3 ${isActive('/dashboard/vendors') ? 'active' : ''}`}
+              >
+                <ShoppingCart className="h-5 w-5" />
+                Vendors
               </Link>
             </li>
 

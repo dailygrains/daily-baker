@@ -20,6 +20,7 @@ interface IngredientEditPageContentProps {
     currentQty: number | string | Decimal;
     unit: string;
     costPerUnit: number | string | Decimal;
+    lowStockThreshold: number | null;
     vendors: Array<{
       vendor: Vendor;
     }>;

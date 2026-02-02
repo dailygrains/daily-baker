@@ -33,7 +33,7 @@ export async function createRole(data: {
 
     // Log the activity
     await createActivityLog({
-      userId: currentUser.id,
+      userId: currentUser.id!,
       action: 'CREATE',
       entityType: 'role',
       entityId: role.id,
@@ -83,7 +83,7 @@ export async function updateRole(data: {
 
     // Log the activity
     await createActivityLog({
-      userId: currentUser.id,
+      userId: currentUser.id!,
       action: 'UPDATE',
       entityType: 'role',
       entityId: role.id,
@@ -149,7 +149,7 @@ export async function deleteRole(id: string) {
 
     // Log the activity
     await createActivityLog({
-      userId: currentUser.id,
+      userId: currentUser.id!,
       action: 'DELETE',
       entityType: 'role',
       entityId: role.id,

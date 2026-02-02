@@ -22,6 +22,7 @@ import {
 function calculateInventoryAggregates(inventory: {
   id: string;
   displayUnit: string;
+  lowStockThreshold?: { toNumber: () => number } | number | null;
   lots: Array<{
     id: string;
     purchaseQty: { toNumber: () => number } | number;
@@ -33,9 +34,12 @@ function calculateInventoryAggregates(inventory: {
     vendorId: string | null;
     notes: string | null;
   }>;
-} | null): { currentQty: number; costPerUnit: number } {
+} | null): { currentQty: number; costPerUnit: number; lowStockThreshold: number | null } {
   if (!inventory || !inventory.lots.length) {
-    return { currentQty: 0, costPerUnit: 0 };
+    const threshold = inventory?.lowStockThreshold != null
+      ? (typeof inventory.lowStockThreshold === 'number' ? inventory.lowStockThreshold : inventory.lowStockThreshold.toNumber())
+      : null;
+    return { currentQty: 0, costPerUnit: 0, lowStockThreshold: threshold };
   }
 
   const inventoryForCalc: InventoryWithLots = {
@@ -54,9 +58,14 @@ function calculateInventoryAggregates(inventory: {
     })),
   };
 
+  const threshold = inventory.lowStockThreshold != null
+    ? (typeof inventory.lowStockThreshold === 'number' ? inventory.lowStockThreshold : inventory.lowStockThreshold.toNumber())
+    : null;
+
   return {
     currentQty: getTotalQuantity(inventoryForCalc),
     costPerUnit: getWeightedAverageCost(inventoryForCalc),
+    lowStockThreshold: threshold,
   };
 }
 
@@ -99,7 +108,7 @@ export async function createIngredient(data: CreateIngredientInput) {
 
     // Log the activity
     await createActivityLog({
-      userId: currentUser.id,
+      userId: currentUser.id!,
       action: 'CREATE',
       entityType: 'ingredient',
       entityId: ingredient.id,
@@ -118,6 +127,7 @@ export async function createIngredient(data: CreateIngredientInput) {
         ...ingredient,
         currentQty: 0,
         costPerUnit: 0,
+        lowStockThreshold: null,
       },
     };
   } catch (error) {
@@ -169,7 +179,7 @@ export async function updateIngredient(data: UpdateIngredientInput) {
       };
     }
 
-    const { id, ...updateData } = validatedData;
+    const { id, lowStockThreshold, ...updateData } = validatedData;
 
     const ingredient = await db.ingredient.update({
       where: { id },
@@ -188,9 +198,25 @@ export async function updateIngredient(data: UpdateIngredientInput) {
       },
     });
 
+    // Update lowStockThreshold on inventory if provided and inventory exists
+    if (lowStockThreshold !== undefined && ingredient.inventory) {
+      await db.inventory.update({
+        where: { id: ingredient.inventory.id },
+        data: { lowStockThreshold },
+      });
+      // Re-fetch to get updated inventory
+      const updatedInventory = await db.inventory.findUnique({
+        where: { id: ingredient.inventory.id },
+        include: { lots: true },
+      });
+      if (updatedInventory) {
+        ingredient.inventory = updatedInventory;
+      }
+    }
+
     // Log the activity
     await createActivityLog({
-      userId: currentUser.id,
+      userId: currentUser.id!,
       action: 'UPDATE',
       entityType: 'ingredient',
       entityId: ingredient.id,
@@ -291,7 +317,7 @@ export async function deleteIngredient(id: string) {
 
     // Log the activity
     await createActivityLog({
-      userId: currentUser.id,
+      userId: currentUser.id!,
       action: 'DELETE',
       entityType: 'ingredient',
       entityId: ingredient.id,
@@ -371,6 +397,7 @@ export async function getIngredientsByBakery(bakeryId: string) {
           ...ingredient,
           currentQty: aggregates.currentQty,
           costPerUnit: aggregates.costPerUnit,
+          lowStockThreshold: aggregates.lowStockThreshold,
           _count: {
             lots: ingredient.inventory?._count?.lots ?? 0,
           },
@@ -457,8 +484,10 @@ export async function getIngredientById(id: string) {
         ...ingredient,
         currentQty: aggregates.currentQty,
         costPerUnit: aggregates.costPerUnit,
+        lowStockThreshold: aggregates.lowStockThreshold,
         inventory: ingredient.inventory ? {
           ...ingredient.inventory,
+          lowStockThreshold: ingredient.inventory.lowStockThreshold ? Number(ingredient.inventory.lowStockThreshold) : null,
           lots: ingredient.inventory.lots.map(lot => ({
             ...lot,
             purchaseQty: Number(lot.purchaseQty),
@@ -560,7 +589,7 @@ export async function assignVendorToIngredient(ingredientId: string, vendorId: s
 
     // Log the activity
     await createActivityLog({
-      userId: currentUser.id,
+      userId: currentUser.id!,
       action: 'ASSIGN',
       entityType: 'ingredient',
       entityId: ingredient.id,
@@ -633,7 +662,7 @@ export async function unassignVendorFromIngredient(ingredientId: string, vendorI
     // Log the activity
     if (vendor) {
       await createActivityLog({
-        userId: currentUser.id,
+        userId: currentUser.id!,
         action: 'REVOKE',
         entityType: 'ingredient',
         entityId: ingredient.id,

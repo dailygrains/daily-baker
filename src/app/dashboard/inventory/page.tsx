@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { getIngredientsByBakery } from '@/app/actions/ingredient';
 import { getRecentInventoryActivity } from '@/app/actions/inventory';
+import { InventoryTable } from '@/components/inventory/InventoryTable';
 import Link from 'next/link';
 import { Package, TrendingUp, TrendingDown, AlertTriangle, Boxes, Plus } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
@@ -138,49 +139,7 @@ export default async function InventoryPage() {
                 </Link>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="table table-zebra">
-                  <thead>
-                    <tr>
-                      <th>Ingredient</th>
-                      <th>Current Quantity</th>
-                      <th>Avg Cost/Unit</th>
-                      <th>Total Value</th>
-                      <th>Lots</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {ingredients.map((ingredient) => {
-                      const value = ingredient.currentQty * ingredient.costPerUnit;
-
-                      return (
-                        <tr key={ingredient.id}>
-                          <td>
-                            <Link
-                              href={`/dashboard/ingredients/${ingredient.id}`}
-                              className="font-semibold hover:text-primary"
-                            >
-                              {ingredient.name}
-                            </Link>
-                          </td>
-                          <td>
-                            {ingredient.currentQty.toFixed(3)} {ingredient.unit}
-                          </td>
-                          <td>
-                            {ingredient.costPerUnit > 0
-                              ? `$${ingredient.costPerUnit.toFixed(2)}/${ingredient.unit}`
-                              : '-'}
-                          </td>
-                          <td>${value.toFixed(2)}</td>
-                          <td>
-                            <span className="badge badge-ghost">{ingredient._count?.lots ?? 0}</span>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+              <InventoryTable ingredients={ingredients} />
             )}
           </div>
         </div>

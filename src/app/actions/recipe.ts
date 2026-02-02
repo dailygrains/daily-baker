@@ -163,7 +163,7 @@ export async function createRecipe(data: CreateRecipeInput) {
 
     // Log activity
     await createActivityLog({
-      userId: currentUser.id,
+      userId: currentUser.id!,
       action: 'CREATE',
       entityType: 'recipe',
       entityId: recipe.id,
@@ -271,7 +271,7 @@ export async function updateRecipe(data: UpdateRecipeInput) {
 
     // Log activity
     await createActivityLog({
-      userId: currentUser.id,
+      userId: currentUser.id!,
       action: 'UPDATE',
       entityType: 'recipe',
       entityId: recipe.id,
@@ -346,7 +346,7 @@ export async function deleteRecipe(id: string) {
 
     // Log activity
     await createActivityLog({
-      userId: currentUser.id,
+      userId: currentUser.id!,
       action: 'DELETE',
       entityType: 'recipe',
       entityId: recipe.id,

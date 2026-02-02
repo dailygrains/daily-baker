@@ -17,9 +17,9 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
   return (
     <AppLayout
       userName={user.name || undefined}
-      userEmail={user.email}
+      userEmail={user.email ?? ''}
       userRole={user.role?.name}
-      isPlatformAdmin={user.isPlatformAdmin}
+      isPlatformAdmin={user.isPlatformAdmin ?? false}
       bakeries={user.allBakeries}
       currentBakeryId={user.bakeryId}
     >

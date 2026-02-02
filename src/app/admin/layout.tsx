@@ -22,7 +22,7 @@ export default async function AdminLayout({ children }: AdminLayoutProps) {
   return (
     <AppLayout
       userName={user.name || undefined}
-      userEmail={user.email}
+      userEmail={user.email ?? ''}
       userRole={user.role?.name}
       isPlatformAdmin={true}
       bakeries={user.allBakeries}

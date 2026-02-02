@@ -51,7 +51,7 @@ export default async function UsersPage() {
           description="Users will appear here once they sign up."
         />
       ) : (
-        <UsersTable users={users} currentUserId={user.id} />
+        <UsersTable users={users} currentUserId={user.id!} />
       )}
     </>
   );

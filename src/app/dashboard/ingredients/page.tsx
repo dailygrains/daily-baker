@@ -28,6 +28,7 @@ export default async function IngredientsPage() {
     unit: ingredient.unit,
     currentQty: ingredient.currentQty.toString(),
     costPerUnit: ingredient.costPerUnit.toString(),
+    lowStockThreshold: ingredient.lowStockThreshold ?? null,
     vendors: ingredient.vendors,
   }));
 
@@ -70,7 +71,10 @@ export default async function IngredientsPage() {
             <div className="stat">
               <div className="stat-title">Low Stock Items</div>
               <div className="stat-value text-warning">
-                {ingredients.filter((i) => Number(i.currentQty) < 100).length}
+                {ingredients.filter((i) => {
+                  const threshold = i.lowStockThreshold;
+                  return threshold != null && threshold > 0 && Number(i.currentQty) < threshold;
+                }).length}
               </div>
             </div>
 

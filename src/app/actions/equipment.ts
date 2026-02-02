@@ -51,7 +51,7 @@ export async function createEquipment(data: CreateEquipmentInput) {
 
     // Log activity
     await createActivityLog({
-      userId: currentUser.id,
+      userId: currentUser.id!,
       action: 'CREATE',
       entityType: 'equipment',
       entityId: equipment.id,
@@ -126,7 +126,7 @@ export async function updateEquipment(data: UpdateEquipmentInput) {
     // Log activity with status change if applicable
     const statusChanged = validatedData.status && validatedData.status !== existingEquipment.status;
     await createActivityLog({
-      userId: currentUser.id,
+      userId: currentUser.id!,
       action: 'UPDATE',
       entityType: 'equipment',
       entityId: equipment.id,
@@ -194,7 +194,7 @@ export async function deleteEquipment(id: string) {
 
     // Log activity
     await createActivityLog({
-      userId: currentUser.id,
+      userId: currentUser.id!,
       action: 'DELETE',
       entityType: 'equipment',
       entityId: equipment.id,

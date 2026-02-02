@@ -211,14 +211,15 @@ model Ingredient {
 
 // Master inventory configuration per ingredient
 model Inventory {
-  id           String   @id @default(cuid())
-  bakeryId     String
-  bakery       Bakery   @relation(fields: [bakeryId], references: [id], onDelete: Cascade)
-  ingredientId String   @unique // One inventory record per ingredient
-  ingredient   Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
-  displayUnit  String   // Main unit for display/aggregates (e.g., "kg")
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id                String   @id @default(cuid())
+  bakeryId          String
+  bakery            Bakery   @relation(fields: [bakeryId], references: [id], onDelete: Cascade)
+  ingredientId      String   @unique // One inventory record per ingredient
+  ingredient        Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+  displayUnit       String   // Main unit for display/aggregates (e.g., "kg")
+  lowStockThreshold Decimal? @db.Decimal(10, 3) // Alert threshold (null = no alert, 0 = disabled)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   // Relations
   lots InventoryLot[]

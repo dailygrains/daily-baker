@@ -157,7 +157,7 @@ export async function assignUserToBakery(userId: string, bakeryId: string) {
 
     // Log the activity
     await createActivityLog({
-      userId: currentUser.id,
+      userId: currentUser.id!,
       action: 'ASSIGN',
       entityType: 'user',
       entityId: userId,
@@ -221,7 +221,7 @@ export async function unassignUserFromBakery(userId: string, bakeryId: string) {
 
     // Log the activity
     await createActivityLog({
-      userId: currentUser.id,
+      userId: currentUser.id!,
       action: 'REVOKE',
       entityType: 'user',
       entityId: userId,
@@ -278,7 +278,7 @@ export async function assignUserRole(userId: string, roleId: string | null) {
 
     // Log the activity
     await createActivityLog({
-      userId: currentUser.id,
+      userId: currentUser.id!,
       action: 'ASSIGN',
       entityType: 'user',
       entityId: user.id,
@@ -341,7 +341,7 @@ export async function updateUser(data: {
 
     // Log the activity
     await createActivityLog({
-      userId: currentUser.id,
+      userId: currentUser.id!,
       action: 'UPDATE',
       entityType: 'user',
       entityId: user.id,
@@ -434,7 +434,7 @@ export async function deleteUser(id: string) {
 
     // Log the activity
     await createActivityLog({
-      userId: currentUser.id,
+      userId: currentUser.id!,
       action: 'DELETE',
       entityType: 'user',
       entityId: user.id,

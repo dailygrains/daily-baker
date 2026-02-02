@@ -143,7 +143,7 @@ export async function createProductionSheet(data: CreateProductionSheetInput) {
 
     // Log activity
     await createActivityLog({
-      userId: currentUser.id,
+      userId: currentUser.id!,
       action: 'CREATE',
       entityType: 'production_sheet',
       entityId: productionSheet.id,
@@ -393,7 +393,7 @@ export async function updateProductionSheet(data: UpdateProductionSheetInput) {
 
     // Log activity
     await createActivityLog({
-      userId: currentUser.id,
+      userId: currentUser.id!,
       action: 'UPDATE',
       entityType: 'production_sheet',
       entityId: productionSheet.id,
@@ -602,7 +602,7 @@ export async function completeProductionSheet(data: CompleteProductionSheetInput
               shortfall: new Decimal(0), // No shortfall on individual lot usage
               reason: 'USE',
               productionSheetId: productionSheet.id,
-              createdBy: currentUser.id,
+              createdBy: currentUser.id!,
               notes: `Used for production sheet: ${productionSheet.quantity} of ${productionSheet.recipe.name}`,
             },
           });
@@ -665,7 +665,7 @@ export async function completeProductionSheet(data: CompleteProductionSheetInput
                 shortfall: new Decimal(shortfallInLotUnit),
                 reason: 'USE',
                 productionSheetId: productionSheet.id,
-                createdBy: currentUser.id,
+                createdBy: currentUser.id!,
                 notes: `Shortfall for production sheet: ${productionSheet.quantity} of ${productionSheet.recipe.name} (needed ${fifoResult.shortfall.toFixed(3)} ${usage.inventory.displayUnit}, had none)`,
               },
             });
@@ -679,7 +679,7 @@ export async function completeProductionSheet(data: CompleteProductionSheetInput
 
     // Log activity
     await createActivityLog({
-      userId: currentUser.id,
+      userId: currentUser.id!,
       action: 'UPDATE',
       entityType: 'production_sheet',
       entityId: productionSheet.id,
@@ -776,7 +776,7 @@ export async function deleteProductionSheet(id: string) {
 
     // Log activity
     await createActivityLog({
-      userId: currentUser.id,
+      userId: currentUser.id!,
       action: 'DELETE',
       entityType: 'production_sheet',
       entityId: id,

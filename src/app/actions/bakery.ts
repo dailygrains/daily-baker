@@ -51,9 +51,9 @@ export async function createBakery(data: unknown) {
       },
     });
 
-    // Log the activity
+    // Log the activity (user.id is guaranteed to exist after platform admin check)
     await createActivityLog({
-      userId: user.id,
+      userId: user.id!,
       action: 'CREATE',
       entityType: 'bakery',
       entityId: bakery.id,
@@ -98,7 +98,7 @@ export async function updateBakery(data: unknown) {
 
     // Log the activity
     await createActivityLog({
-      userId: user.id,
+      userId: user.id!,
       action: 'UPDATE',
       entityType: 'bakery',
       entityId: bakery.id,
@@ -165,7 +165,7 @@ export async function deleteBakery(id: string) {
 
     // Log the activity
     await createActivityLog({
-      userId: user.id,
+      userId: user.id!,
       action: 'DELETE',
       entityType: 'bakery',
       entityId: bakery.id,
@@ -354,7 +354,7 @@ export async function assignUserToBakery(userId: string, bakeryId: string) {
 
     // Log the activity
     await createActivityLog({
-      userId: currentUser.id,
+      userId: currentUser.id!,
       action: 'ASSIGN',
       entityType: 'user',
       entityId: targetUser.id,
@@ -449,7 +449,7 @@ export async function unassignUserFromBakery(userId: string, bakeryId: string) {
 
     // Log the activity
     await createActivityLog({
-      userId: currentUser.id,
+      userId: currentUser.id!,
       action: 'REVOKE',
       entityType: 'user',
       entityId: targetUser.id,

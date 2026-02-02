@@ -62,7 +62,7 @@ export async function createInvitation(data: {
         roleId: data.roleId || null,
         token,
         expiresAt,
-        createdBy: currentUser.id,
+        createdBy: currentUser.id!,
       },
       include: {
         bakery: true,
@@ -78,7 +78,7 @@ export async function createInvitation(data: {
 
     // Log the activity
     await createActivityLog({
-      userId: currentUser.id,
+      userId: currentUser.id!,
       action: 'INVITE',
       entityType: 'invitation',
       entityId: invitation.id,
@@ -183,7 +183,7 @@ export async function revokeInvitation(id: string) {
 
     // Log the activity
     await createActivityLog({
-      userId: currentUser.id,
+      userId: currentUser.id!,
       action: 'REVOKE',
       entityType: 'invitation',
       entityId: invitation.id,

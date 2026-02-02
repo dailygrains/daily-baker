@@ -11,6 +11,7 @@ interface Ingredient {
   currentQty: string;
   unit: string;
   costPerUnit: string;
+  lowStockThreshold: number | null;
   vendors: Array<{
     vendor: {
       id: string;
@@ -54,7 +55,9 @@ export function IngredientsTable({ ingredients }: IngredientsTableProps) {
             {currentIngredients.map((ingredient) => {
               const currentQty = Number(ingredient.currentQty);
               const costPerUnit = Number(ingredient.costPerUnit);
-              const isLowStock = currentQty < 100;
+              const threshold = ingredient.lowStockThreshold;
+              // Low stock if threshold is set (not null) and greater than 0, and current qty is below it
+              const isLowStock = threshold != null && threshold > 0 && currentQty < threshold;
 
               return (
                 <tr
@@ -63,7 +66,7 @@ export function IngredientsTable({ ingredients }: IngredientsTableProps) {
                   className="hover cursor-pointer"
                 >
                   <td className="align-top">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-between gap-2">
                       <span className="font-bold">{ingredient.name}</span>
                       {isLowStock && (
                         <span className="badge badge-warning badge-sm">Low Stock</span>

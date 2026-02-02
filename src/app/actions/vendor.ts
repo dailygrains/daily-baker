@@ -47,7 +47,7 @@ export async function createVendor(data: CreateVendorInput) {
 
     // Log activity
     await createActivityLog({
-      userId: currentUser.id,
+      userId: currentUser.id!,
       action: 'CREATE',
       entityType: 'vendor',
       entityId: vendor.id,
@@ -116,7 +116,7 @@ export async function updateVendor(data: UpdateVendorInput) {
 
     // Log activity
     await createActivityLog({
-      userId: currentUser.id,
+      userId: currentUser.id!,
       action: 'UPDATE',
       entityType: 'vendor',
       entityId: vendor.id,
@@ -192,7 +192,7 @@ export async function deleteVendor(id: string) {
 
     // Log activity
     await createActivityLog({
-      userId: currentUser.id,
+      userId: currentUser.id!,
       action: 'DELETE',
       entityType: 'vendor',
       entityId: vendor.id,

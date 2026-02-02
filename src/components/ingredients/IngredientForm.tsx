@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { createIngredient, updateIngredient, assignVendorToIngredient, unassignVendorFromIngredient } from '@/app/actions/ingredient';
 import { VendorAutocomplete } from '@/components/vendor/VendorAutocomplete';
 import { X } from 'lucide-react';
@@ -21,6 +22,7 @@ interface IngredientFormProps {
     currentQty: number | string | Decimal;
     unit: string;
     costPerUnit: number | string | Decimal;
+    lowStockThreshold: number | null;
     vendors: Array<{
       vendor: Vendor;
     }>;
@@ -55,6 +57,7 @@ export function IngredientForm({
     currentQty: ingredient ? Number(ingredient.currentQty) : 0,
     unit: ingredient?.unit ?? '',
     costPerUnit: ingredient ? Number(ingredient.costPerUnit) : 0,
+    lowStockThreshold: ingredient?.lowStockThreshold ?? null as number | null,
   });
 
   // Notify parent of form ref changes
@@ -202,21 +205,17 @@ export function IngredientForm({
         <h2 className="text-xl font-semibold">Inventory Details</h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-          <fieldset className="fieldset">
-            <legend className="fieldset-legend">Current Quantity *</legend>
-            <input
-              type="number"
-              step="0.001"
-              min="0"
-              className="input input-bordered w-full"
-              value={formData.currentQty}
-              onChange={(e) => {
-                setFormData({ ...formData, currentQty: parseFloat(e.target.value) || 0 });
-                setHasUnsavedChanges(true);
-              }}
-              required
-            />
-          </fieldset>
+          {ingredient ? (
+            <fieldset className="fieldset">
+              <legend className="fieldset-legend">Current Quantity</legend>
+              <input
+                type="text"
+                className="input input-bordered w-full bg-base-200"
+                value={`${formData.currentQty.toFixed(3)} ${formData.unit}`}
+                disabled
+              />
+            </fieldset>
+          ) : null}
 
           <fieldset className="fieldset">
             <legend className="fieldset-legend">Unit *</legend>
@@ -242,36 +241,52 @@ export function IngredientForm({
               <option value="unit">Units</option>
             </select>
           </fieldset>
+
+          {ingredient ? (
+            <fieldset className="fieldset">
+              <legend className="fieldset-legend">Avg Cost per Unit</legend>
+              <input
+                type="text"
+                className="input input-bordered w-full bg-base-200"
+                value={`$${formData.costPerUnit.toFixed(2)}/${formData.unit}`}
+                disabled
+              />
+            </fieldset>
+          ) : null}
         </div>
-      </div>
 
-      <div className="space-y-0">
-        <h2 className="text-xl font-semibold">Pricing</h2>
+        {ingredient && (
+          <p className="text-sm text-base-content/60 mt-2">
+            Quantity and cost are calculated from inventory lots.{' '}
+            <Link href={`/dashboard/ingredients/${ingredient.id}`} className="link">
+              Manage lots
+            </Link>
+          </p>
+        )}
 
-        <fieldset className="fieldset">
-          <legend className="fieldset-legend">Cost per Unit *</legend>
-          <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base-content/50">
-              $
-            </span>
+        {ingredient && (
+          <fieldset className="fieldset">
+            <legend className="fieldset-legend">Low Stock Alert Threshold</legend>
             <input
               type="number"
-              step="0.01"
+              step="0.001"
               min="0"
-              className="input input-bordered w-full pl-8"
-              value={formData.costPerUnit}
+              className="input input-bordered w-full"
+              value={formData.lowStockThreshold ?? ''}
               onChange={(e) => {
-                setFormData({ ...formData, costPerUnit: parseFloat(e.target.value) || 0 });
+                const value = e.target.value === '' ? null : parseFloat(e.target.value);
+                setFormData({ ...formData, lowStockThreshold: value });
                 setHasUnsavedChanges(true);
               }}
-              required
-              placeholder="0.00"
+              placeholder="Leave empty to disable"
             />
-          </div>
-          <label className="label">
-            <span className="label-text-alt">Price per single unit (e.g., per gram)</span>
-          </label>
-        </fieldset>
+            <label className="label">
+              <span className="label-text-alt">
+                Show low stock warning when quantity falls below this value. Leave empty or set to 0 to disable alerts.
+              </span>
+            </label>
+          </fieldset>
+        )}
       </div>
 
       {ingredient && (
