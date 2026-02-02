@@ -147,8 +147,8 @@ model Recipe {
   updatedAt   DateTime @updatedAt
 
   // Relations
-  sections   RecipeSection[]
-  productionSheets ProductionSheet[]
+  sections              RecipeSection[]
+  productionSheetRecipes ProductionSheetRecipe[]
 
   @@index([bakeryId])
   @@index([name])
@@ -382,29 +382,44 @@ enum EquipmentStatus {
 // ============================================================================
 
 model ProductionSheet {
-  id          String    @id @default(cuid())
-  bakeryId    String
-  bakery      Bakery    @relation(fields: [bakeryId], references: [id], onDelete: Cascade)
-  recipeId    String
-  recipe      Recipe    @relation(fields: [recipeId], references: [id], onDelete: Restrict)
-  scale       Decimal   @db.Decimal(5, 2) // Multiplier (1.0 = recipe as-is, 2.0 = double)
-  quantity    String // "25 loaves"
-  completed   Boolean   @default(false)
-  completedAt DateTime?
-  completedBy String?
-  completer   User?     @relation("CompletedBy", fields: [completedBy], references: [id], onDelete: SetNull)
-  notes       String?   @db.Text
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id           String    @id @default(cuid())
+  bakeryId     String
+  bakery       Bakery    @relation(fields: [bakeryId], references: [id], onDelete: Cascade)
+  description  String?   @db.Text
+  scheduledFor DateTime?
+  completed    Boolean   @default(false)
+  completedAt  DateTime?
+  completedBy  String?
+  completer    User?     @relation("CompletedBy", fields: [completedBy], references: [id], onDelete: SetNull)
+  notes        String?   @db.Text
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   // Relations
-  usages InventoryUsage[]
+  recipes ProductionSheetRecipe[]
+  usages  InventoryUsage[]
 
   @@index([bakeryId])
-  @@index([recipeId])
   @@index([completed])
+  @@index([scheduledFor])
   @@index([createdAt])
   @@map("production_sheets")
+}
+
+model ProductionSheetRecipe {
+  id                String          @id @default(cuid())
+  productionSheetId String
+  productionSheet   ProductionSheet @relation(fields: [productionSheetId], references: [id], onDelete: Cascade)
+  recipeId          String
+  recipe            Recipe          @relation(fields: [recipeId], references: [id], onDelete: Restrict)
+  scale             Decimal         @db.Decimal(5, 2)
+  order             Int             @default(0)
+  createdAt         DateTime        @default(now())
+
+  @@unique([productionSheetId, recipeId])
+  @@index([productionSheetId])
+  @@index([recipeId])
+  @@map("production_sheet_recipes")
 }
 
 // ============================================================================

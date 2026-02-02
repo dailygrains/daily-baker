@@ -1065,36 +1065,65 @@ async function main() {
 
   await prisma.productionSheet.create({
     data: {
-      recipeId: countrySourdough.id,
       bakeryId: dailyGrains.id,
-      scale: 10,
-      quantity: '20 loaves',
+      description: 'Morning sourdough batch',
+      scheduledFor: new Date('2026-01-31T06:00:00'),
       completed: true,
       completedAt: new Date('2026-01-31T14:30:00'),
       completedBy: dailyGrainsBaker.id,
-      notes: 'Morning sourdough batch',
+      notes: 'Completed successfully',
+      recipes: {
+        create: [
+          {
+            recipeId: countrySourdough.id,
+            scale: 10,
+            order: 0,
+          },
+        ],
+      },
     },
   });
 
   await prisma.productionSheet.create({
     data: {
-      recipeId: chocolateChipCookie.id,
       bakeryId: dailyGrains.id,
-      scale: 4,
-      quantity: '96 cookies',
+      description: 'Weekend cookie production',
+      scheduledFor: new Date('2026-02-02T08:00:00'),
       completed: false,
-      notes: 'Weekend cookie production',
+      notes: 'Need to check chocolate chip inventory',
+      recipes: {
+        create: [
+          {
+            recipeId: chocolateChipCookie.id,
+            scale: 4,
+            order: 0,
+          },
+        ],
+      },
     },
   });
 
   await prisma.productionSheet.create({
     data: {
-      recipeId: cinnamonRoll.id,
       bakeryId: dailyGrains.id,
-      scale: 3,
-      quantity: '36 rolls',
+      description: 'Sunday morning bake',
+      scheduledFor: new Date('2026-02-03T05:00:00'),
       completed: false,
-      notes: 'Sunday morning cinnamon rolls',
+      notes: 'Cinnamon rolls and bread for Sunday market',
+      recipes: {
+        create: [
+          {
+            recipeId: cinnamonRoll.id,
+            scale: 3,
+            order: 0,
+          },
+          {
+            recipeId: countrySourdough.id,
+            scale: 5,
+            order: 1,
+          },
+        ],
+      },
     },
   });
 

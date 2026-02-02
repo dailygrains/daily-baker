@@ -15,7 +15,7 @@ interface Recipe {
   totalCost: string;
   _count: {
     sections: number;
-    productionSheets: number;
+    productionSheetRecipes: number;
   };
 }
 
@@ -92,10 +92,10 @@ export function RecipesTable({ recipes }: RecipesTableProps) {
                     {formatCurrency(costPerUnit)}
                   </td>
                   <td className="align-top">
-                    {recipe._count.productionSheets > 0 ? (
+                    {recipe._count.productionSheetRecipes > 0 ? (
                       <span className="badge badge-secondary gap-1">
                         <ClipboardList className="h-4 w-4" />
-                        {recipe._count.productionSheets}
+                        {recipe._count.productionSheetRecipes}
                       </span>
                     ) : (
                       <span className="text-base-content/50">None</span>

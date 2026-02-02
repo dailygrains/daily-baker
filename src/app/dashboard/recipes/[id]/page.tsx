@@ -103,7 +103,7 @@ export default async function RecipeDetailPage({
 
           <div>
             <p className="text-sm text-base-content/70">Production Sheets</p>
-            <p className="text-2xl font-bold">{recipe._count.productionSheets}</p>
+            <p className="text-2xl font-bold">{recipe._count.productionSheetRecipes}</p>
           </div>
         </div>
 

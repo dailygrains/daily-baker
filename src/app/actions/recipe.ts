@@ -331,7 +331,7 @@ export async function deleteRecipe(id: string) {
       include: {
         _count: {
           select: {
-            productionSheets: true,
+            productionSheetRecipes: true,
           },
         },
       },
@@ -350,10 +350,10 @@ export async function deleteRecipe(id: string) {
     }
 
     // Check if recipe is used in production sheets
-    if (recipe._count.productionSheets > 0) {
+    if (recipe._count.productionSheetRecipes > 0) {
       return {
         success: false,
-        error: `Cannot delete recipe with ${recipe._count.productionSheets} production sheet(s). Please remove from production sheets first.`,
+        error: `Cannot delete recipe with ${recipe._count.productionSheetRecipes} production sheet(s). Please remove from production sheets first.`,
       };
     }
 
@@ -412,7 +412,7 @@ export async function getRecipesByBakery(bakeryId: string) {
         _count: {
           select: {
             sections: true,
-            productionSheets: true,
+            productionSheetRecipes: true,
           },
         },
       },
@@ -471,7 +471,7 @@ export async function getRecipeById(id: string) {
         _count: {
           select: {
             sections: true,
-            productionSheets: true,
+            productionSheetRecipes: true,
           },
         },
       },

@@ -445,7 +445,7 @@ export async function getIngredientById(id: string) {
                   take: 5,
                   include: {
                     creator: { select: { id: true, name: true } },
-                    productionSheet: { select: { id: true, recipe: { select: { name: true } } } },
+                    productionSheet: { select: { id: true, description: true, recipes: { select: { recipe: { select: { name: true } } }, orderBy: { order: 'asc' } } } },
                   },
                 },
               },

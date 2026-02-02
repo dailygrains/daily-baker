@@ -314,7 +314,7 @@ export default async function IngredientDetailPage({
                               href={`/dashboard/production-sheets/${usage.productionSheet.id}`}
                               className="link link-primary text-sm"
                             >
-                              {usage.productionSheet.recipe?.name || 'Production sheet'}
+                              {usage.productionSheet.recipes?.[0]?.recipe?.name || usage.productionSheet.description || 'Production sheet'}
                             </Link>
                           ) : (
                             <span className="text-sm text-base-content/50">

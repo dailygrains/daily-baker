@@ -22,6 +22,8 @@ export default async function NewProductionSheetPage() {
       id: true,
       name: true,
       totalCost: true,
+      yieldQty: true,
+      yieldUnit: true,
     },
     orderBy: {
       name: 'asc',
@@ -38,7 +40,7 @@ export default async function NewProductionSheetPage() {
     <div className="max-w-2xl mx-auto space-y-6">
       <SetPageHeader
         title="New Production Sheet"
-        description="Create a production run for a recipe"
+        description="Create a production run with one or more recipes"
       />
 
       <div className="card bg-base-100 shadow-xl">

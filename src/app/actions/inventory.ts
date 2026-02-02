@@ -590,7 +590,7 @@ export async function getInventoryForIngredient(ingredientId: string) {
                   take: 5,
                   include: {
                     creator: { select: { id: true, name: true } },
-                    productionSheet: { select: { id: true, recipe: { select: { name: true } } } },
+                    productionSheet: { select: { id: true, description: true, recipes: { select: { recipe: { select: { name: true } } }, orderBy: { order: 'asc' } } } },
                   },
                 },
               },
@@ -793,7 +793,7 @@ export async function getRecentInventoryActivity(bakeryId: string, limit: number
           },
         },
         creator: { select: { id: true, name: true, email: true } },
-        productionSheet: { select: { id: true, recipe: { select: { name: true } } } },
+        productionSheet: { select: { id: true, description: true, recipes: { select: { recipe: { select: { name: true } } }, orderBy: { order: 'asc' }, take: 1 } } },
       },
     });
 
@@ -808,7 +808,7 @@ export async function getRecentInventoryActivity(bakeryId: string, limit: number
         ingredientName: usage.lot.inventory.ingredient.name,
         creatorName: usage.creator.name || usage.creator.email,
         productionSheetId: usage.productionSheetId,
-        recipeName: usage.productionSheet?.recipe.name ?? null,
+        recipeName: usage.productionSheet?.recipes?.[0]?.recipe.name ?? usage.productionSheet?.description ?? null,
         notes: usage.notes,
         createdAt: usage.createdAt,
       })),
