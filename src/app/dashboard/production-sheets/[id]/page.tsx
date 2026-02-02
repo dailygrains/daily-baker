@@ -13,7 +13,15 @@ import {
   calculateAllScaledIngredients,
   aggregateIngredients,
   type ProductionSheetRecipeEntry,
+  type RecipeScaledIngredients,
+  type AggregatedIngredient,
 } from '@/lib/ingredientAggregation';
+import {
+  isValidSnapshot,
+  snapshotToScaledIngredients,
+  snapshotToAggregatedIngredients,
+  type ProductionSheetSnapshot,
+} from '@/lib/productionSheetSnapshot';
 
 export default async function ProductionSheetDetailPage({
   params,
@@ -39,55 +47,81 @@ export default async function ProductionSheetDetailPage({
 
   const productionSheet = productionSheetResult.data;
 
-  // Build recipe entries for ingredient calculations
-  const recipeEntries: ProductionSheetRecipeEntry[] = productionSheet.recipes.map((r) => ({
-    id: r.id,
-    scale: Number(r.scale),
-    order: r.order,
-    recipe: {
-      id: r.recipe.id,
-      name: r.recipe.name,
-      yieldQty: r.recipe.yieldQty,
-      yieldUnit: r.recipe.yieldUnit,
-      totalCost: r.recipe.totalCost,
-      sections: r.recipe.sections.map((s) => ({
-        id: s.id,
-        name: s.name,
-        order: s.order,
-        ingredients: s.ingredients.map((i) => ({
-          id: i.id,
-          quantity: i.quantity,
-          unit: i.unit,
-          ingredient: i.ingredient,
+  // For completed sheets with snapshot data, use frozen values
+  // For pending sheets, calculate from live recipe data
+  let scaledRecipes: RecipeScaledIngredients[];
+  let aggregatedIngredients: AggregatedIngredient[];
+  let totalCost: number;
+
+  const snapshotData = productionSheet.snapshotData as ProductionSheetSnapshot | null;
+
+  if (productionSheet.completed && snapshotData && isValidSnapshot(snapshotData)) {
+    // Use frozen snapshot data for completed sheets
+    scaledRecipes = snapshotToScaledIngredients(snapshotData);
+    aggregatedIngredients = snapshotToAggregatedIngredients(snapshotData);
+    totalCost = snapshotData.totalCost;
+  } else {
+    // Calculate from live recipe data for pending sheets (or completed sheets without snapshot)
+    const recipeEntries: ProductionSheetRecipeEntry[] = productionSheet.recipes.map((r) => ({
+      id: r.id,
+      scale: Number(r.scale),
+      order: r.order,
+      recipe: {
+        id: r.recipe.id,
+        name: r.recipe.name,
+        yieldQty: r.recipe.yieldQty,
+        yieldUnit: r.recipe.yieldUnit,
+        totalCost: r.recipe.totalCost,
+        sections: r.recipe.sections.map((s) => ({
+          id: s.id,
+          name: s.name,
+          order: s.order,
+          ingredients: s.ingredients.map((i) => ({
+            id: i.id,
+            quantity: i.quantity,
+            unit: i.unit,
+            ingredient: i.ingredient,
+          })),
         })),
-      })),
-    },
-  }));
+      },
+    }));
 
-  // Calculate scaled ingredients per recipe and aggregated totals
-  const scaledRecipes = calculateAllScaledIngredients(recipeEntries);
-  const aggregatedIngredients = aggregateIngredients(scaledRecipes);
-
-  // Calculate total cost
-  const totalCost = scaledRecipes.reduce((sum, r) => sum + r.estimatedCost, 0);
+    scaledRecipes = calculateAllScaledIngredients(recipeEntries);
+    aggregatedIngredients = aggregateIngredients(scaledRecipes);
+    totalCost = scaledRecipes.reduce((sum, r) => sum + r.estimatedCost, 0);
+  }
 
   // Get recipe names for display
   const recipeNames = productionSheet.recipes.map((r) => r.recipe.name).join(', ');
 
-  // Prepare recipes for RecipeListTable
-  const recipesForTable = productionSheet.recipes.map((r) => ({
-    id: r.id,
-    recipeId: r.recipeId,
-    scale: Number(r.scale),
-    order: r.order,
-    recipe: {
-      id: r.recipe.id,
-      name: r.recipe.name,
-      yieldQty: r.recipe.yieldQty,
-      yieldUnit: r.recipe.yieldUnit,
-      totalCost: Number(r.recipe.totalCost || 0),
-    },
-  }));
+  // Prepare recipes for RecipeListTable - use snapshot data for completed sheets
+  const recipesForTable = productionSheet.completed && snapshotData && isValidSnapshot(snapshotData)
+    ? snapshotData.recipes.map((r, idx) => ({
+        id: `snapshot-${idx}`,
+        recipeId: r.recipeId,
+        scale: r.scale,
+        order: idx,
+        recipe: {
+          id: r.recipeId,
+          name: r.recipeName,
+          yieldQty: r.yieldQty,
+          yieldUnit: r.yieldUnit,
+          totalCost: r.totalCost / r.scale, // Convert back to per-recipe cost
+        },
+      }))
+    : productionSheet.recipes.map((r) => ({
+        id: r.id,
+        recipeId: r.recipeId,
+        scale: Number(r.scale),
+        order: r.order,
+        recipe: {
+          id: r.recipe.id,
+          name: r.recipe.name,
+          yieldQty: r.recipe.yieldQty,
+          yieldUnit: r.recipe.yieldUnit,
+          totalCost: Number(r.recipe.totalCost || 0),
+        },
+      }));
 
   return (
     <>
@@ -102,7 +136,7 @@ export default async function ProductionSheetDetailPage({
             <div className="flex gap-2">
               <Link
                 href={`/dashboard/production-sheets/${id}/edit`}
-                className="btn btn-ghost"
+                className="btn btn-primary"
               >
                 <Edit className="h-4 w-4" />
                 Edit

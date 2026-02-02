@@ -1,7 +1,6 @@
 import { getCurrentUser } from '@/lib/clerk';
 import { redirect } from 'next/navigation';
-import { SetPageHeader } from '@/components/layout/SetPageHeader';
-import { ProductionSheetForm } from '@/components/productionSheets/ProductionSheetForm';
+import { ProductionSheetEditPageContent } from '@/components/productionSheets/ProductionSheetEditPageContent';
 import { getProductionSheetById } from '@/app/actions/productionSheet';
 import { db } from '@/lib/db';
 
@@ -69,33 +68,16 @@ export default async function EditProductionSheetPage({
     })),
   };
 
-  // Get recipe names for breadcrumb
+  // Get display name for breadcrumb
   const recipeNames = productionSheet.recipes.map((r) => r.recipe.name).join(', ');
+  const displayName = productionSheet.description || recipeNames;
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      <SetPageHeader
-        title="Edit Production Sheet"
-        description="Modify the production sheet details and recipes"
-        breadcrumbs={[
-          { label: 'Production Sheets', href: '/dashboard/production-sheets' },
-          {
-            label: productionSheet.description || recipeNames,
-            href: `/dashboard/production-sheets/${id}`,
-          },
-          { label: 'Edit' },
-        ]}
-      />
-
-      <div className="card bg-base-100 shadow-xl">
-        <div className="card-body">
-          <ProductionSheetForm
-            bakeryId={user.bakeryId}
-            recipes={recipesForForm}
-            existingSheet={existingSheet}
-          />
-        </div>
-      </div>
-    </div>
+    <ProductionSheetEditPageContent
+      bakeryId={user.bakeryId}
+      recipes={recipesForForm}
+      existingSheet={existingSheet}
+      displayName={displayName}
+    />
   );
 }

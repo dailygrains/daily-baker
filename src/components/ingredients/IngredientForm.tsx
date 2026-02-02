@@ -249,16 +249,27 @@ export function IngredientForm({
               required
             >
               <option value="">Select unit</option>
-              <option value="g">Grams (g)</option>
-              <option value="kg">Kilograms (kg)</option>
-              <option value="ml">Milliliters (ml)</option>
-              <option value="l">Liters (l)</option>
-              <option value="oz">Ounces (oz)</option>
-              <option value="lb">Pounds (lb)</option>
-              <option value="cup">Cups</option>
-              <option value="tbsp">Tablespoons</option>
-              <option value="tsp">Teaspoons</option>
-              <option value="unit">Units</option>
+              <optgroup label="Weight">
+                <option value="g">Grams (g)</option>
+                <option value="kg">Kilograms (kg)</option>
+                <option value="oz">Ounces (oz)</option>
+                <option value="lb">Pounds (lb)</option>
+              </optgroup>
+              <optgroup label="Volume">
+                <option value="ml">Milliliters (mL)</option>
+                <option value="l">Liters (L)</option>
+                <option value="gal">Gallons</option>
+                <option value="qt">Quarts</option>
+                <option value="pint">Pints</option>
+                <option value="cup">Cups</option>
+                <option value="fl-oz">Fluid Ounces (fl oz)</option>
+                <option value="tbsp">Tablespoons</option>
+                <option value="tsp">Teaspoons</option>
+              </optgroup>
+              <optgroup label="Count">
+                <option value="unit">Each</option>
+                <option value="dozen">Dozen</option>
+              </optgroup>
             </select>
           </fieldset>
 

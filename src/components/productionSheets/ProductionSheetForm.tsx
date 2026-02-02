@@ -1,9 +1,12 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createProductionSheet, updateProductionSheet } from '@/app/actions/productionSheet';
 import { AlertTriangle, Plus, Trash2, GripVertical } from 'lucide-react';
+import { formatQuantity, formatCurrency } from '@/lib/format';
+import { useToast } from '@/contexts/ToastContext';
+import { RecipeAutocomplete } from '@/components/productionSheets/RecipeAutocomplete';
 
 type Recipe = {
   id: string;
@@ -43,13 +46,28 @@ type ProductionSheetFormProps = {
       order: number;
     }>;
   };
+  onFormRefChange?: (ref: HTMLFormElement | null) => void;
+  onSavingChange?: (isSaving: boolean) => void;
+  onUnsavedChangesChange?: (hasChanges: boolean) => void;
+  showBottomActions?: boolean;
 };
 
-export function ProductionSheetForm({ bakeryId, recipes, existingSheet }: ProductionSheetFormProps) {
+export function ProductionSheetForm({
+  bakeryId,
+  recipes,
+  existingSheet,
+  onFormRefChange,
+  onSavingChange,
+  onUnsavedChangesChange,
+  showBottomActions = true,
+}: ProductionSheetFormProps) {
   const router = useRouter();
+  const { showToast } = useToast();
+  const formRef = useRef<HTMLFormElement>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [warnings, setWarnings] = useState<InventoryWarning[] | null>(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   // Form state
   const [description, setDescription] = useState(existingSheet?.description || '');
@@ -69,6 +87,32 @@ export function ProductionSheetForm({ bakeryId, recipes, existingSheet }: Produc
       : []
   );
 
+  // Notify parent of form ref changes
+  useEffect(() => {
+    if (onFormRefChange && formRef.current) {
+      onFormRefChange(formRef.current);
+    }
+  }, [onFormRefChange]);
+
+  // Notify parent of saving state changes
+  useEffect(() => {
+    if (onSavingChange) {
+      onSavingChange(isSubmitting);
+    }
+  }, [isSubmitting, onSavingChange]);
+
+  // Notify parent of unsaved changes state
+  useEffect(() => {
+    if (onUnsavedChangesChange) {
+      onUnsavedChangesChange(hasUnsavedChanges);
+    }
+  }, [hasUnsavedChanges, onUnsavedChangesChange]);
+
+  // Mark form as having unsaved changes
+  const markUnsaved = useCallback(() => {
+    setHasUnsavedChanges(true);
+  }, []);
+
   // Add a new recipe entry
   const addRecipeEntry = useCallback(() => {
     setRecipeEntries((prev) => [
@@ -79,12 +123,14 @@ export function ProductionSheetForm({ bakeryId, recipes, existingSheet }: Produc
         order: prev.length,
       },
     ]);
-  }, []);
+    markUnsaved();
+  }, [markUnsaved]);
 
   // Remove a recipe entry
   const removeRecipeEntry = useCallback((index: number) => {
     setRecipeEntries((prev) => prev.filter((_, i) => i !== index));
-  }, []);
+    markUnsaved();
+  }, [markUnsaved]);
 
   // Update a recipe entry
   const updateRecipeEntry = useCallback(
@@ -94,8 +140,9 @@ export function ProductionSheetForm({ bakeryId, recipes, existingSheet }: Produc
           i === index ? { ...entry, [field]: value } : entry
         )
       );
+      markUnsaved();
     },
-    []
+    [markUnsaved]
   );
 
   // Move recipe entry up/down
@@ -113,7 +160,8 @@ export function ProductionSheetForm({ bakeryId, recipes, existingSheet }: Produc
       // Update order values
       return newEntries.map((entry, i) => ({ ...entry, order: i }));
     });
-  }, []);
+    markUnsaved();
+  }, [markUnsaved]);
 
   // Calculate totals
   const totalEstimatedCost = recipeEntries.reduce((sum, entry) => {
@@ -148,45 +196,60 @@ export function ProductionSheetForm({ bakeryId, recipes, existingSheet }: Produc
       })),
     };
 
-    let result;
-    if (existingSheet) {
-      result = await updateProductionSheet({
-        id: existingSheet.id,
-        ...data,
-      });
-    } else {
-      result = await createProductionSheet(data);
-    }
-
-    if (result.success) {
-      // Show warnings briefly if any, then redirect
-      const warnings = 'warnings' in result ? result.warnings as InventoryWarning[] | undefined : undefined;
-      if (warnings && warnings.length > 0) {
-        setWarnings(warnings);
-        setIsSubmitting(false);
-        // Auto-redirect after showing warnings
-        setTimeout(() => {
-          router.push('/dashboard/production-sheets');
-          router.refresh();
-        }, 3000);
+    try {
+      let result;
+      if (existingSheet) {
+        result = await updateProductionSheet({
+          id: existingSheet.id,
+          ...data,
+        });
       } else {
-        router.push('/dashboard/production-sheets');
-        router.refresh();
+        result = await createProductionSheet(data);
       }
-    } else {
-      setError(result.error || 'Failed to save production sheet');
+
+      if (result.success) {
+        const sheetName = description || 'Production sheet';
+        const message = existingSheet
+          ? `"${sheetName}" updated successfully`
+          : `"${sheetName}" created successfully`;
+
+        setHasUnsavedChanges(false);
+
+        // Show warnings briefly if any, then redirect
+        const resultWarnings = 'warnings' in result ? result.warnings as InventoryWarning[] | undefined : undefined;
+        if (resultWarnings && resultWarnings.length > 0) {
+          setWarnings(resultWarnings);
+          setIsSubmitting(false);
+          showToast(message, 'success');
+          // Auto-redirect after showing warnings
+          setTimeout(() => {
+            router.push('/dashboard/production-sheets');
+            router.refresh();
+          }, 3000);
+        } else {
+          showToast(message, 'success');
+          // Only redirect to list after creating, stay on page after editing
+          if (!existingSheet) {
+            router.push('/dashboard/production-sheets');
+          }
+          router.refresh();
+        }
+      } else {
+        const errorMessage = result.error || 'Failed to save production sheet';
+        setError(errorMessage);
+        showToast(errorMessage, 'error');
+        setIsSubmitting(false);
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred';
+      setError(errorMessage);
+      showToast(errorMessage, 'error');
       setIsSubmitting(false);
     }
   };
 
-  // Get available recipes (not already selected)
-  const getAvailableRecipes = (currentRecipeId: string) => {
-    const selectedIds = new Set(recipeEntries.map((r) => r.recipeId));
-    return recipes.filter((r) => r.id === currentRecipeId || !selectedIds.has(r.id));
-  };
-
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form ref={formRef} onSubmit={handleSubmit} className="max-w-3xl mx-auto space-y-8">
       {error && (
         <div className="alert alert-error">
           <span>{error}</span>
@@ -204,8 +267,8 @@ export function ProductionSheetForm({ bakeryId, recipes, existingSheet }: Produc
             <ul className="text-sm list-disc list-inside">
               {warnings.map((w) => (
                 <li key={w.ingredientId}>
-                  <strong>{w.ingredientName}</strong>: need {w.required.toFixed(2)} {w.unit}, have{' '}
-                  {w.available.toFixed(2)} {w.unit} (short {w.shortfall.toFixed(2)})
+                  <strong>{w.ingredientName}</strong>: need {formatQuantity(w.required)} {w.unit}, have{' '}
+                  {formatQuantity(w.available)} {w.unit} (short {formatQuantity(w.shortfall)})
                 </li>
               ))}
             </ul>
@@ -213,47 +276,58 @@ export function ProductionSheetForm({ bakeryId, recipes, existingSheet }: Produc
         </div>
       )}
 
-      {/* Description */}
-      <div className="form-control">
-        <label className="label">
-          <span className="label-text">Description (Optional)</span>
-        </label>
-        <input
-          type="text"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          className="input input-bordered"
-          placeholder="e.g., Morning bread production, Weekend pastries"
-        />
-        <label className="label">
-          <span className="label-text-alt text-base-content/70">
-            A short description for this production sheet
-          </span>
-        </label>
+      <div className="space-y-0">
+        <h2 className="text-xl font-semibold">Basic Information</h2>
+
+        <fieldset className="fieldset">
+          <legend className="fieldset-legend">Description</legend>
+          <input
+            type="text"
+            value={description}
+            onChange={(e) => {
+              setDescription(e.target.value);
+              markUnsaved();
+            }}
+            className="input input-bordered w-full"
+            placeholder="e.g., Morning bread production, Weekend pastries"
+          />
+        </fieldset>
+
+        <fieldset className="fieldset">
+          <legend className="fieldset-legend">Scheduled For</legend>
+          <input
+            type="datetime-local"
+            value={scheduledFor}
+            onChange={(e) => {
+              setScheduledFor(e.target.value);
+              markUnsaved();
+            }}
+            className="input input-bordered w-full"
+          />
+          <label className="label">
+            <span className="label-text-alt">
+              When this production is planned to start
+            </span>
+          </label>
+        </fieldset>
+
+        <fieldset className="fieldset">
+          <legend className="fieldset-legend">Notes</legend>
+          <textarea
+            value={notes}
+            onChange={(e) => {
+              setNotes(e.target.value);
+              markUnsaved();
+            }}
+            className="textarea textarea-bordered w-full h-24"
+            placeholder="Add any notes about this production sheet..."
+          />
+        </fieldset>
       </div>
 
-      {/* Scheduled For */}
-      <div className="form-control">
-        <label className="label">
-          <span className="label-text">Scheduled For (Optional)</span>
-        </label>
-        <input
-          type="datetime-local"
-          value={scheduledFor}
-          onChange={(e) => setScheduledFor(e.target.value)}
-          className="input input-bordered"
-        />
-        <label className="label">
-          <span className="label-text-alt text-base-content/70">
-            When this production is planned to start
-          </span>
-        </label>
-      </div>
-
-      {/* Recipes Section */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold">Recipes</h3>
+          <h2 className="text-xl font-semibold">Recipes</h2>
           <button
             type="button"
             className="btn btn-sm btn-primary"
@@ -303,21 +377,17 @@ export function ProductionSheetForm({ bakeryId, recipes, existingSheet }: Produc
                   </div>
 
                   {/* Recipe selector */}
-                  <div className="form-control flex-1">
-                    <select
-                      className="select select-bordered select-sm"
-                      value={entry.recipeId}
-                      onChange={(e) => updateRecipeEntry(index, 'recipeId', e.target.value)}
-                      required
-                    >
-                      <option value="">Select a recipe</option>
-                      {getAvailableRecipes(entry.recipeId).map((recipe) => (
-                        <option key={recipe.id} value={recipe.id}>
-                          {recipe.name} ({recipe.yieldQty} {recipe.yieldUnit})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                  <RecipeAutocomplete
+                    recipes={recipes}
+                    selectedRecipeId={entry.recipeId}
+                    excludeRecipeIds={recipeEntries
+                      .filter((_, i) => i !== index)
+                      .map((r) => r.recipeId)
+                      .filter(Boolean)}
+                    onSelect={(recipe) => updateRecipeEntry(index, 'recipeId', recipe.id)}
+                    onClear={() => updateRecipeEntry(index, 'recipeId', '')}
+                    placeholder="Search recipes..."
+                  />
 
                   {/* Scale input */}
                   <div className="form-control w-24">
@@ -326,10 +396,17 @@ export function ProductionSheetForm({ bakeryId, recipes, existingSheet }: Produc
                       step="0.01"
                       min="0.01"
                       max="100"
-                      value={entry.scale}
-                      onChange={(e) =>
-                        updateRecipeEntry(index, 'scale', parseFloat(e.target.value) || 1)
-                      }
+                      value={entry.scale || ''}
+                      onChange={(e) => {
+                        const value = e.target.value === '' ? 0 : parseFloat(e.target.value);
+                        updateRecipeEntry(index, 'scale', isNaN(value) ? 0 : value);
+                      }}
+                      onBlur={(e) => {
+                        const value = parseFloat(e.target.value);
+                        if (!value || value <= 0) {
+                          updateRecipeEntry(index, 'scale', 1);
+                        }
+                      }}
                       className="input input-bordered input-sm"
                       placeholder="Scale"
                       required
@@ -339,7 +416,7 @@ export function ProductionSheetForm({ bakeryId, recipes, existingSheet }: Produc
                   {/* Scaled yield display */}
                   {selectedRecipe && (
                     <div className="text-sm text-base-content/70 w-32 hidden sm:block">
-                      = {scaledYield.toFixed(1)} {selectedRecipe.yieldUnit}
+                      = {formatQuantity(scaledYield)} {selectedRecipe.yieldUnit}
                     </div>
                   )}
 
@@ -361,56 +438,41 @@ export function ProductionSheetForm({ bakeryId, recipes, existingSheet }: Produc
         {totalEstimatedCost > 0 && (
           <div className="text-right text-sm text-base-content/70">
             Estimated Total Cost:{' '}
-            <span className="font-semibold">${totalEstimatedCost.toFixed(2)}</span>
+            <span className="font-semibold">{formatCurrency(totalEstimatedCost)}</span>
           </div>
         )}
       </div>
 
-      {/* Notes */}
-      <div className="form-control">
-        <label className="label">
-          <span className="label-text">Notes (Optional)</span>
-        </label>
-        <textarea
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          className="textarea textarea-bordered h-24"
-          placeholder="Add any notes about this production sheet..."
-        />
-        <label className="label">
-          <span className="label-text-alt text-base-content/70">
-            Optional notes for this production run
-          </span>
-        </label>
-      </div>
-
-      {/* Form Actions */}
-      <div className="flex gap-2 justify-end">
-        <button
-          type="button"
-          className="btn btn-ghost"
-          onClick={() => router.back()}
-          disabled={isSubmitting}
-        >
-          Cancel
-        </button>
-        <button
-          type="submit"
-          className="btn btn-primary"
-          disabled={isSubmitting || recipeEntries.filter((r) => r.recipeId).length === 0}
-        >
-          {isSubmitting ? (
-            <>
-              <span className="loading loading-spinner loading-sm"></span>
-              {existingSheet ? 'Saving...' : 'Creating...'}
-            </>
-          ) : existingSheet ? (
-            'Save Changes'
-          ) : (
-            'Create Production Sheet'
-          )}
-        </button>
-      </div>
+      {showBottomActions && (
+        <div className="flex gap-3 justify-between pt-4">
+          <div className="flex gap-3 ml-auto">
+            <button
+              type="button"
+              className="btn btn-ghost"
+              onClick={() => router.back()}
+              disabled={isSubmitting}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="btn btn-primary"
+              disabled={isSubmitting || recipeEntries.filter((r) => r.recipeId).length === 0}
+            >
+              {isSubmitting ? (
+                <>
+                  <span className="loading loading-spinner loading-sm"></span>
+                  {existingSheet ? 'Saving...' : 'Creating...'}
+                </>
+              ) : existingSheet ? (
+                'Save Changes'
+              ) : (
+                'Create Production Sheet'
+              )}
+            </button>
+          </div>
+        </div>
+      )}
     </form>
   );
 }

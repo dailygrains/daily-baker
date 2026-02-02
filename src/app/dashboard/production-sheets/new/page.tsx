@@ -1,7 +1,6 @@
 import { getCurrentUser } from '@/lib/clerk';
 import { redirect } from 'next/navigation';
-import { SetPageHeader } from '@/components/layout/SetPageHeader';
-import { ProductionSheetForm } from '@/components/productionSheets/ProductionSheetForm';
+import { ProductionSheetNewPageContent } from '@/components/productionSheets/ProductionSheetNewPageContent';
 import { db } from '@/lib/db';
 
 export default async function NewProductionSheetPage() {
@@ -37,17 +36,9 @@ export default async function NewProductionSheetPage() {
   }));
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      <SetPageHeader
-        title="New Production Sheet"
-        description="Create a production run with one or more recipes"
-      />
-
-      <div className="card bg-base-100 shadow-xl">
-        <div className="card-body">
-          <ProductionSheetForm bakeryId={user.bakeryId} recipes={recipesForForm} />
-        </div>
-      </div>
-    </div>
+    <ProductionSheetNewPageContent
+      bakeryId={user.bakeryId}
+      recipes={recipesForForm}
+    />
   );
 }

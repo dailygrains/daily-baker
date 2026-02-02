@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Fragment } from 'react';
 import Link from 'next/link';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { AggregatedIngredient } from '@/lib/ingredientAggregation';
+import { formatQuantity } from '@/lib/format';
 
 type TotalIngredientsTableProps = {
   ingredients: AggregatedIngredient[];
@@ -26,13 +27,12 @@ export function TotalIngredientsTable({ ingredients }: TotalIngredientsTableProp
 
   return (
     <div className="overflow-x-auto">
-      <table className="table">
+      <table className="table table-lg w-full">
         <thead>
           <tr>
             <th className="w-8"></th>
-            <th>Ingredient</th>
-            <th>Total Required</th>
-            <th>Unit</th>
+            <th className="w-full">Ingredient</th>
+            <th className="text-right w-40">Total Required</th>
           </tr>
         </thead>
         <tbody>
@@ -41,9 +41,8 @@ export function TotalIngredientsTable({ ingredients }: TotalIngredientsTableProp
             const hasMultipleContributions = ingredient.contributions.length > 1;
 
             return (
-              <>
+              <Fragment key={ingredient.ingredientId}>
                 <tr
-                  key={ingredient.ingredientId}
                   className={hasMultipleContributions ? 'cursor-pointer hover:bg-base-200' : ''}
                   onClick={() => hasMultipleContributions && toggleExpanded(ingredient.ingredientId)}
                 >
@@ -72,10 +71,9 @@ export function TotalIngredientsTable({ ingredients }: TotalIngredientsTableProp
                       </span>
                     )}
                   </td>
-                  <td className="font-mono font-semibold">
-                    {ingredient.totalQuantity.toFixed(3)}
+                  <td className="font-mono font-semibold text-right whitespace-nowrap">
+                    {formatQuantity(ingredient.totalQuantity)} {ingredient.unit}
                   </td>
-                  <td>{ingredient.unit}</td>
                 </tr>
                 {isExpanded &&
                   ingredient.contributions.map((contribution, idx) => (
@@ -84,18 +82,15 @@ export function TotalIngredientsTable({ ingredients }: TotalIngredientsTableProp
                       className="bg-base-200/50"
                     >
                       <td></td>
-                      <td className="pl-10 text-sm text-base-content/70">
+                      <td className="pl-10 text-base-content/70">
                         {contribution.recipeName}
                       </td>
-                      <td className="font-mono text-sm text-base-content/70">
-                        {contribution.quantity.toFixed(3)}
-                      </td>
-                      <td className="text-sm text-base-content/70">
-                        {contribution.unit}
+                      <td className="font-mono text-base-content/70 text-right whitespace-nowrap">
+                        {formatQuantity(contribution.quantity)} {contribution.unit}
                       </td>
                     </tr>
                   ))}
-              </>
+              </Fragment>
             );
           })}
         </tbody>

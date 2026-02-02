@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { getCurrentUser } from '@/lib/clerk';
 import { revalidatePath } from 'next/cache';
 import { Decimal } from '@prisma/client/runtime/library';
+import { Prisma } from '@/generated/prisma';
 import {
   createProductionSheetSchema,
   updateProductionSheetSchema,
@@ -32,6 +33,7 @@ import {
   calculateTotalCost,
   type ProductionSheetRecipeEntry,
 } from '@/lib/ingredientAggregation';
+import { createProductionSheetSnapshot } from '@/lib/productionSheetSnapshot';
 
 // Helper to build recipe include for inventory checking
 const recipeWithIngredientsInclude = {
@@ -897,15 +899,19 @@ export async function completeProductionSheet(data: CompleteProductionSheetInput
     // Get recipe names for notes
     const recipeNames = productionSheet.recipes.map((r) => r.recipe.name).join(', ');
 
+    // Create snapshot of current state before completing
+    const snapshot = createProductionSheetSnapshot(recipeEntries);
+
     // Complete the production sheet and create inventory usages in a transaction
     const result = await db.$transaction(async (tx) => {
-      // Mark production sheet as completed
+      // Mark production sheet as completed with snapshot
       const completedProductionSheet = await tx.productionSheet.update({
         where: { id: validatedData.id },
         data: {
           completed: true,
           completedAt: new Date(),
           completedBy: currentUser.id,
+          snapshotData: JSON.parse(JSON.stringify(snapshot)) as Prisma.InputJsonValue,
         },
       });
 
@@ -1059,6 +1065,124 @@ export async function completeProductionSheet(data: CompleteProductionSheetInput
       success: false,
       error:
         error instanceof Error ? error.message : 'Failed to complete production sheet',
+    };
+  }
+}
+
+/**
+ * Backfill snapshot data for existing completed production sheets
+ * This should be run once after the migration to populate snapshot data
+ * for production sheets that were completed before the snapshot feature was added
+ */
+export async function backfillProductionSheetSnapshots() {
+  try {
+    const currentUser = await getCurrentUser();
+
+    if (!currentUser) {
+      return { success: false, error: 'Unauthorized: You must be logged in' };
+    }
+
+    // Only platform admins can run this
+    if (!currentUser.isPlatformAdmin) {
+      return { success: false, error: 'Unauthorized: Only platform admins can run backfill' };
+    }
+
+    // Find all completed production sheets without snapshot data
+    const sheetsToBackfill = await db.productionSheet.findMany({
+      where: {
+        completed: true,
+        snapshotData: { equals: Prisma.DbNull },
+      },
+      include: {
+        recipes: {
+          include: {
+            recipe: {
+              include: {
+                sections: {
+                  include: {
+                    ingredients: {
+                      include: {
+                        ingredient: {
+                          select: {
+                            id: true,
+                            name: true,
+                            unit: true,
+                          },
+                        },
+                      },
+                    },
+                  },
+                  orderBy: { order: 'asc' },
+                },
+              },
+            },
+          },
+          orderBy: { order: 'asc' },
+        },
+      },
+    });
+
+    if (sheetsToBackfill.length === 0) {
+      return { success: true, message: 'No production sheets need backfilling', count: 0 };
+    }
+
+    let backfilledCount = 0;
+
+    for (const sheet of sheetsToBackfill) {
+      // Build recipe entries for snapshot creation
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const recipeEntries: ProductionSheetRecipeEntry[] = (sheet as any).recipes.map((r: any) => ({
+        id: r.id,
+        scale: r.scale,
+        order: r.order,
+        recipe: {
+          id: r.recipe.id,
+          name: r.recipe.name,
+          yieldQty: r.recipe.yieldQty,
+          yieldUnit: r.recipe.yieldUnit,
+          totalCost: r.recipe.totalCost,
+          sections: r.recipe.sections.map((s: any) => ({
+            id: s.id,
+            name: s.name,
+            order: s.order,
+            ingredients: s.ingredients.map((i: any) => ({
+              id: i.id,
+              quantity: i.quantity,
+              unit: i.unit,
+              ingredient: i.ingredient,
+            })),
+          })),
+        },
+      }));
+
+      // Create snapshot
+      const snapshot = createProductionSheetSnapshot(recipeEntries);
+
+      // Update the completedAt timestamp in the snapshot if available
+      const sheetCompletedAt = (sheet as { completedAt: Date | null }).completedAt;
+      if (sheetCompletedAt) {
+        snapshot.completedAt = sheetCompletedAt.toISOString();
+      }
+
+      // Update the production sheet with the snapshot
+      await db.productionSheet.update({
+        where: { id: sheet.id },
+        data: { snapshotData: JSON.parse(JSON.stringify(snapshot)) as Prisma.InputJsonValue },
+      });
+
+      backfilledCount++;
+    }
+
+    return {
+      success: true,
+      message: `Backfilled ${backfilledCount} production sheet(s)`,
+      count: backfilledCount,
+    };
+  } catch (error) {
+    console.error('Failed to backfill production sheet snapshots:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to backfill snapshots',
     };
   }
 }

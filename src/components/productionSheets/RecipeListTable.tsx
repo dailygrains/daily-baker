@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { formatQuantity, formatCurrency } from '@/lib/format';
 
 type RecipeEntry = {
   id: string;
@@ -51,24 +52,24 @@ export function RecipeListTable({ recipes }: RecipeListTableProps) {
                   <td>
                     <Link
                       href={`/dashboard/recipes/${entry.recipe.id}`}
-                      className="font-semibold hover:text-primary"
+                      className="text-lg font-semibold hover:text-primary"
                     >
                       {entry.recipe.name}
                     </Link>
                   </td>
-                  <td className="text-base-content/70">
-                    {entry.recipe.yieldQty} {entry.recipe.yieldUnit}
+                  <td className="text-lg text-base-content/70">
+                    {formatQuantity(entry.recipe.yieldQty)} {entry.recipe.yieldUnit}
                   </td>
                   <td>
-                    <span className="badge badge-outline">
-                      {entry.scale.toFixed(2)}x
+                    <span className="badge badge-outline text-lg">
+                      {formatQuantity(entry.scale, 2)}x
                     </span>
                   </td>
-                  <td className="font-semibold">
-                    {scaledYield.toFixed(1)} {entry.recipe.yieldUnit}
+                  <td className="text-lg font-semibold">
+                    {formatQuantity(scaledYield)} {entry.recipe.yieldUnit}
                   </td>
                   <td className="text-right font-mono">
-                    ${scaledCost.toFixed(2)}
+                    {formatCurrency(scaledCost)}
                   </td>
                 </tr>
               );
@@ -80,7 +81,7 @@ export function RecipeListTable({ recipes }: RecipeListTableProps) {
               Total Estimated Cost
             </td>
             <td className="text-right font-semibold font-mono">
-              ${totalCost.toFixed(2)}
+              {formatCurrency(totalCost)}
             </td>
           </tr>
         </tfoot>

@@ -64,16 +64,45 @@ const unitMap: Record<string, string | null> = {
   'pint': 'pnt',
   'pints': 'pnt',
 
-  // Non-convertible units (count-based)
-  'unit': null,
-  'units': null,
-  'each': null,
-  'ea': null,
-  'piece': null,
-  'pieces': null,
-  'pc': null,
-  'pcs': null,
+  // Count-based units (custom conversion, not in convert-units library)
+  'unit': 'unit',
+  'units': 'unit',
+  'each': 'unit',
+  'ea': 'unit',
+  'piece': 'unit',
+  'pieces': 'unit',
+  'pc': 'unit',
+  'pcs': 'unit',
+  'dozen': 'dozen',
+  'doz': 'dozen',
 };
+
+// Custom count-based conversions (1 dozen = 12 units)
+const countConversions: Record<string, Record<string, number>> = {
+  'unit': { 'unit': 1, 'dozen': 1/12 },
+  'dozen': { 'dozen': 1, 'unit': 12 },
+};
+
+/**
+ * Check if a unit is a count-based unit
+ */
+function isCountUnit(unit: string): boolean {
+  const normalized = normalizeUnit(unit);
+  return normalized === 'unit' || normalized === 'dozen';
+}
+
+/**
+ * Convert between count-based units (unit, dozen)
+ */
+function convertCountUnits(quantity: number, fromUnit: string, toUnit: string): number | null {
+  const fromNorm = normalizeUnit(fromUnit);
+  const toNorm = normalizeUnit(toUnit);
+
+  if (!fromNorm || !toNorm) return null;
+  if (!countConversions[fromNorm] || !countConversions[fromNorm][toNorm]) return null;
+
+  return quantity * countConversions[fromNorm][toNorm];
+}
 
 /**
  * Normalize a unit string to its convert-units abbreviation
@@ -131,7 +160,12 @@ export function canConvertUnits(fromUnit: string, toUnit: string): boolean {
   const fromNormalized = normalizeUnit(fromUnit);
   const toNormalized = normalizeUnit(toUnit);
 
-  // If either unit is non-convertible (like "unit"), can only convert if they're the same
+  // Count-based units can convert between each other
+  if (fromNormalized && toNormalized && isCountUnit(fromUnit) && isCountUnit(toUnit)) {
+    return true;
+  }
+
+  // If either unit is non-convertible, can only convert if they're the same
   if (!fromNormalized || !toNormalized) {
     return fromUnit.toLowerCase() === toUnit.toLowerCase();
   }
@@ -168,7 +202,12 @@ export function convertQuantity(
   const fromNormalized = normalizeUnit(fromUnit);
   const toNormalized = normalizeUnit(toUnit);
 
-  // Handle non-convertible units (count-based like "unit", "each")
+  // Handle count-based units (unit, dozen) with custom conversion
+  if (fromNormalized && toNormalized && isCountUnit(fromUnit) && isCountUnit(toUnit)) {
+    return convertCountUnits(quantity, fromUnit, toUnit);
+  }
+
+  // Handle non-convertible units
   if (!fromNormalized || !toNormalized) {
     // If both are the same non-convertible unit type, just return the quantity
     if (fromUnit.toLowerCase() === toUnit.toLowerCase()) {
@@ -262,6 +301,8 @@ export function formatUnit(unit: string): string {
     'gal': 'gal',
     'qt': 'qt',
     'pnt': 'pint',
+    'unit': 'each',
+    'dozen': 'dozen',
   };
 
   const normalized = normalizeUnit(unit);

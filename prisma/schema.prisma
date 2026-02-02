@@ -392,6 +392,7 @@ model ProductionSheet {
   completedBy  String?
   completer    User?     @relation("CompletedBy", fields: [completedBy], references: [id], onDelete: SetNull)
   notes        String?   @db.Text
+  snapshotData Json?     // Frozen recipe/ingredient data at completion time
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 

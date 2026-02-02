@@ -313,7 +313,7 @@ export function RecipeForm({
 
         <div className="space-y-4 fieldset">
           {sections.map((section, sectionIndex) => (
-            <div key={sectionIndex} className="border border-base-300 rounded-lg p-4 bg-white/5">
+            <div key={sectionIndex} className="border border-base-300 rounded-lg p-4 bg-base-200">
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
                   <input
@@ -358,11 +358,11 @@ export function RecipeForm({
 
                 <fieldset className="fieldset">
                   <legend className="fieldset-legend">Ingredients</legend>
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     {section.ingredients.map((ingredient, ingredientIndex) => (
-                      <div key={ingredientIndex} className="flex gap-2">
+                      <div key={ingredientIndex} className="flex gap-2 items-center">
                         <select
-                          className="select select-bordered select-sm flex-1"
+                          className="select select-bordered flex-1 text-base"
                           value={ingredient.ingredientId}
                           onChange={(e) =>
                             updateIngredient(
@@ -383,7 +383,7 @@ export function RecipeForm({
                           type="number"
                           step="0.001"
                           min="0"
-                          className="input input-bordered input-sm w-24"
+                          className="input input-bordered w-28 text-base"
                           value={ingredient.quantity}
                           onChange={(e) =>
                             updateIngredient(
@@ -394,14 +394,14 @@ export function RecipeForm({
                             )
                           }
                         />
-                        <span className="text-sm self-center w-12">{ingredient.unit}</span>
+                        <span className="text-base self-center w-16">{ingredient.unit}</span>
                         <button
                           type="button"
                           className="btn btn-error btn-sm"
                           onClick={() => removeIngredient(sectionIndex, ingredientIndex)}
                           aria-label={`Remove ingredient from ${section.name}`}
                         >
-                          <Trash2 className="h-3 w-3" />
+                          <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
                     ))}

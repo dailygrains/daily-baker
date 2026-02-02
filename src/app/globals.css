@@ -1,13 +1,19 @@
 @import "tailwindcss";
-@plugin "daisyui";
+@plugin "daisyui" {
+  themes: business --default;
+}
 
 :root {
   --background: #ffffff;
   --foreground: #171717;
 }
 
-/* Fully rounded buttons globally */
+/* Fully rounded buttons and badges globally */
 .btn {
+  border-radius: 9999px !important;
+}
+
+.badge {
   border-radius: 9999px !important;
 }
 
@@ -33,7 +39,7 @@ body {
 
 /* MDX Editor Wrapper Styling (for edit mode) */
 .mdx-editor-wrapper {
-  @apply border border-base-300 rounded-lg overflow-hidden bg-base-100;
+  @apply border border-base-300 rounded-lg overflow-hidden bg-base-200;
 }
 
 /* MDXEditor content area styling */
@@ -131,7 +137,7 @@ body {
 /* MDXEditor Theming with DaisyUI CSS Variables */
 .mdxeditor {
   /* Base colors - using DaisyUI theme variables */
-  --baseBase: oklch(var(--b1));
+  --baseBase: oklch(var(--b2));
   --baseBg: oklch(var(--b2));
   --baseBgHover: oklch(var(--b3));
   --baseBorder: oklch(var(--bc) / 0.2);

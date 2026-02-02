@@ -120,7 +120,7 @@ export default async function RecipeDetailPage({
               <div>
                 <h3 className="font-semibold mb-2 text-base-content/70">Ingredients</h3>
                 <div className="overflow-x-auto">
-                  <table className="table">
+                  <table className="table table-lg">
                     <thead>
                       <tr>
                         <th>Ingredient</th>
@@ -129,7 +129,7 @@ export default async function RecipeDetailPage({
                         <th>Total Cost</th>
                       </tr>
                     </thead>
-                    <tbody>
+                    <tbody className="text-base">
                       {section.ingredients.map((ing) => {
                         const quantity = Number(ing.quantity);
                         const unitCost = Number(ing.ingredient.costPerUnit);

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { RecipeScaledIngredients } from '@/lib/ingredientAggregation';
+import { formatQuantity, formatCurrency } from '@/lib/format';
 
 type ScaledIngredientsSectionProps = {
   recipes: RecipeScaledIngredients[];
@@ -76,18 +77,18 @@ export function ScaledIngredientsSection({ recipes }: ScaledIngredientsSectionPr
                 <div>
                   <Link
                     href={`/dashboard/recipes/${recipe.recipeId}`}
-                    className="font-semibold hover:text-primary"
+                    className="text-xl font-semibold hover:text-primary"
                     onClick={(e) => e.stopPropagation()}
                   >
                     {recipe.recipeName}
                   </Link>
                   <div className="text-sm text-base-content/70">
-                    {recipe.scaledYieldQty.toFixed(1)} {recipe.yieldUnit} ({recipe.scale.toFixed(2)}x)
+                    {formatQuantity(recipe.scaledYieldQty)} {recipe.yieldUnit} ({formatQuantity(recipe.scale, 2)}x)
                   </div>
                 </div>
               </div>
               <div className="text-right">
-                <div className="font-mono">${recipe.estimatedCost.toFixed(2)}</div>
+                <div className="font-mono">{formatCurrency(recipe.estimatedCost)}</div>
                 <div className="text-sm text-base-content/70">Est. cost</div>
               </div>
             </div>
@@ -97,15 +98,14 @@ export function ScaledIngredientsSection({ recipes }: ScaledIngredientsSectionPr
               <div className="p-4 space-y-4">
                 {recipe.sections.map((section) => (
                   <div key={section.sectionId} className="space-y-2">
-                    <h4 className="font-semibold text-base-content/80">{section.sectionName}</h4>
+                    <h4 className="text-lg font-semibold text-base-content/80">{section.sectionName}</h4>
                     <div className="overflow-x-auto">
-                      <table className="table table-sm table-zebra">
+                      <table className="table table-lg table-zebra w-full">
                         <thead>
                           <tr>
-                            <th>Ingredient</th>
-                            <th>Original</th>
-                            <th>Scaled</th>
-                            <th>Unit</th>
+                            <th className="w-full">Ingredient</th>
+                            <th className="text-right w-40">Original</th>
+                            <th className="text-right w-40">Scaled</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -119,13 +119,12 @@ export function ScaledIngredientsSection({ recipes }: ScaledIngredientsSectionPr
                                   {ingredient.ingredientName}
                                 </Link>
                               </td>
-                              <td className="font-mono text-base-content/60">
-                                {ingredient.originalQuantity.toFixed(3)}
+                              <td className="font-mono text-base-content/60 text-right whitespace-nowrap">
+                                {formatQuantity(ingredient.originalQuantity)} {ingredient.recipeUnit}
                               </td>
-                              <td className="font-mono font-semibold">
-                                {ingredient.scaledQuantity.toFixed(3)}
+                              <td className="font-mono font-semibold text-right whitespace-nowrap">
+                                {formatQuantity(ingredient.scaledQuantity)} {ingredient.recipeUnit}
                               </td>
-                              <td>{ingredient.recipeUnit}</td>
                             </tr>
                           ))}
                         </tbody>
