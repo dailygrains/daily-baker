@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import { getInventoryLotById } from '@/app/actions/inventory';
 import { SetPageHeader } from '@/components/layout/SetPageHeader';
 import Link from 'next/link';
-import { Edit, Package, DollarSign, Calendar, AlertTriangle } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 import { formatQuantity, formatCurrency } from '@/lib/format';
 
@@ -38,6 +38,7 @@ export default async function LotDetailPage({
     new Date(lot.expiresAt).getTime() - Date.now() < 7 * 24 * 60 * 60 * 1000;
 
   const totalValue = lot.remainingQty * lot.costPerUnit;
+  const percentRemaining = ((lot.remainingQty / lot.purchaseQty) * 100).toFixed(0);
 
   return (
     <>
@@ -54,169 +55,124 @@ export default async function LotDetailPage({
             href={`/dashboard/inventory/lots/${id}/edit`}
             className="btn btn-primary"
           >
-            <Edit className="h-5 w-5 mr-2" />
             Edit
           </Link>
         }
       />
 
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Info Card */}
-          <div className="lg:col-span-2 card bg-base-100 shadow-xl">
-            <div className="card-body">
-              <div className="flex items-center justify-between">
-                <h2 className="card-title">Lot Details</h2>
-                {isDepleted ? (
-                  <span className="badge badge-ghost badge-lg">Depleted</span>
-                ) : isExpired ? (
-                  <span className="badge badge-error badge-lg">Expired</span>
-                ) : isExpiringSoon ? (
-                  <span className="badge badge-warning badge-lg">Expiring Soon</span>
-                ) : (
-                  <span className="badge badge-success badge-lg">Active</span>
-                )}
-              </div>
+      <div className="space-y-8">
+        {/* Status Banner */}
+        <div className="flex items-center gap-2">
+          {isDepleted ? (
+            <span className="badge badge-ghost badge-lg">Depleted</span>
+          ) : isExpired ? (
+            <span className="badge badge-error badge-lg">Expired</span>
+          ) : isExpiringSoon ? (
+            <span className="badge badge-warning badge-lg">Expiring Soon</span>
+          ) : (
+            <span className="badge badge-success badge-lg">Active</span>
+          )}
+        </div>
 
-              <div className="grid grid-cols-2 gap-4 mt-4">
-                <div>
-                  <p className="text-sm text-base-content/70">Ingredient</p>
-                  <Link
-                    href={`/dashboard/ingredients/${lot.ingredient.id}`}
-                    className="text-xl font-bold link link-hover"
-                  >
-                    {lot.ingredient.name}
-                  </Link>
-                </div>
-
-                <div>
-                  <p className="text-sm text-base-content/70">Purchase Date</p>
-                  <p className="text-xl font-bold">
-                    {format(new Date(lot.purchasedAt), 'MMM d, yyyy')}
-                  </p>
-                  <p className="text-sm text-base-content/60">
-                    {formatDistanceToNow(new Date(lot.purchasedAt), { addSuffix: true })}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="text-sm text-base-content/70">Original Quantity</p>
-                  <p className="text-xl font-bold">
-                    {formatQuantity(lot.purchaseQty)} {lot.purchaseUnit}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="text-sm text-base-content/70">Remaining Quantity</p>
-                  <p className={`text-xl font-bold ${isDepleted ? 'text-base-content/50' : ''}`}>
-                    {formatQuantity(lot.remainingQty)} {lot.purchaseUnit}
-                  </p>
-                  {!isDepleted && (
-                    <p className="text-sm text-base-content/60">
-                      {((lot.remainingQty / lot.purchaseQty) * 100).toFixed(0)}% remaining
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <p className="text-sm text-base-content/70">Cost per Unit</p>
-                  <p className="text-xl font-bold">
-                    {formatCurrency(lot.costPerUnit)}/{lot.purchaseUnit}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="text-sm text-base-content/70">Remaining Value</p>
-                  <p className="text-xl font-bold text-success">
-                    {formatCurrency(totalValue)}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="text-sm text-base-content/70">Vendor</p>
-                  {lot.vendor ? (
-                    <Link
-                      href={`/dashboard/vendors/${lot.vendor.id}`}
-                      className="text-lg font-semibold link link-hover"
-                    >
-                      {lot.vendor.name}
-                    </Link>
-                  ) : (
-                    <p className="text-base-content/50 italic">No vendor</p>
-                  )}
-                </div>
-
-                <div>
-                  <p className="text-sm text-base-content/70">Expiration Date</p>
-                  {lot.expiresAt ? (
-                    <div className={`flex items-center gap-2 ${isExpired ? 'text-error' : isExpiringSoon ? 'text-warning' : ''}`}>
-                      {(isExpired || isExpiringSoon) && <AlertTriangle className="h-5 w-5" />}
-                      <div>
-                        <p className="text-lg font-semibold">
-                          {format(new Date(lot.expiresAt), 'MMM d, yyyy')}
-                        </p>
-                        <p className="text-sm">
-                          {formatDistanceToNow(new Date(lot.expiresAt), { addSuffix: true })}
-                        </p>
-                      </div>
-                    </div>
-                  ) : (
-                    <p className="text-base-content/50 italic">No expiration</p>
-                  )}
-                </div>
-              </div>
-
-              {lot.notes && (
-                <div className="mt-4">
-                  <p className="text-sm text-base-content/70">Notes</p>
-                  <p className="mt-1">{lot.notes}</p>
-                </div>
-              )}
-            </div>
+        {/* Overview Stats */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+          <div>
+            <p className="text-sm text-base-content/70">Ingredient</p>
+            <Link
+              href={`/dashboard/ingredients/${lot.ingredient.id}`}
+              className="text-xl font-bold link link-hover"
+            >
+              {lot.ingredient.name}
+            </Link>
           </div>
 
-          {/* Stats Card */}
-          <div className="space-y-4">
-            <div className="stats stats-vertical shadow">
-              <div className="stat">
-                <div className="stat-figure text-primary">
-                  <Package className="h-8 w-8" />
-                </div>
-                <div className="stat-title">Remaining</div>
-                <div className="stat-value text-primary">
-                  {formatQuantity(lot.remainingQty)}
-                </div>
-                <div className="stat-desc">{lot.purchaseUnit}</div>
-              </div>
+          <div>
+            <p className="text-sm text-base-content/70">Original Qty</p>
+            <p className="text-2xl font-bold">
+              {formatQuantity(lot.purchaseQty)} {lot.purchaseUnit}
+            </p>
+          </div>
 
-              <div className="stat">
-                <div className="stat-figure text-secondary">
-                  <DollarSign className="h-8 w-8" />
-                </div>
-                <div className="stat-title">Value</div>
-                <div className="stat-value text-secondary">
-                  {formatCurrency(totalValue)}
-                </div>
-                <div className="stat-desc">at {formatCurrency(lot.costPerUnit)}/{lot.purchaseUnit}</div>
-              </div>
+          <div>
+            <p className="text-sm text-base-content/70">Remaining</p>
+            <p className={`text-2xl font-bold ${isDepleted ? 'text-base-content/50' : ''}`}>
+              {formatQuantity(lot.remainingQty)} {lot.purchaseUnit}
+            </p>
+            {!isDepleted && (
+              <p className="text-sm text-base-content/60">{percentRemaining}% left</p>
+            )}
+          </div>
 
-              {lot.expiresAt && (
-                <div className="stat">
-                  <div className={`stat-figure ${isExpired ? 'text-error' : isExpiringSoon ? 'text-warning' : 'text-accent'}`}>
-                    <Calendar className="h-8 w-8" />
-                  </div>
-                  <div className="stat-title">Expires</div>
-                  <div className={`stat-value text-sm ${isExpired ? 'text-error' : isExpiringSoon ? 'text-warning' : 'text-accent'}`}>
-                    {format(new Date(lot.expiresAt), 'MMM d')}
-                  </div>
-                  <div className="stat-desc">
-                    {formatDistanceToNow(new Date(lot.expiresAt), { addSuffix: true })}
-                  </div>
-                </div>
-              )}
-            </div>
+          <div>
+            <p className="text-sm text-base-content/70">Cost/Unit</p>
+            <p className="text-2xl font-bold">
+              {formatCurrency(lot.costPerUnit)}/{lot.purchaseUnit}
+            </p>
+          </div>
+
+          <div>
+            <p className="text-sm text-base-content/70">Remaining Value</p>
+            <p className="text-2xl font-bold text-success">
+              {formatCurrency(totalValue)}
+            </p>
+          </div>
+
+          <div>
+            <p className="text-sm text-base-content/70">Purchase Date</p>
+            <p className="text-xl font-bold">
+              {format(new Date(lot.purchasedAt), 'MMM d, yyyy')}
+            </p>
+            <p className="text-sm text-base-content/60">
+              {formatDistanceToNow(new Date(lot.purchasedAt), { addSuffix: true })}
+            </p>
           </div>
         </div>
+
+        {/* Details */}
+        <section className="space-y-4">
+          <h2 className="text-xl font-semibold">Details</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div>
+              <p className="text-sm text-base-content/70">Vendor</p>
+              {lot.vendor ? (
+                <Link
+                  href={`/dashboard/vendors/${lot.vendor.id}`}
+                  className="text-lg font-semibold link link-hover"
+                >
+                  {lot.vendor.name}
+                </Link>
+              ) : (
+                <p className="text-base-content/50 italic">No vendor</p>
+              )}
+            </div>
+
+            <div>
+              <p className="text-sm text-base-content/70">Expiration Date</p>
+              {lot.expiresAt ? (
+                <div className={`flex items-center gap-2 ${isExpired ? 'text-error' : isExpiringSoon ? 'text-warning' : ''}`}>
+                  {(isExpired || isExpiringSoon) && <AlertTriangle className="h-5 w-5" />}
+                  <div>
+                    <p className="text-lg font-semibold">
+                      {format(new Date(lot.expiresAt), 'MMM d, yyyy')}
+                    </p>
+                    <p className="text-sm">
+                      {formatDistanceToNow(new Date(lot.expiresAt), { addSuffix: true })}
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-base-content/50 italic">No expiration</p>
+              )}
+            </div>
+          </div>
+
+          {lot.notes && (
+            <div>
+              <p className="text-sm text-base-content/70">Notes</p>
+              <p className="mt-1">{lot.notes}</p>
+            </div>
+          )}
+        </section>
       </div>
     </>
   );

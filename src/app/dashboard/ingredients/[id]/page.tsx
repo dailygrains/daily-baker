@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import { SetPageHeader } from '@/components/layout/SetPageHeader';
 import { getIngredientById } from '@/app/actions/ingredient';
 import Link from 'next/link';
-import { Edit, Package, DollarSign, Boxes, AlertTriangle, TrendingDown, Plus, AlertCircle } from 'lucide-react';
+import { Edit, Boxes, AlertTriangle, TrendingDown, Plus, AlertCircle } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 export default async function IngredientDetailPage({
@@ -89,293 +89,246 @@ export default async function IngredientDetailPage({
         }
       />
 
-      <div className="space-y-6">
+      <div className="space-y-8">
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Info Card */}
-          <div className="lg:col-span-2 card bg-base-100 shadow-xl">
-            <div className="card-body">
-              <h2 className="card-title">Ingredient Information</h2>
-
-              <div className="grid grid-cols-2 gap-4 mt-4">
-                <div>
-                  <p className="text-sm text-base-content/70">Current Quantity</p>
-                  <p className={`text-2xl font-bold ${isLowStock ? 'text-warning' : ''}`}>
-                    {currentQty.toFixed(3)} {ingredient.unit}
-                  </p>
-                  {isLowStock && <p className="text-sm text-warning mt-1">Low stock</p>}
-                </div>
-
-                <div>
-                  <p className="text-sm text-base-content/70">Weighted Avg Cost</p>
-                  <p className="text-2xl font-bold">${costPerUnit.toFixed(2)}</p>
-                  <p className="text-sm text-base-content/70 mt-1">per {ingredient.unit}</p>
-                </div>
-
-                <div>
-                  <p className="text-sm text-base-content/70">Total Value</p>
-                  <p className="text-2xl font-bold text-success">${totalValue.toFixed(2)}</p>
-                </div>
-
-                <div>
-                  <p className="text-sm text-base-content/70">Vendors</p>
-                  {ingredient.vendors.length > 0 ? (
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {ingredient.vendors.map((iv) => (
-                        <Link
-                          key={iv.vendor.id}
-                          href={`/dashboard/vendors/${iv.vendor.id}`}
-                          className="badge badge-ghost hover:badge-primary"
-                        >
-                          {iv.vendor.name}
-                        </Link>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-base-content/50 italic">No vendors</p>
-                  )}
-                </div>
-
-                <div>
-                  <p className="text-sm text-base-content/70">Used in Recipes</p>
-                  <p className="text-lg font-semibold">
-                    {ingredient._count.recipeUses} recipe(s)
-                  </p>
-                </div>
-
-                <div>
-                  <p className="text-sm text-base-content/70">Last Updated</p>
-                  <p className="text-sm">
-                    {formatDistanceToNow(new Date(ingredient.updatedAt), { addSuffix: true })}
-                  </p>
-                </div>
-              </div>
-            </div>
+        {/* Overview Stats */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+          <div>
+            <p className="text-sm text-base-content/70">Current Quantity</p>
+            <p className={`text-2xl font-bold ${isLowStock ? 'text-warning' : ''}`}>
+              {currentQty.toFixed(3)} {ingredient.unit}
+            </p>
+            {isLowStock && <p className="text-sm text-warning">Low stock</p>}
           </div>
 
-          {/* Stats Card */}
-          <div className="space-y-4">
-            <div className="stats stats-vertical shadow">
-              <div className="stat">
-                <div className="stat-figure text-primary">
-                  <Package className="h-8 w-8" />
-                </div>
-                <div className="stat-title">Current Stock</div>
-                <div className="stat-value text-primary">{currentQty.toFixed(1)}</div>
-                <div className="stat-desc">{ingredient.unit}</div>
-              </div>
-
-              <div className="stat">
-                <div className="stat-figure text-secondary">
-                  <DollarSign className="h-8 w-8" />
-                </div>
-                <div className="stat-title">Total Value</div>
-                <div className="stat-value text-secondary">${totalValue.toFixed(2)}</div>
-                <div className="stat-desc">Weighted average cost</div>
-              </div>
-
-              <div className="stat">
-                <div className="stat-figure text-accent">
-                  <Boxes className="h-8 w-8" />
-                </div>
-                <div className="stat-title">Inventory Lots</div>
-                <div className="stat-value text-accent">{activeLots.length}</div>
-                <div className="stat-desc">{lots.length} total ({lots.length - activeLots.length} depleted)</div>
-              </div>
-            </div>
+          <div>
+            <p className="text-sm text-base-content/70">Avg Cost</p>
+            <p className="text-2xl font-bold">${costPerUnit.toFixed(2)}</p>
+            <p className="text-sm text-base-content/70">per {ingredient.unit}</p>
           </div>
-        </div>
 
-        {/* Inventory Lots */}
-        <div className="card bg-base-100 shadow-xl">
-          <div className="card-body">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="card-title">Inventory Lots (FIFO)</h2>
-              <Link
-                href={`/dashboard/inventory/lots/new?ingredientId=${id}`}
-                className="btn btn-primary btn-sm"
-              >
-                <Plus className="h-4 w-4" />
-                Add Lot
-              </Link>
-            </div>
+          <div>
+            <p className="text-sm text-base-content/70">Total Value</p>
+            <p className="text-2xl font-bold text-success">${totalValue.toFixed(2)}</p>
+          </div>
 
-            {lots.length === 0 ? (
-              <div className="text-center py-8">
-                <Boxes className="h-12 w-12 mx-auto text-base-content/30 mb-2" />
-                <p className="text-base-content/70">No inventory lots</p>
-                <p className="text-sm text-base-content/50 mb-4">
-                  Add purchase lots to track inventory
-                </p>
-                <Link
-                  href={`/dashboard/inventory/lots/new?ingredientId=${id}`}
-                  className="btn btn-primary btn-sm"
-                >
-                  Add First Lot
-                </Link>
+          <div>
+            <p className="text-sm text-base-content/70">Active Lots</p>
+            <p className="text-2xl font-bold">{activeLots.length}</p>
+            <p className="text-sm text-base-content/70">{lots.length - activeLots.length} depleted</p>
+          </div>
+
+          <div>
+            <p className="text-sm text-base-content/70">Used in Recipes</p>
+            <p className="text-2xl font-bold">{ingredient._count.recipeUses}</p>
+          </div>
+
+          <div>
+            <p className="text-sm text-base-content/70">Vendors</p>
+            {ingredient.vendors.length > 0 ? (
+              <div className="flex flex-wrap gap-1 mt-1">
+                {ingredient.vendors.map((iv) => (
+                  <Link
+                    key={iv.vendor.id}
+                    href={`/dashboard/vendors/${iv.vendor.id}`}
+                    className="badge badge-ghost hover:badge-primary"
+                  >
+                    {iv.vendor.name}
+                  </Link>
+                ))}
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="table table-zebra">
-                  <thead>
-                    <tr>
-                      <th>Purchase Date</th>
-                      <th>Vendor</th>
-                      <th>Original Qty</th>
-                      <th>Remaining</th>
-                      <th>Cost/Unit</th>
-                      <th>Expires</th>
-                      <th>Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {lots.map((lot) => {
-                      const isDepleted = lot.remainingQty <= 0;
-                      const isExpiringSoon = lot.expiresAt &&
-                        new Date(lot.expiresAt).getTime() - Date.now() < 7 * 24 * 60 * 60 * 1000;
-                      const isExpired = lot.expiresAt && new Date(lot.expiresAt) < new Date();
-
-                      return (
-                        <tr key={lot.id} className={`hover cursor-pointer ${isDepleted ? 'opacity-50' : ''}`}>
-                          <td>
-                            <Link href={`/dashboard/inventory/lots/${lot.id}`} className="block">
-                              {formatDistanceToNow(new Date(lot.purchasedAt), {
-                                addSuffix: true,
-                              })}
-                            </Link>
-                          </td>
-                          <td>
-                            <Link href={`/dashboard/inventory/lots/${lot.id}`} className="block">
-                              {lot.vendor ? lot.vendor.name : <span className="text-base-content/50">-</span>}
-                            </Link>
-                          </td>
-                          <td>
-                            <Link href={`/dashboard/inventory/lots/${lot.id}`} className="block">
-                              {lot.purchaseQty.toFixed(2)} {lot.purchaseUnit}
-                            </Link>
-                          </td>
-                          <td>
-                            <Link href={`/dashboard/inventory/lots/${lot.id}`} className="block">
-                              <span className={lot.remainingQty <= 0 ? 'text-base-content/50' : 'font-semibold'}>
-                                {lot.remainingQty.toFixed(2)} {lot.purchaseUnit}
-                              </span>
-                            </Link>
-                          </td>
-                          <td>
-                            <Link href={`/dashboard/inventory/lots/${lot.id}`} className="block">
-                              ${lot.costPerUnit.toFixed(2)}/{lot.purchaseUnit}
-                            </Link>
-                          </td>
-                          <td>
-                            <Link href={`/dashboard/inventory/lots/${lot.id}`} className="block">
-                              {lot.expiresAt ? (
-                                <span className={`flex items-center gap-1 ${isExpired ? 'text-error' : isExpiringSoon ? 'text-warning' : ''}`}>
-                                  {(isExpired || isExpiringSoon) && <AlertTriangle className="h-3 w-3" />}
-                                  {formatDistanceToNow(new Date(lot.expiresAt), { addSuffix: true })}
-                                </span>
-                              ) : (
-                                <span className="text-base-content/50">-</span>
-                              )}
-                            </Link>
-                          </td>
-                          <td>
-                            <Link href={`/dashboard/inventory/lots/${lot.id}`} className="block">
-                              {isDepleted ? (
-                                <span className="badge badge-ghost">Depleted</span>
-                              ) : isExpired ? (
-                                <span className="badge badge-error">Expired</span>
-                              ) : isExpiringSoon ? (
-                                <span className="badge badge-warning">Expiring Soon</span>
-                              ) : (
-                                <span className="badge badge-success">Active</span>
-                              )}
-                            </Link>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+              <p className="text-base-content/50 italic">None</p>
             )}
           </div>
         </div>
 
-        {/* Recent Activity */}
-        {allUsages.length > 0 && (
-          <div className="card bg-base-100 shadow-xl">
-            <div className="card-body">
-              <h2 className="card-title">Recent Activity</h2>
-              <div className="overflow-x-auto">
-                <table className="table table-zebra">
-                  <thead>
-                    <tr>
-                      <th>Date</th>
-                      <th>Type</th>
-                      <th>Quantity</th>
-                      <th>Shortfall</th>
-                      <th>From Lot</th>
-                      <th>By</th>
-                      <th>Related To</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {allUsages.map((usage) => {
-                      const hasShortfall = (usage.shortfall ?? 0) > 0;
-                      return (
-                        <tr key={usage.id} className={hasShortfall ? 'bg-warning/10' : ''}>
-                          <td className="align-top">
-                            {formatDistanceToNow(new Date(usage.createdAt), {
+        {/* Inventory Lots */}
+        <section className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h2 className="text-xl font-semibold">Inventory Lots (FIFO)</h2>
+            <Link
+              href={`/dashboard/inventory/lots/new?ingredientId=${id}`}
+              className="btn btn-primary btn-sm"
+            >
+              <Plus className="h-4 w-4" />
+              Add Lot
+            </Link>
+          </div>
+
+          {lots.length === 0 ? (
+            <div className="text-center py-8">
+              <Boxes className="h-12 w-12 mx-auto text-base-content/30 mb-2" />
+              <p className="text-base-content/70">No inventory lots</p>
+              <p className="text-sm text-base-content/50 mb-4">
+                Add purchase lots to track inventory
+              </p>
+              <Link
+                href={`/dashboard/inventory/lots/new?ingredientId=${id}`}
+                className="btn btn-primary btn-sm"
+              >
+                Add First Lot
+              </Link>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="table table-zebra">
+                <thead>
+                  <tr>
+                    <th>Purchase Date</th>
+                    <th>Vendor</th>
+                    <th>Original Qty</th>
+                    <th>Remaining</th>
+                    <th>Cost/Unit</th>
+                    <th>Expires</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {lots.map((lot) => {
+                    const isDepleted = lot.remainingQty <= 0;
+                    const isExpiringSoon = lot.expiresAt &&
+                      new Date(lot.expiresAt).getTime() - Date.now() < 7 * 24 * 60 * 60 * 1000;
+                    const isExpired = lot.expiresAt && new Date(lot.expiresAt) < new Date();
+
+                    return (
+                      <tr key={lot.id} className={`hover cursor-pointer ${isDepleted ? 'opacity-50' : ''}`}>
+                        <td>
+                          <Link href={`/dashboard/inventory/lots/${lot.id}`} className="block">
+                            {formatDistanceToNow(new Date(lot.purchasedAt), {
                               addSuffix: true,
                             })}
-                          </td>
-                          <td className="align-top">
-                            <span className={`badge ${getUsageReasonBadgeClass(usage.reason)} gap-1`}>
-                              <TrendingDown className="h-3 w-3" />
-                              {usage.reason}
+                          </Link>
+                        </td>
+                        <td>
+                          <Link href={`/dashboard/inventory/lots/${lot.id}`} className="block">
+                            {lot.vendor ? lot.vendor.name : <span className="text-base-content/50">-</span>}
+                          </Link>
+                        </td>
+                        <td>
+                          <Link href={`/dashboard/inventory/lots/${lot.id}`} className="block">
+                            {lot.purchaseQty.toFixed(2)} {lot.purchaseUnit}
+                          </Link>
+                        </td>
+                        <td>
+                          <Link href={`/dashboard/inventory/lots/${lot.id}`} className="block">
+                            <span className={lot.remainingQty <= 0 ? 'text-base-content/50' : 'font-semibold'}>
+                              {lot.remainingQty.toFixed(2)} {lot.purchaseUnit}
                             </span>
-                          </td>
-                          <td className="align-top">
-                            {usage.quantity.toFixed(3)} {usage.lot.purchaseUnit}
-                          </td>
-                          <td className="align-top">
-                            {hasShortfall ? (
-                              <span className="badge badge-warning gap-1">
-                                <AlertCircle className="h-3 w-3" />
-                                {(usage.shortfall ?? 0).toFixed(3)}
+                          </Link>
+                        </td>
+                        <td>
+                          <Link href={`/dashboard/inventory/lots/${lot.id}`} className="block">
+                            ${lot.costPerUnit.toFixed(2)}/{lot.purchaseUnit}
+                          </Link>
+                        </td>
+                        <td>
+                          <Link href={`/dashboard/inventory/lots/${lot.id}`} className="block">
+                            {lot.expiresAt ? (
+                              <span className={`flex items-center gap-1 ${isExpired ? 'text-error' : isExpiringSoon ? 'text-warning' : ''}`}>
+                                {(isExpired || isExpiringSoon) && <AlertTriangle className="h-3 w-3" />}
+                                {formatDistanceToNow(new Date(lot.expiresAt), { addSuffix: true })}
                               </span>
                             ) : (
                               <span className="text-base-content/50">-</span>
                             )}
-                          </td>
-                          <td className="align-top text-sm text-base-content/70">
-                            {usage.lot.vendor?.name || 'Unknown vendor'}
-                          </td>
-                          <td className="align-top text-sm">
-                            {usage.creator?.name || 'Unknown'}
-                          </td>
-                          <td className="align-top">
-                            {usage.productionSheet ? (
-                              <Link
-                                href={`/dashboard/production-sheets/${usage.productionSheet.id}`}
-                                className="link link-primary text-sm"
-                              >
-                                {usage.productionSheet.recipe?.name || 'Production sheet'}
-                              </Link>
+                          </Link>
+                        </td>
+                        <td>
+                          <Link href={`/dashboard/inventory/lots/${lot.id}`} className="block">
+                            {isDepleted ? (
+                              <span className="badge badge-ghost">Depleted</span>
+                            ) : isExpired ? (
+                              <span className="badge badge-error">Expired</span>
+                            ) : isExpiringSoon ? (
+                              <span className="badge badge-warning">Expiring Soon</span>
                             ) : (
-                              <span className="text-sm text-base-content/50">
-                                {usage.notes || '-'}
-                              </span>
+                              <span className="badge badge-success">Active</span>
                             )}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+                          </Link>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
-          </div>
+          )}
+        </section>
+
+        {/* Recent Activity */}
+        {allUsages.length > 0 && (
+          <section className="space-y-4">
+            <h2 className="text-xl font-semibold">Recent Activity</h2>
+            <div className="overflow-x-auto">
+              <table className="table table-zebra">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Quantity</th>
+                    <th>Shortfall</th>
+                    <th>From Lot</th>
+                    <th>By</th>
+                    <th>Related To</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {allUsages.map((usage) => {
+                    const hasShortfall = (usage.shortfall ?? 0) > 0;
+                    return (
+                      <tr key={usage.id} className={hasShortfall ? 'bg-warning/10' : ''}>
+                        <td className="align-top">
+                          {formatDistanceToNow(new Date(usage.createdAt), {
+                            addSuffix: true,
+                          })}
+                        </td>
+                        <td className="align-top">
+                          <span className={`badge ${getUsageReasonBadgeClass(usage.reason)} gap-1`}>
+                            <TrendingDown className="h-3 w-3" />
+                            {usage.reason}
+                          </span>
+                        </td>
+                        <td className="align-top">
+                          {usage.quantity.toFixed(3)} {usage.lot.purchaseUnit}
+                        </td>
+                        <td className="align-top">
+                          {hasShortfall ? (
+                            <span className="badge badge-warning gap-1">
+                              <AlertCircle className="h-3 w-3" />
+                              {(usage.shortfall ?? 0).toFixed(3)}
+                            </span>
+                          ) : (
+                            <span className="text-base-content/50">-</span>
+                          )}
+                        </td>
+                        <td className="align-top text-sm text-base-content/70">
+                          {usage.lot.vendor?.name || 'Unknown vendor'}
+                        </td>
+                        <td className="align-top text-sm">
+                          {usage.creator?.name || 'Unknown'}
+                        </td>
+                        <td className="align-top">
+                          {usage.productionSheet ? (
+                            <Link
+                              href={`/dashboard/production-sheets/${usage.productionSheet.id}`}
+                              className="link link-primary text-sm"
+                            >
+                              {usage.productionSheet.recipe?.name || 'Production sheet'}
+                            </Link>
+                          ) : (
+                            <span className="text-sm text-base-content/50">
+                              {usage.notes || '-'}
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </section>
         )}
       </div>
     </>

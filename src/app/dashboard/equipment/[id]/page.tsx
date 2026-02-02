@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import { SetPageHeader } from '@/components/layout/SetPageHeader';
 import { getEquipmentById } from '@/app/actions/equipment';
 import Link from 'next/link';
-import { Edit, DollarSign, Package, Calendar, Hash } from 'lucide-react';
+import { Calendar, Hash, Mail, Phone } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 export default async function EquipmentDetailPage({
@@ -30,6 +30,7 @@ export default async function EquipmentDetailPage({
 
   const equipment = equipmentResult.data;
   const cost = equipment.cost ? Number(equipment.cost) : 0;
+  const totalValue = cost * equipment.quantity;
 
   // Status badge color
   const getStatusBadgeClass = (status: string) => {
@@ -52,164 +53,138 @@ export default async function EquipmentDetailPage({
   };
 
   return (
-    <div className="space-y-6">
-        <SetPageHeader
-          title={equipment.name}
-          description="Equipment details and information"
-          actions={
-            <Link
-              href={`/dashboard/equipment/${id}/edit`}
-              className="btn btn-primary btn-sm"
-            >
-              <Edit className="h-4 w-4" />
-              Edit
-            </Link>
-          }
-        />
+    <>
+      <SetPageHeader
+        title={equipment.name}
+        breadcrumbs={[
+          { label: 'Equipment', href: '/dashboard/equipment' },
+          { label: equipment.name },
+        ]}
+        actions={
+          <Link
+            href={`/dashboard/equipment/${id}/edit`}
+            className="btn btn-primary"
+          >
+            Edit
+          </Link>
+        }
+      />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Info Card */}
-          <div className="lg:col-span-2 card bg-base-100 shadow-xl">
-            <div className="card-body">
-              <h2 className="card-title">Equipment Information</h2>
-
-              <div className="grid grid-cols-2 gap-4 mt-4">
-                <div>
-                  <p className="text-sm text-base-content/70">Status</p>
-                  <span className={`badge ${getStatusBadgeClass(equipment.status)} badge-lg mt-1`}>
-                    {equipment.status}
-                  </span>
-                </div>
-
-                <div>
-                  <p className="text-sm text-base-content/70">Quantity</p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <Package className="h-5 w-5 text-base-content/70" />
-                    <p className="text-2xl font-bold">{equipment.quantity}</p>
-                  </div>
-                </div>
-
-                {equipment.vendor && (
-                  <div>
-                    <p className="text-sm text-base-content/70">Vendor</p>
-                    <Link
-                      href={`/dashboard/vendors/${equipment.vendor.id}`}
-                      className="text-lg font-semibold hover:text-primary"
-                    >
-                      {equipment.vendor.name}
-                    </Link>
-                  </div>
-                )}
-
-                {equipment.cost && (
-                  <div>
-                    <p className="text-sm text-base-content/70">Cost</p>
-                    <p className="text-2xl font-bold text-success">${cost.toFixed(2)}</p>
-                  </div>
-                )}
-
-                {equipment.purchaseDate && (
-                  <div>
-                    <p className="text-sm text-base-content/70">Purchase Date</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Calendar className="h-4 w-4 text-base-content/70" />
-                      <p className="text-lg">
-                        {new Date(equipment.purchaseDate).toLocaleDateString()}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {equipment.serialNumber && (
-                  <div>
-                    <p className="text-sm text-base-content/70">Serial Number</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Hash className="h-4 w-4 text-base-content/70" />
-                      <p className="font-mono">{equipment.serialNumber}</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {equipment.notes && (
-                <div className="mt-4 pt-4 border-t border-base-300">
-                  <p className="text-sm text-base-content/70 mb-2">Notes</p>
-                  <p className="whitespace-pre-line text-base-content/80">
-                    {equipment.notes}
-                  </p>
-                </div>
-              )}
-
-              <div className="mt-4 pt-4 border-t border-base-300">
-                <p className="text-sm text-base-content/70">
-                  Last Updated: {formatDistanceToNow(new Date(equipment.updatedAt), { addSuffix: true })}
-                </p>
-              </div>
-            </div>
+      <div className="space-y-8">
+        {/* Overview Stats */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4">
+          <div>
+            <p className="text-sm text-base-content/70">Status</p>
+            <span className={`badge ${getStatusBadgeClass(equipment.status)} badge-lg mt-1`}>
+              {equipment.status}
+            </span>
           </div>
 
-          {/* Stats Card */}
-          <div className="space-y-4">
-            <div className="stats stats-vertical shadow">
-              <div className="stat">
-                <div className="stat-figure text-primary">
-                  <Package className="h-8 w-8" />
-                </div>
-                <div className="stat-title">Quantity</div>
-                <div className="stat-value text-primary">{equipment.quantity}</div>
-                <div className="stat-desc">Units owned</div>
-              </div>
+          <div>
+            <p className="text-sm text-base-content/70">Quantity</p>
+            <p className="text-2xl font-bold">{equipment.quantity}</p>
+          </div>
 
-              {equipment.cost && (
-                <div className="stat">
-                  <div className="stat-figure text-secondary">
-                    <DollarSign className="h-8 w-8" />
-                  </div>
-                  <div className="stat-title">Total Value</div>
-                  <div className="stat-value text-secondary">
-                    ${(cost * equipment.quantity).toFixed(2)}
-                  </div>
-                  <div className="stat-desc">
-                    ${cost.toFixed(2)} × {equipment.quantity}
-                  </div>
-                </div>
-              )}
+          {equipment.cost && (
+            <div>
+              <p className="text-sm text-base-content/70">Unit Cost</p>
+              <p className="text-2xl font-bold">${cost.toFixed(2)}</p>
             </div>
+          )}
 
-            {/* Vendor Contact Card */}
-            {equipment.vendor && (
-              <div className="card bg-base-100 shadow">
-                <div className="card-body">
-                  <h3 className="card-title text-sm">Vendor Contact</h3>
-                  <div className="space-y-2 text-sm">
-                    <Link
-                      href={`/dashboard/vendors/${equipment.vendor.id}`}
-                      className="font-semibold hover:text-primary"
-                    >
-                      {equipment.vendor.name}
-                    </Link>
-                    {equipment.vendor.email && (
-                      <a
-                        href={`mailto:${equipment.vendor.email}`}
-                        className="link link-hover flex items-center gap-1"
-                      >
-                        {equipment.vendor.email}
-                      </a>
-                    )}
-                    {equipment.vendor.phone && (
-                      <a
-                        href={`tel:${equipment.vendor.phone}`}
-                        className="link link-hover flex items-center gap-1"
-                      >
-                        {equipment.vendor.phone}
-                      </a>
-                    )}
-                  </div>
+          {equipment.cost && (
+            <div>
+              <p className="text-sm text-base-content/70">Total Value</p>
+              <p className="text-2xl font-bold text-success">${totalValue.toFixed(2)}</p>
+            </div>
+          )}
+
+          {equipment.purchaseDate && (
+            <div>
+              <p className="text-sm text-base-content/70">Purchase Date</p>
+              <div className="flex items-center gap-2 mt-1">
+                <Calendar className="h-4 w-4 text-base-content/70" />
+                <p>{new Date(equipment.purchaseDate).toLocaleDateString()}</p>
+              </div>
+            </div>
+          )}
+
+          <div>
+            <p className="text-sm text-base-content/70">Last Updated</p>
+            <p className="text-sm">{formatDistanceToNow(new Date(equipment.updatedAt), { addSuffix: true })}</p>
+          </div>
+        </div>
+
+        {/* Details */}
+        <section className="space-y-4">
+          <h2 className="text-xl font-semibold">Details</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {equipment.serialNumber && (
+              <div>
+                <p className="text-sm text-base-content/70">Serial Number</p>
+                <div className="flex items-center gap-2 mt-1">
+                  <Hash className="h-4 w-4 text-base-content/70" />
+                  <p className="font-mono">{equipment.serialNumber}</p>
                 </div>
               </div>
             )}
+
+            {equipment.vendor && (
+              <div>
+                <p className="text-sm text-base-content/70">Vendor</p>
+                <Link
+                  href={`/dashboard/vendors/${equipment.vendor.id}`}
+                  className="text-lg font-semibold hover:text-primary"
+                >
+                  {equipment.vendor.name}
+                </Link>
+              </div>
+            )}
           </div>
-        </div>
+
+          {equipment.notes && (
+            <div>
+              <p className="text-sm text-base-content/70">Notes</p>
+              <p className="whitespace-pre-line text-base-content/80 mt-1">
+                {equipment.notes}
+              </p>
+            </div>
+          )}
+        </section>
+
+        {/* Vendor Contact */}
+        {equipment.vendor && (equipment.vendor.email || equipment.vendor.phone) && (
+          <section className="space-y-4">
+            <h2 className="text-xl font-semibold">Vendor Contact</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {equipment.vendor.email && (
+                <div>
+                  <p className="text-sm text-base-content/70">Email</p>
+                  <a
+                    href={`mailto:${equipment.vendor.email}`}
+                    className="flex items-center gap-2 hover:text-primary"
+                  >
+                    <Mail className="h-4 w-4" />
+                    {equipment.vendor.email}
+                  </a>
+                </div>
+              )}
+              {equipment.vendor.phone && (
+                <div>
+                  <p className="text-sm text-base-content/70">Phone</p>
+                  <a
+                    href={`tel:${equipment.vendor.phone}`}
+                    className="flex items-center gap-2 hover:text-primary"
+                  >
+                    <Phone className="h-4 w-4" />
+                    {equipment.vendor.phone}
+                  </a>
+                </div>
+              )}
+            </div>
+          </section>
+        )}
       </div>
+    </>
   );
 }
