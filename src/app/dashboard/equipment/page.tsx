@@ -66,22 +66,24 @@ export default async function EquipmentPage() {
         />
 
         {/* Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div>
-            <p className="text-sm text-base-content/70">Total Equipment</p>
-            <p className="text-2xl font-bold text-primary">{totalEquipment}</p>
-          </div>
-          <div>
-            <p className="text-sm text-base-content/70">In Use</p>
-            <p className="text-2xl font-bold">{inUse}</p>
-          </div>
-          <div>
-            <p className="text-sm text-base-content/70">Maintenance</p>
-            <p className="text-2xl font-bold text-warning">{maintenance}</p>
-          </div>
-          <div>
-            <p className="text-sm text-base-content/70">Total Value</p>
-            <p className="text-2xl font-bold text-success">${totalCost}</p>
+        <div className="card bg-base-100 p-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div>
+              <p className="text-sm text-base-content/70">Total Equipment</p>
+              <p className="text-2xl font-bold text-primary">{totalEquipment}</p>
+            </div>
+            <div>
+              <p className="text-sm text-base-content/70">In Use</p>
+              <p className="text-2xl font-bold">{inUse}</p>
+            </div>
+            <div>
+              <p className="text-sm text-base-content/70">Maintenance</p>
+              <p className="text-2xl font-bold text-warning">{maintenance}</p>
+            </div>
+            <div>
+              <p className="text-sm text-base-content/70">Total Value</p>
+              <p className="text-2xl font-bold text-success">${totalCost}</p>
+            </div>
           </div>
         </div>
 
@@ -99,7 +101,7 @@ export default async function EquipmentPage() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="table table-zebra">
+            <table className="table table-zebra table-lg">
                   <thead>
                     <tr>
                       <th>Name</th>

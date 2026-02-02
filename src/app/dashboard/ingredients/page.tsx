@@ -36,6 +36,7 @@ export default async function IngredientsPage() {
     <>
       <SetPageHeader
         title="Ingredients"
+        description="Manage your bakery ingredients and track costs"
         sticky
         actions={
           <Link href="/dashboard/ingredients/new" className="btn btn-primary">
@@ -58,37 +59,39 @@ export default async function IngredientsPage() {
           }
         />
       ) : (
-        <>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-            <div>
-              <p className="text-sm text-base-content/70">Total Ingredients</p>
-              <p className="text-2xl font-bold text-primary">{ingredients.length}</p>
-            </div>
-            <div>
-              <p className="text-sm text-base-content/70">Low Stock Items</p>
-              <p className="text-2xl font-bold text-warning">
-                {ingredients.filter((i) => {
-                  const threshold = i.lowStockThreshold;
-                  return threshold != null && threshold > 0 && Number(i.currentQty) < threshold;
-                }).length}
-              </p>
-            </div>
-            <div>
-              <p className="text-sm text-base-content/70">Total Inventory Value</p>
-              <p className="text-2xl font-bold text-success">
-                $
-                {ingredients
-                  .reduce(
-                    (sum, i) => sum + Number(i.currentQty) * Number(i.costPerUnit),
-                    0
-                  )
-                  .toFixed(2)}
-              </p>
+        <div className="space-y-6">
+          <div className="card bg-base-100 p-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+              <div>
+                <p className="text-sm text-base-content/70">Total Ingredients</p>
+                <p className="text-2xl font-bold text-primary">{ingredients.length}</p>
+              </div>
+              <div>
+                <p className="text-sm text-base-content/70">Low Stock Items</p>
+                <p className="text-2xl font-bold text-warning">
+                  {ingredients.filter((i) => {
+                    const threshold = i.lowStockThreshold;
+                    return threshold != null && threshold > 0 && Number(i.currentQty) < threshold;
+                  }).length}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-base-content/70">Total Inventory Value</p>
+                <p className="text-2xl font-bold text-success">
+                  $
+                  {ingredients
+                    .reduce(
+                      (sum, i) => sum + Number(i.currentQty) * Number(i.costPerUnit),
+                      0
+                    )
+                    .toFixed(2)}
+                </p>
+              </div>
             </div>
           </div>
 
           <IngredientsTable ingredients={serializedIngredients} />
-        </>
+        </div>
       )}
     </>
   );

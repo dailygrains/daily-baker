@@ -79,27 +79,29 @@ export default async function InventoryPage() {
         title="Inventory Management"
         description="Track ingredient quantities with FIFO lot-based inventory"
         actions={
-          <Link href="/dashboard/inventory/lots/new" className="btn btn-primary btn-sm">
-            <Plus className="h-4 w-4" />
+          <Link href="/dashboard/inventory/lots/new" className="btn btn-primary">
+            <Plus className="h-5 w-5 mr-2" />
             Add Inventory Lot
           </Link>
         }
       />
 
       {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-        <div>
-          <p className="text-sm text-base-content/70">Total Ingredients</p>
-          <p className="text-2xl font-bold text-primary">{totalIngredients}</p>
-          <p className="text-sm text-base-content/60">{ingredientsWithInventory} with inventory</p>
-        </div>
-        <div>
-          <p className="text-sm text-base-content/70">Inventory Lots</p>
-          <p className="text-2xl font-bold">{totalLots}</p>
-        </div>
-        <div>
-          <p className="text-sm text-base-content/70">Total Inventory Value</p>
-          <p className="text-2xl font-bold text-success">${totalValue.toFixed(2)}</p>
+      <div className="card bg-base-100 p-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+          <div>
+            <p className="text-sm text-base-content/70">Total Ingredients</p>
+            <p className="text-2xl font-bold text-primary">{totalIngredients}</p>
+            <p className="text-sm text-base-content/60">{ingredientsWithInventory} with inventory</p>
+          </div>
+          <div>
+            <p className="text-sm text-base-content/70">Inventory Lots</p>
+            <p className="text-2xl font-bold">{totalLots}</p>
+          </div>
+          <div>
+            <p className="text-sm text-base-content/70">Total Inventory Value</p>
+            <p className="text-2xl font-bold text-success">${totalValue.toFixed(2)}</p>
+          </div>
         </div>
       </div>
 

@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { Pagination, usePageSize } from '@/components/ui/Pagination';
 import { formatQuantity, formatCurrency } from '@/lib/format';
 
@@ -49,7 +48,6 @@ export function IngredientsTable({ ingredients }: IngredientsTableProps) {
               <th>Current Qty</th>
               <th>Cost per Unit</th>
               <th>Vendors</th>
-              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -92,24 +90,6 @@ export function IngredientsTable({ ingredients }: IngredientsTableProps) {
                     ) : (
                       <span className="text-base-content/40 italic">No vendors</span>
                     )}
-                  </td>
-                  <td className="align-top">
-                    <div className="flex gap-2">
-                      <Link
-                        href={`/dashboard/ingredients/${ingredient.id}`}
-                        className="btn btn-ghost"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        View
-                      </Link>
-                      <Link
-                        href={`/dashboard/ingredients/${ingredient.id}/edit`}
-                        className="btn btn-ghost"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        Edit
-                      </Link>
-                    </div>
                   </td>
                 </tr>
               );

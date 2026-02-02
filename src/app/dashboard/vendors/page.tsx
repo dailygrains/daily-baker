@@ -45,18 +45,20 @@ export default async function VendorsPage() {
         />
 
         {/* Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-          <div>
-            <p className="text-sm text-base-content/70">Total Vendors</p>
-            <p className="text-2xl font-bold text-primary">{totalVendors}</p>
-          </div>
-          <div>
-            <p className="text-sm text-base-content/70">With Email</p>
-            <p className="text-2xl font-bold">{vendorsWithEmail}</p>
-          </div>
-          <div>
-            <p className="text-sm text-base-content/70">With Phone</p>
-            <p className="text-2xl font-bold">{vendorsWithPhone}</p>
+        <div className="card bg-base-100 p-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            <div>
+              <p className="text-sm text-base-content/70">Total Vendors</p>
+              <p className="text-2xl font-bold text-primary">{totalVendors}</p>
+            </div>
+            <div>
+              <p className="text-sm text-base-content/70">With Email</p>
+              <p className="text-2xl font-bold">{vendorsWithEmail}</p>
+            </div>
+            <div>
+              <p className="text-sm text-base-content/70">With Phone</p>
+              <p className="text-2xl font-bold">{vendorsWithPhone}</p>
+            </div>
           </div>
         </div>
 
@@ -74,7 +76,7 @@ export default async function VendorsPage() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="table table-zebra">
+            <table className="table table-zebra table-lg">
                   <thead>
                     <tr>
                       <th>Vendor Name</th>
