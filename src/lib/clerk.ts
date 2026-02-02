@@ -26,14 +26,20 @@ export async function getCurrentUser() {
     },
   });
 
+  // Check if this email should be a platform admin
+  const userEmail = clerkUser.emailAddresses[0]?.emailAddress ?? '';
+  const platformAdminEmail = process.env.PLATFORM_ADMIN_EMAIL;
+  const shouldBePlatformAdmin = platformAdminEmail && userEmail.toLowerCase() === platformAdminEmail.toLowerCase();
+
   if (!user) {
     // Create new user record
     user = await prisma.user.create({
       data: {
         clerkId: clerkUser.id,
-        email: clerkUser.emailAddresses[0]?.emailAddress ?? '',
+        email: userEmail,
         name: `${clerkUser.firstName ?? ''} ${clerkUser.lastName ?? ''}`.trim() || null,
         imageUrl: clerkUser.imageUrl,
+        isPlatformAdmin: shouldBePlatformAdmin,
         lastLoginAt: new Date(),
       },
       include: {
@@ -46,13 +52,21 @@ export async function getCurrentUser() {
       },
     });
   } else {
-    // Update last login and sync imageUrl in case it changed
+    // Update last login, sync imageUrl, and promote to platform admin if email matches
+    const updateData: { lastLoginAt: Date; imageUrl: string | null; isPlatformAdmin?: boolean } = {
+      lastLoginAt: new Date(),
+      imageUrl: clerkUser.imageUrl,
+    };
+
+    // Auto-promote to platform admin if email matches and not already admin
+    if (shouldBePlatformAdmin && !user.isPlatformAdmin) {
+      updateData.isPlatformAdmin = true;
+      user.isPlatformAdmin = true; // Update local object too
+    }
+
     await prisma.user.update({
       where: { id: user.id },
-      data: {
-        lastLoginAt: new Date(),
-        imageUrl: clerkUser.imageUrl,
-      },
+      data: updateData,
     });
   }
 
@@ -79,7 +93,7 @@ export async function getCurrentUser() {
   let currentBakeryIdValue: string | undefined = undefined;
 
   // Auto-select for regular users with exactly one bakery
-  if (!user.isPlatformAdmin && user.bakeries.length === 1 && currentBakery) {
+  if (!user.isPlatformAdmin && user.bakeries.length === 1 && currentBakery && !selectedBakeryId) {
     currentBakeryData = currentBakery.bakery;
     currentBakeryIdValue = currentBakery.bakeryId;
   }

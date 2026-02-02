@@ -249,7 +249,17 @@ export function DashboardSidebar({
         {/* User Section - Fixed at bottom */}
         <div className="sticky bottom-0 bg-base-100 px-6 py-4 border-t border-base-300">
           <div className="flex items-center gap-3">
-            <UserButton afterSignOutUrl="/" />
+            <UserButton
+              afterSignOutUrl="/"
+              appearance={{
+                elements: {
+                  avatarBox: {
+                    width: '40px',
+                    height: '40px',
+                  },
+                }
+              }}
+            />
             <div className="flex flex-col flex-1 min-w-0">
               {(userName || userEmail) && (
                 <span className="text-sm font-medium truncate">{userName || userEmail}</span>
