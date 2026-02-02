@@ -50,6 +50,7 @@ export default async function RecipesPage() {
     <>
       <SetPageHeader
         title="Recipes"
+        description="Create and manage your bakery recipes"
         sticky
         actions={
           <Link href="/dashboard/recipes/new" className="btn btn-primary">
@@ -72,25 +73,27 @@ export default async function RecipesPage() {
           }
         />
       ) : (
-        <>
+        <div className="space-y-6">
           {/* Stats */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-            <div>
-              <p className="text-sm text-base-content/70">Total Recipes</p>
-              <p className="text-2xl font-bold text-primary">{totalRecipes}</p>
-            </div>
-            <div>
-              <p className="text-sm text-base-content/70">Total Cost</p>
-              <p className="text-2xl font-bold text-success">${totalCost}</p>
-            </div>
-            <div>
-              <p className="text-sm text-base-content/70">Average Cost</p>
-              <p className="text-2xl font-bold">${avgCost}</p>
+          <div className="card bg-base-100 p-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+              <div>
+                <p className="text-sm text-base-content/70">Total Recipes</p>
+                <p className="text-2xl font-bold text-primary">{totalRecipes}</p>
+              </div>
+              <div>
+                <p className="text-sm text-base-content/70">Total Cost</p>
+                <p className="text-2xl font-bold text-success">${totalCost}</p>
+              </div>
+              <div>
+                <p className="text-sm text-base-content/70">Average Cost</p>
+                <p className="text-2xl font-bold">${avgCost}</p>
+              </div>
             </div>
           </div>
 
           <RecipesTable recipes={serializedRecipes} />
-        </>
+        </div>
       )}
     </>
   );

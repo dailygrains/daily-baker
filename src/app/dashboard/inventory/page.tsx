@@ -33,6 +33,16 @@ export default async function InventoryPage() {
   const ingredients = ingredientsResult.data || [];
   const recentActivity = activityResult.success ? activityResult.data || [] : [];
 
+  // Serialize ingredients for client component (convert Decimal to number)
+  const serializedIngredients = ingredients.map((ing) => ({
+    id: ing.id,
+    name: ing.name,
+    currentQty: Number(ing.currentQty),
+    unit: ing.unit,
+    costPerUnit: Number(ing.costPerUnit),
+    _count: ing._count,
+  }));
+
   // Calculate stats
   const totalIngredients = ingredients.length;
   const ingredientsWithInventory = ingredients.filter((ing) => ing.currentQty > 0).length;
@@ -127,7 +137,7 @@ export default async function InventoryPage() {
               </Link>
             </div>
           ) : (
-            <InventoryTable ingredients={ingredients} />
+            <InventoryTable ingredients={serializedIngredients} />
           )}
         </section>
 

@@ -41,27 +41,29 @@ export default async function ProductionSheetsPage() {
           actions={
             <Link
               href="/dashboard/production-sheets/new"
-              className="btn btn-primary btn-sm"
+              className="btn btn-primary"
             >
-              <Plus className="h-4 w-4" />
+              <Plus className="h-5 w-5 mr-2" />
               New Production Sheet
             </Link>
           }
         />
 
         {/* Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-          <div>
-            <p className="text-sm text-base-content/70">Pending</p>
-            <p className="text-2xl font-bold text-warning">{pendingProductionSheets.length}</p>
-          </div>
-          <div>
-            <p className="text-sm text-base-content/70">Completed</p>
-            <p className="text-2xl font-bold text-success">{completedProductionSheets.length}</p>
-          </div>
-          <div>
-            <p className="text-sm text-base-content/70">Total</p>
-            <p className="text-2xl font-bold text-primary">{productionSheets.length}</p>
+        <div className="card bg-base-100 p-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            <div>
+              <p className="text-sm text-base-content/70">Pending</p>
+              <p className="text-2xl font-bold text-warning">{pendingProductionSheets.length}</p>
+            </div>
+            <div>
+              <p className="text-sm text-base-content/70">Completed</p>
+              <p className="text-2xl font-bold text-success">{completedProductionSheets.length}</p>
+            </div>
+            <div>
+              <p className="text-sm text-base-content/70">Total</p>
+              <p className="text-2xl font-bold text-primary">{productionSheets.length}</p>
+            </div>
           </div>
         </div>
 
@@ -71,7 +73,7 @@ export default async function ProductionSheetsPage() {
             <h2 className="text-xl font-semibold">Pending Production Sheets</h2>
 
             <div className="overflow-x-auto">
-              <table className="table">
+              <table className="table table-zebra table-lg">
                   <thead>
                     <tr>
                       <th>Recipe</th>
@@ -125,7 +127,7 @@ export default async function ProductionSheetsPage() {
             <h2 className="text-xl font-semibold">Completed Production Sheets</h2>
 
             <div className="overflow-x-auto">
-              <table className="table">
+              <table className="table table-zebra table-lg">
                   <thead>
                     <tr>
                       <th>Recipe</th>

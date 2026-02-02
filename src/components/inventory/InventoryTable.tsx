@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+import { formatQuantity } from '@/lib/format';
 
 interface Ingredient {
   id: string;
@@ -51,7 +51,7 @@ export function InventoryTable({ ingredients }: InventoryTableProps) {
                   <span className="font-semibold">{ingredient.name}</span>
                 </td>
                 <td>
-                  {ingredient.currentQty.toFixed(3)} {ingredient.unit}
+                  {formatQuantity(ingredient.currentQty)} {ingredient.unit}
                 </td>
                 <td>
                   {ingredient.costPerUnit > 0
