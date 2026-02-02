@@ -1,5 +1,5 @@
 import { getCurrentUser } from '@/lib/clerk';
-import { PageHeader } from '@/components/ui/PageHeader';
+import { SetPageHeader } from '@/components/layout/SetPageHeader';
 import { RoleForm } from '@/components/role/RoleForm';
 import { redirect } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
@@ -19,7 +19,7 @@ export default async function NewRolePage() {
   return (
     
       <>
-        <PageHeader
+        <SetPageHeader
         title="Create Platform Role"
         description="Define a new platform-wide role with specific permissions"
         actions={

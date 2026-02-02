@@ -1,5 +1,5 @@
 import { getCurrentUser } from '@/lib/clerk';
-import { PageHeader } from '@/components/ui/PageHeader';
+import { SetPageHeader } from '@/components/layout/SetPageHeader';
 import { BakeryForm } from '@/components/bakery/BakeryForm';
 import { redirect } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
@@ -19,7 +19,7 @@ export default async function NewBakeryPage() {
   return (
     
       <>
-        <PageHeader
+        <SetPageHeader
         title="Create New Bakery"
         description="Add a new bakery to the platform"
         actions={

@@ -1,6 +1,6 @@
 import { getCurrentUser } from '@/lib/clerk';
 import { redirect } from 'next/navigation';
-import { PageHeader } from '@/components/ui/PageHeader';
+import { SetPageHeader } from '@/components/layout/SetPageHeader';
 import { MarkdownViewer } from '@/components/ui/MarkdownViewer';
 import { getRecipeById } from '@/app/actions/recipe';
 import Link from 'next/link';
@@ -51,7 +51,7 @@ export default async function RecipeDetailPage({
 
   return (
     <>
-      <PageHeader
+      <SetPageHeader
         title={recipe.name}
         sticky
         breadcrumbs={[

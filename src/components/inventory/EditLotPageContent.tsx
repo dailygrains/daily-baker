@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { PageHeader } from '@/components/ui/PageHeader';
+import { SetPageHeader } from '@/components/layout/SetPageHeader';
 import { EditLotForm } from '@/components/inventory/EditLotForm';
 import { deleteInventoryLot } from '@/app/actions/inventory';
 import { useToast } from '@/contexts/ToastContext';
@@ -68,7 +68,7 @@ export function EditLotPageContent({ lot, vendors }: EditLotPageContentProps) {
 
   return (
     <>
-      <PageHeader
+      <SetPageHeader
         title={`Edit Lot - ${lot.ingredient.name}`}
         sticky
         breadcrumbs={[

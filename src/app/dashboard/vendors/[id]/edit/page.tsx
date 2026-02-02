@@ -1,6 +1,6 @@
 import { getCurrentUser } from '@/lib/clerk';
 import { redirect } from 'next/navigation';
-import { PageHeader } from '@/components/ui/PageHeader';
+import { SetPageHeader } from '@/components/layout/SetPageHeader';
 import { VendorForm } from '@/components/vendors/VendorForm';
 import { getVendorById } from '@/app/actions/vendor';
 
@@ -30,7 +30,7 @@ export default async function EditVendorPage({
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-        <PageHeader
+        <SetPageHeader
           title="Edit Vendor"
           description={`Update details for ${vendor.name}`}
         />

@@ -1,5 +1,5 @@
 import { getCurrentUser } from '@/lib/clerk';
-import { PageHeader } from '@/components/ui/PageHeader';
+import { SetPageHeader } from '@/components/layout/SetPageHeader';
 import { redirect } from 'next/navigation';
 import { getBakeryById } from '@/app/actions/bakery';
 import { BakeryForm } from '@/components/bakery/BakeryForm';
@@ -15,7 +15,7 @@ export default async function SettingsPage() {
   if (user.isPlatformAdmin) {
     return (
       <>
-        <PageHeader
+        <SetPageHeader
           title="Platform Settings"
           description="Configure platform-wide settings"
         />
@@ -37,7 +37,7 @@ export default async function SettingsPage() {
     return (
       
       <>
-        <PageHeader
+        <SetPageHeader
           title="Settings"
           description="Configure your bakery settings"
         />
@@ -59,7 +59,7 @@ export default async function SettingsPage() {
     return (
       
       <>
-        <PageHeader
+        <SetPageHeader
           title="Settings"
           description="Configure your bakery settings"
         />
@@ -75,7 +75,7 @@ export default async function SettingsPage() {
   return (
     
       <>
-        <PageHeader
+        <SetPageHeader
         title="Bakery Settings"
         description="Update your bakery information and preferences"
       />

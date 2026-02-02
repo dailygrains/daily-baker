@@ -1,6 +1,6 @@
 import { getCurrentUser } from '@/lib/clerk';
 import { redirect } from 'next/navigation';
-import { PageHeader } from '@/components/ui/PageHeader';
+import { SetPageHeader } from '@/components/layout/SetPageHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { getIngredientsByBakery } from '@/app/actions/ingredient';
 import { IngredientsTable } from '@/components/ingredients/IngredientsTable';
@@ -34,7 +34,7 @@ export default async function IngredientsPage() {
 
   return (
     <>
-      <PageHeader
+      <SetPageHeader
         title="Ingredients"
         sticky
         actions={

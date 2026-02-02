@@ -1,5 +1,5 @@
 import { getCurrentUser } from '@/lib/clerk';
-import { PageHeader } from '@/components/ui/PageHeader';
+import { SetPageHeader } from '@/components/layout/SetPageHeader';
 import { RoleForm } from '@/components/role/RoleForm';
 import { getBakeryById } from '@/app/actions/bakery';
 import { redirect } from 'next/navigation';
@@ -28,7 +28,7 @@ export default async function NewRolePage({
     return (
       
       <>
-        <PageHeader title="Create Role" />
+        <SetPageHeader title="Create Role" />
         <div className="alert alert-error">
           <span>{bakeryResult.error || 'Bakery not found'}</span>
         </div>
@@ -41,7 +41,7 @@ export default async function NewRolePage({
   return (
     
       <>
-        <PageHeader
+        <SetPageHeader
         title="Create Platform Role"
         description="Define a new platform-wide role with specific permissions"
         actions={

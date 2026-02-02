@@ -2,7 +2,7 @@ import { getCurrentUser } from '@/lib/clerk';
 import { getBakeryById } from '@/app/actions/bakery';
 import { redirect } from 'next/navigation';
 import { BakeryEditPageContent } from '@/components/bakery/BakeryEditPageContent';
-import { PageHeader } from '@/components/ui/PageHeader';
+import { SetPageHeader } from '@/components/layout/SetPageHeader';
 
 export default async function EditBakeryPage({
   params,
@@ -26,7 +26,7 @@ export default async function EditBakeryPage({
     return (
       
       <>
-        <PageHeader title="Edit Bakery" />
+        <SetPageHeader title="Edit Bakery" />
         <div className="alert alert-error">
           <span>{result.error || 'Bakery not found'}</span>
         </div>

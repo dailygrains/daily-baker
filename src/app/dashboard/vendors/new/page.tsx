@@ -1,6 +1,6 @@
 import { getCurrentUser } from '@/lib/clerk';
 import { redirect } from 'next/navigation';
-import { PageHeader } from '@/components/ui/PageHeader';
+import { SetPageHeader } from '@/components/layout/SetPageHeader';
 import { VendorForm } from '@/components/vendors/VendorForm';
 
 export default async function NewVendorPage() {
@@ -16,7 +16,7 @@ export default async function NewVendorPage() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-        <PageHeader
+        <SetPageHeader
           title="Add New Vendor"
           description="Add a new supplier or service provider"
         />

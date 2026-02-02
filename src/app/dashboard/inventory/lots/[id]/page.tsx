@@ -1,7 +1,7 @@
 import { getCurrentUser } from '@/lib/clerk';
 import { redirect } from 'next/navigation';
 import { getInventoryLotById } from '@/app/actions/inventory';
-import { PageHeader } from '@/components/ui/PageHeader';
+import { SetPageHeader } from '@/components/layout/SetPageHeader';
 import Link from 'next/link';
 import { Edit, ArrowLeft, Package, DollarSign, Calendar, AlertTriangle } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
@@ -41,7 +41,7 @@ export default async function LotDetailPage({
 
   return (
     <>
-      <PageHeader
+      <SetPageHeader
         title={`Lot - ${lot.ingredient.name}`}
         sticky
         breadcrumbs={[

@@ -1,6 +1,6 @@
 import { getCurrentUser } from '@/lib/clerk';
 import { redirect } from 'next/navigation';
-import { PageHeader } from '@/components/ui/PageHeader';
+import { SetPageHeader } from '@/components/layout/SetPageHeader';
 import { getIngredientById } from '@/app/actions/ingredient';
 import Link from 'next/link';
 import { Edit, Package, DollarSign, Boxes, AlertTriangle, TrendingDown, Plus, AlertCircle } from 'lucide-react';
@@ -71,7 +71,7 @@ export default async function IngredientDetailPage({
 
   return (
     <>
-      <PageHeader
+      <SetPageHeader
         title={ingredient.name}
         sticky
         breadcrumbs={[

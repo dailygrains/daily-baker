@@ -1,6 +1,6 @@
 import { getCurrentUser } from '@/lib/clerk';
 import { redirect } from 'next/navigation';
-import { PageHeader } from '@/components/ui/PageHeader';
+import { SetPageHeader } from '@/components/layout/SetPageHeader';
 import { ProductionSheetForm } from '@/components/productionSheets/ProductionSheetForm';
 import { db } from '@/lib/db';
 
@@ -36,7 +36,7 @@ export default async function NewProductionSheetPage() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      <PageHeader
+      <SetPageHeader
         title="New Production Sheet"
         description="Create a production run for a recipe"
       />

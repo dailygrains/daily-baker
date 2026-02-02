@@ -1,6 +1,6 @@
 import { getCurrentUser } from '@/lib/clerk';
 import { redirect } from 'next/navigation';
-import { PageHeader } from '@/components/ui/PageHeader';
+import { SetPageHeader } from '@/components/layout/SetPageHeader';
 import { getProductionSheetById } from '@/app/actions/productionSheet';
 import Link from 'next/link';
 import { CheckCircle2, Package, Clock, AlertTriangle } from 'lucide-react';
@@ -36,7 +36,7 @@ export default async function ProductionSheetDetailPage({
 
   return (
     <div className="space-y-6">
-        <PageHeader
+        <SetPageHeader
           title={`${productionSheet.quantity} of ${productionSheet.recipe.name}`}
           description={`Production sheet details${productionSheet.completed ? ' (Completed)' : ''}`}
           actions={

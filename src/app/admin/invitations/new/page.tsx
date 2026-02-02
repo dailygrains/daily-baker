@@ -1,5 +1,5 @@
 import { getCurrentUser } from '@/lib/clerk';
-import { PageHeader } from '@/components/ui/PageHeader';
+import { SetPageHeader } from '@/components/layout/SetPageHeader';
 import { InvitationForm } from '@/components/invitation/InvitationForm';
 import { getAllBakeries } from '@/app/actions/bakery';
 import { getAllRoles } from '@/app/actions/user';
@@ -29,7 +29,7 @@ export default async function NewInvitationPage() {
   return (
     
       <>
-        <PageHeader
+        <SetPageHeader
         title="Send Invitation"
         description="Invite a new user to the platform"
         actions={

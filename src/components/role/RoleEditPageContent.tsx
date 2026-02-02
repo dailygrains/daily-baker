@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { PageHeader } from '@/components/ui/PageHeader';
+import { SetPageHeader } from '@/components/layout/SetPageHeader';
 import { RoleForm } from '@/components/role/RoleForm';
 import { deleteRole } from '@/app/actions/role';
 import { useToast } from '@/contexts/ToastContext';
@@ -56,7 +56,7 @@ export function RoleEditPageContent({ role }: RoleEditPageContentProps) {
 
   return (
     <>
-      <PageHeader
+      <SetPageHeader
         title={`Edit Platform Role: ${role.name}`}
         sticky
         actions={

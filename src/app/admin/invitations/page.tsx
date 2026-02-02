@@ -1,5 +1,5 @@
 import { getCurrentUser } from '@/lib/clerk';
-import { PageHeader } from '@/components/ui/PageHeader';
+import { SetPageHeader } from '@/components/layout/SetPageHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { redirect } from 'next/navigation';
 import { getAllInvitations, revokeInvitation } from '@/app/actions/invitation';
@@ -23,7 +23,7 @@ export default async function InvitationsPage() {
     return (
       
       <>
-        <PageHeader
+        <SetPageHeader
           title="Invitations"
           description="Manage user invitations"
         />
@@ -58,7 +58,7 @@ export default async function InvitationsPage() {
   return (
     
       <>
-        <PageHeader
+        <SetPageHeader
         title="Invitations"
         description="Manage user invitations to the platform"
         actions={

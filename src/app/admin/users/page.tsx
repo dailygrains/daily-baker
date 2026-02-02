@@ -1,5 +1,5 @@
 import { getCurrentUser } from '@/lib/clerk';
-import { PageHeader } from '@/components/ui/PageHeader';
+import { SetPageHeader } from '@/components/layout/SetPageHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { redirect } from 'next/navigation';
 import { getAllUsers } from '@/app/actions/user';
@@ -23,7 +23,7 @@ export default async function UsersPage() {
     return (
       
       <>
-        <PageHeader
+        <SetPageHeader
           title="Users"
           description="Manage all users on the platform"
         />
@@ -39,7 +39,7 @@ export default async function UsersPage() {
   return (
     
       <>
-        <PageHeader
+        <SetPageHeader
         title="Users"
         sticky
       />

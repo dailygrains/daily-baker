@@ -1,6 +1,6 @@
 import { getCurrentUser } from '@/lib/clerk';
 import { redirect } from 'next/navigation';
-import { PageHeader } from '@/components/ui/PageHeader';
+import { SetPageHeader } from '@/components/layout/SetPageHeader';
 import { getEquipmentById } from '@/app/actions/equipment';
 import Link from 'next/link';
 import { Edit, DollarSign, Package, Calendar, Hash } from 'lucide-react';
@@ -53,7 +53,7 @@ export default async function EquipmentDetailPage({
 
   return (
     <div className="space-y-6">
-        <PageHeader
+        <SetPageHeader
           title={equipment.name}
           description="Equipment details and information"
           actions={

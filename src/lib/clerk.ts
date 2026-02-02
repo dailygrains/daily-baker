@@ -29,11 +29,11 @@ export async function getCurrentUser() {
   // Check if this email should be a platform admin
   const userEmail = clerkUser.emailAddresses[0]?.emailAddress ?? '';
   const platformAdminEmail = process.env.PLATFORM_ADMIN_EMAIL;
-  const shouldBePlatformAdmin = platformAdminEmail && userEmail.toLowerCase() === platformAdminEmail.toLowerCase();
+  const shouldBePlatformAdmin = !!(platformAdminEmail && userEmail.toLowerCase() === platformAdminEmail.toLowerCase());
 
   if (!user) {
     // Create new user record
-    user = await prisma.user.create({
+    const createdUser = await prisma.user.create({
       data: {
         clerkId: clerkUser.id,
         email: userEmail,
@@ -42,6 +42,10 @@ export async function getCurrentUser() {
         isPlatformAdmin: shouldBePlatformAdmin,
         lastLoginAt: new Date(),
       },
+    });
+    // Re-fetch with includes to get consistent type
+    user = await prisma.user.findUniqueOrThrow({
+      where: { id: createdUser.id },
       include: {
         bakeries: {
           include: {

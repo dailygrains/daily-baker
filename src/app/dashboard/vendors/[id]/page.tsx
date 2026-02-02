@@ -1,6 +1,6 @@
 import { getCurrentUser } from '@/lib/clerk';
 import { redirect } from 'next/navigation';
-import { PageHeader } from '@/components/ui/PageHeader';
+import { SetPageHeader } from '@/components/layout/SetPageHeader';
 import { getVendorById } from '@/app/actions/vendor';
 import Link from 'next/link';
 import { Edit, Mail, Phone, Globe, Package, Wrench, FileText } from 'lucide-react';
@@ -34,7 +34,7 @@ export default async function VendorDetailPage({
 
   return (
     <div className="space-y-6">
-        <PageHeader
+        <SetPageHeader
           title={vendor.name}
           description="Vendor details and linked items"
           actions={

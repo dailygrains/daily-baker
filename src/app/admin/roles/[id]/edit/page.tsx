@@ -1,5 +1,5 @@
 import { getCurrentUser } from '@/lib/clerk';
-import { PageHeader } from '@/components/ui/PageHeader';
+import { SetPageHeader } from '@/components/layout/SetPageHeader';
 import { RoleEditPageContent } from '@/components/role/RoleEditPageContent';
 import { getRoleById } from '@/app/actions/role';
 import { redirect } from 'next/navigation';
@@ -26,7 +26,7 @@ export default async function EditRolePage({
     return (
       
       <>
-        <PageHeader title="Edit Role" />
+        <SetPageHeader title="Edit Role" />
         <div className="alert alert-error">
           <span>{roleResult.error || 'Role not found'}</span>
         </div>

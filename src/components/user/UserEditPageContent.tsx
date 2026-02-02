@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { PageHeader } from '@/components/ui/PageHeader';
+import { SetPageHeader } from '@/components/layout/SetPageHeader';
 import { UserAssignmentForm } from '@/components/user/UserAssignmentForm';
 import { deleteUser } from '@/app/actions/user';
 import { useToast } from '@/contexts/ToastContext';
@@ -80,7 +80,7 @@ export function UserEditPageContent({
 
   return (
     <>
-      <PageHeader
+      <SetPageHeader
         title={`Edit User: ${user.name || user.email}`}
         sticky
         actions={

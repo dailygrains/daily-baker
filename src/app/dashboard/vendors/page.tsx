@@ -1,6 +1,6 @@
 import { getCurrentUser } from '@/lib/clerk';
 import { redirect } from 'next/navigation';
-import { PageHeader } from '@/components/ui/PageHeader';
+import { SetPageHeader } from '@/components/layout/SetPageHeader';
 import { getVendorsByBakery } from '@/app/actions/vendor';
 import Link from 'next/link';
 import { Plus, Mail, Phone, Globe, Package, Wrench } from 'lucide-react';
@@ -33,7 +33,7 @@ export default async function VendorsPage() {
 
   return (
     <div className="space-y-6">
-        <PageHeader
+        <SetPageHeader
           title="Vendors"
           description="Manage your suppliers and service providers"
           actions={

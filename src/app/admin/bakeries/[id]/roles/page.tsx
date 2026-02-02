@@ -1,5 +1,5 @@
 import { getCurrentUser } from '@/lib/clerk';
-import { PageHeader } from '@/components/ui/PageHeader';
+import { SetPageHeader } from '@/components/layout/SetPageHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { redirect } from 'next/navigation';
 import { getBakeryById } from '@/app/actions/bakery';
@@ -33,7 +33,7 @@ export default async function BakeryRolesPage({
     return (
       
       <>
-        <PageHeader title="Roles" />
+        <SetPageHeader title="Roles" />
         <div className="alert alert-error">
           <span>{bakeryResult.error || 'Bakery not found'}</span>
         </div>
@@ -47,7 +47,7 @@ export default async function BakeryRolesPage({
   return (
     
       <>
-        <PageHeader
+        <SetPageHeader
         title="Platform Roles"
         description={`Manage platform-wide roles and permissions (viewed from ${bakery.name})`}
         actions={

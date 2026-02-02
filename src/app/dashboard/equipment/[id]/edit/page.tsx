@@ -1,6 +1,6 @@
 import { getCurrentUser } from '@/lib/clerk';
 import { redirect } from 'next/navigation';
-import { PageHeader } from '@/components/ui/PageHeader';
+import { SetPageHeader } from '@/components/layout/SetPageHeader';
 import { EquipmentForm } from '@/components/equipment/EquipmentForm';
 import { getEquipmentById } from '@/app/actions/equipment';
 import { db } from '@/lib/db';
@@ -43,7 +43,7 @@ export default async function EditEquipmentPage({
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-        <PageHeader
+        <SetPageHeader
           title="Edit Equipment"
           description={`Update details for ${equipment.name}`}
         />

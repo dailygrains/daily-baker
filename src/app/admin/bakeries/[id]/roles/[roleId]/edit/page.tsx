@@ -1,5 +1,5 @@
 import { getCurrentUser } from '@/lib/clerk';
-import { PageHeader } from '@/components/ui/PageHeader';
+import { SetPageHeader } from '@/components/layout/SetPageHeader';
 import { RoleForm } from '@/components/role/RoleForm';
 import { getRoleById } from '@/app/actions/role';
 import { getBakeryById } from '@/app/actions/bakery';
@@ -32,7 +32,7 @@ export default async function EditRolePage({
     return (
       
       <>
-        <PageHeader title="Edit Role" />
+        <SetPageHeader title="Edit Role" />
         <div className="alert alert-error">
           <span>{roleResult.error || 'Role not found'}</span>
         </div>
@@ -44,7 +44,7 @@ export default async function EditRolePage({
     return (
       
       <>
-        <PageHeader title="Edit Role" />
+        <SetPageHeader title="Edit Role" />
         <div className="alert alert-error">
           <span>{bakeryResult.error || 'Bakery not found'}</span>
         </div>
@@ -58,7 +58,7 @@ export default async function EditRolePage({
   return (
     
       <>
-        <PageHeader
+        <SetPageHeader
         title={`Edit Platform Role: ${role.name}`}
         description="Update platform-wide role details and permissions"
         actions={

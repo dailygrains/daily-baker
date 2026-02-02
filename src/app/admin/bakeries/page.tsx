@@ -1,5 +1,5 @@
 import { getCurrentUser } from '@/lib/clerk';
-import { PageHeader } from '@/components/ui/PageHeader';
+import { SetPageHeader } from '@/components/layout/SetPageHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { redirect } from 'next/navigation';
 import { getAllBakeries } from '@/app/actions/bakery';
@@ -24,7 +24,7 @@ export default async function BakeriesPage() {
     return (
       
       <>
-        <PageHeader
+        <SetPageHeader
           title="Bakeries"
           description="Manage all bakeries on the platform"
         />
@@ -40,7 +40,7 @@ export default async function BakeriesPage() {
   return (
     
       <>
-        <PageHeader
+        <SetPageHeader
         title="Bakeries"
         sticky
         actions={

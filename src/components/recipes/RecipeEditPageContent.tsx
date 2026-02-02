@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { PageHeader } from '@/components/ui/PageHeader';
+import { SetPageHeader } from '@/components/layout/SetPageHeader';
 import { RecipeForm } from '@/components/recipes/RecipeForm';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
@@ -58,7 +58,7 @@ export function RecipeEditPageContent({
 
   return (
     <>
-      <PageHeader
+      <SetPageHeader
         title={`Edit ${recipe.name}`}
         sticky
         breadcrumbs={[

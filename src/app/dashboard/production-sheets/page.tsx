@@ -1,6 +1,6 @@
 import { getCurrentUser } from '@/lib/clerk';
 import { redirect } from 'next/navigation';
-import { PageHeader } from '@/components/ui/PageHeader';
+import { SetPageHeader } from '@/components/layout/SetPageHeader';
 import { getProductionSheetsByBakery } from '@/app/actions/productionSheet';
 import Link from 'next/link';
 import { Plus, Briefcase, CheckCircle2, Clock } from 'lucide-react';
@@ -35,7 +35,7 @@ export default async function ProductionSheetsPage() {
 
   return (
     <div className="space-y-6">
-        <PageHeader
+        <SetPageHeader
           title="Production Sheets"
           description="Manage production runs and track ingredient usage"
           actions={

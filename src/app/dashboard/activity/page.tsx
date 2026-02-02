@@ -1,5 +1,5 @@
 import { getCurrentUser } from '@/lib/clerk';
-import { PageHeader } from '@/components/ui/PageHeader';
+import { SetPageHeader } from '@/components/layout/SetPageHeader';
 import { ActivityLogTable } from '@/components/activity/ActivityLogTable';
 import { getActivityLogs } from '@/app/actions/activity-log';
 import { redirect } from 'next/navigation';
@@ -21,7 +21,7 @@ export default async function BakeryActivityPage() {
     return (
       
       <>
-        <PageHeader
+        <SetPageHeader
           title="Activity"
           description="Recent bakery activity"
         />
@@ -57,7 +57,7 @@ export default async function BakeryActivityPage() {
     return (
       
       <>
-        <PageHeader
+        <SetPageHeader
           title="Activity"
           description="Recent bakery activity"
         />
@@ -73,7 +73,7 @@ export default async function BakeryActivityPage() {
   return (
     
       <>
-        <PageHeader
+        <SetPageHeader
         title="Activity"
         description={`Recent activity at ${user.bakery.name}`}
       />

@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 import { DashboardSidebar } from './DashboardSidebar';
-import { AppHeader } from './AppHeader';
+import { UnifiedHeader } from './UnifiedHeader';
 import { ToastContainer } from '../ui/ToastContainer';
 
 interface AppLayoutProps {
@@ -28,8 +28,8 @@ export function AppLayout({
 
       {/* Main Content */}
       <div className="drawer-content flex flex-col">
-        {/* App Header with sidebar toggle */}
-        <AppHeader />
+        {/* Unified Header with sidebar toggle and page content */}
+        <UnifiedHeader />
 
         {/* Page Content */}
         <main className="flex-1 p-4 lg:p-6 bg-base-200">

@@ -1,6 +1,6 @@
 import { getCurrentUser } from '@/lib/clerk';
 import { redirect } from 'next/navigation';
-import { PageHeader } from '@/components/ui/PageHeader';
+import { SetPageHeader } from '@/components/layout/SetPageHeader';
 import { getIngredientsByBakery } from '@/app/actions/ingredient';
 import { getRecentInventoryActivity } from '@/app/actions/inventory';
 import { InventoryTable } from '@/components/inventory/InventoryTable';
@@ -75,7 +75,7 @@ export default async function InventoryPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
+      <SetPageHeader
         title="Inventory Management"
         description="Track ingredient quantities with FIFO lot-based inventory"
         actions={

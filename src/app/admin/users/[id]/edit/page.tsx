@@ -1,5 +1,5 @@
 import { getCurrentUser } from '@/lib/clerk';
-import { PageHeader } from '@/components/ui/PageHeader';
+import { SetPageHeader } from '@/components/layout/SetPageHeader';
 import { UserEditPageContent } from '@/components/user/UserEditPageContent';
 import { getUserById, getAllRoles } from '@/app/actions/user';
 import { getAllBakeries } from '@/app/actions/bakery';
@@ -32,7 +32,7 @@ export default async function EditUserPage({
     return (
       
       <>
-        <PageHeader title="Edit User" />
+        <SetPageHeader title="Edit User" />
         <div className="alert alert-error">
           <span>{userResult.error || 'User not found'}</span>
         </div>

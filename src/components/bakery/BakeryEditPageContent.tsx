@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { PageHeader } from '@/components/ui/PageHeader';
+import { SetPageHeader } from '@/components/layout/SetPageHeader';
 import { BakeryForm } from '@/components/bakery/BakeryForm';
 import { deleteBakery } from '@/app/actions/bakery';
 import { useToast } from '@/contexts/ToastContext';
@@ -53,7 +53,7 @@ export function BakeryEditPageContent({ bakery }: BakeryEditPageContentProps) {
 
   return (
     <>
-      <PageHeader
+      <SetPageHeader
         title={`Edit ${bakery.name}`}
         sticky
         actions={

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { PageHeader } from '@/components/ui/PageHeader';
+import { SetPageHeader } from '@/components/layout/SetPageHeader';
 import { AddLotForm } from '@/components/inventory/AddLotForm';
 import Link from 'next/link';
 
@@ -38,7 +38,7 @@ export function AddLotPageContent({
 
   return (
     <>
-      <PageHeader
+      <SetPageHeader
         title="Add Inventory Lot"
         sticky
         actions={

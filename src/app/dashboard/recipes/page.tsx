@@ -1,6 +1,6 @@
 import { getCurrentUser } from '@/lib/clerk';
 import { redirect } from 'next/navigation';
-import { PageHeader } from '@/components/ui/PageHeader';
+import { SetPageHeader } from '@/components/layout/SetPageHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { getRecipesByBakery } from '@/app/actions/recipe';
 import { RecipesTable } from '@/components/recipes/RecipesTable';
@@ -23,7 +23,7 @@ export default async function RecipesPage() {
   if (!recipesResult.success) {
     return (
       <>
-        <PageHeader
+        <SetPageHeader
           title="Recipes"
           sticky
         />
@@ -48,7 +48,7 @@ export default async function RecipesPage() {
 
   return (
     <>
-      <PageHeader
+      <SetPageHeader
         title="Recipes"
         sticky
         actions={

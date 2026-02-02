@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { PageHeader } from '@/components/ui/PageHeader';
+import { SetPageHeader } from '@/components/layout/SetPageHeader';
 import { IngredientForm } from '@/components/ingredients/IngredientForm';
 import { Save, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
@@ -24,7 +24,7 @@ export function IngredientNewPageContent({
 
   return (
     <>
-      <PageHeader
+      <SetPageHeader
         title="Add New Ingredient"
         sticky
         actions={

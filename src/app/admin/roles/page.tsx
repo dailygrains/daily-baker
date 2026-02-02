@@ -1,5 +1,5 @@
 import { getCurrentUser } from '@/lib/clerk';
-import { PageHeader } from '@/components/ui/PageHeader';
+import { SetPageHeader } from '@/components/layout/SetPageHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { redirect } from 'next/navigation';
 import { getAllRoles } from '@/app/actions/user';
@@ -24,7 +24,7 @@ export default async function RolesPage() {
     return (
       
       <>
-        <PageHeader title="Platform Roles" />
+        <SetPageHeader title="Platform Roles" />
         <div className="alert alert-error">
           <span>{rolesResult.error || 'Failed to load roles'}</span>
         </div>
@@ -37,7 +37,7 @@ export default async function RolesPage() {
   return (
     
       <>
-        <PageHeader
+        <SetPageHeader
         title="Platform Roles"
         sticky
         actions={

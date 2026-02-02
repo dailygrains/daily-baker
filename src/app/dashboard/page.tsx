@@ -1,5 +1,5 @@
 import { getCurrentUser } from '@/lib/clerk';
-import { PageHeader } from '@/components/ui/PageHeader';
+import { SetPageHeader } from '@/components/layout/SetPageHeader';
 import { redirect } from 'next/navigation';
 import { getPlatformStats, getRecentActivity } from '@/app/actions/platform-stats';
 import {
@@ -33,7 +33,7 @@ export default async function DashboardPage() {
 
     return (
       <>
-        <PageHeader
+        <SetPageHeader
           title="Platform Dashboard"
           description="Overview of all bakeries on Daily Baker"
           actions={
@@ -259,7 +259,7 @@ export default async function DashboardPage() {
   if (!user.bakery) {
     return (
       <>
-        <PageHeader
+        <SetPageHeader
           title="Welcome to Daily Baker"
           description="You're not currently assigned to a bakery"
         />
@@ -278,7 +278,7 @@ export default async function DashboardPage() {
   // Bakery user dashboard
   return (
     <>
-      <PageHeader
+      <SetPageHeader
         title={`Welcome back, ${user.name || 'Baker'}!`}
         description={`${user.bakery.name} Dashboard`}
       />

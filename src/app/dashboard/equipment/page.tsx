@@ -1,6 +1,6 @@
 import { getCurrentUser } from '@/lib/clerk';
 import { redirect } from 'next/navigation';
-import { PageHeader } from '@/components/ui/PageHeader';
+import { SetPageHeader } from '@/components/layout/SetPageHeader';
 import { getEquipmentByBakery } from '@/app/actions/equipment';
 import Link from 'next/link';
 import { Plus, Package } from 'lucide-react';
@@ -54,7 +54,7 @@ export default async function EquipmentPage() {
 
   return (
     <div className="space-y-6">
-        <PageHeader
+        <SetPageHeader
           title="Equipment"
           description="Track and manage bakery equipment"
           actions={

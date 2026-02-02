@@ -1,5 +1,5 @@
 import { getCurrentUser } from '@/lib/clerk';
-import { PageHeader } from '@/components/ui/PageHeader';
+import { SetPageHeader } from '@/components/layout/SetPageHeader';
 import { ActivityLogTable } from '@/components/activity/ActivityLogTable';
 import { getActivityLogs } from '@/app/actions/activity-log';
 import { redirect } from 'next/navigation';
@@ -22,7 +22,7 @@ export default async function ActivityLogsPage() {
     return (
       
       <>
-        <PageHeader
+        <SetPageHeader
           title="Activity Logs"
           description="Platform-wide activity monitoring"
         />
@@ -38,7 +38,7 @@ export default async function ActivityLogsPage() {
   return (
     
       <>
-        <PageHeader
+        <SetPageHeader
         title="Activity Logs"
         description="Platform-wide activity monitoring"
       />
