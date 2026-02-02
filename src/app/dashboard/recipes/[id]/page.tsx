@@ -4,9 +4,10 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { MarkdownViewer } from '@/components/ui/MarkdownViewer';
 import { getRecipeById } from '@/app/actions/recipe';
 import Link from 'next/link';
-import { Edit, DollarSign, Layers, ClipboardList, Package } from 'lucide-react';
+import { Edit, DollarSign, Layers, ClipboardList, Package, ArrowLeft } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { calculateIngredientCost, formatUnit } from '@/lib/unitConvert';
+import { formatQuantity, formatCurrency } from '@/lib/format';
 
 export default async function RecipeDetailPage({
   params,
@@ -53,14 +54,24 @@ export default async function RecipeDetailPage({
       <PageHeader
         title={recipe.name}
         sticky
+        breadcrumbs={[
+          { label: 'Recipes', href: '/dashboard/recipes' },
+          { label: recipe.name },
+        ]}
         actions={
-          <Link
-            href={`/dashboard/recipes/${id}/edit`}
-            className="btn btn-primary"
-          >
-            <Edit className="h-5 w-5 mr-2" />
-            Edit
-          </Link>
+          <>
+            <Link href="/dashboard/recipes" className="btn btn-ghost">
+              <ArrowLeft className="h-5 w-5 mr-2" />
+              Back
+            </Link>
+            <Link
+              href={`/dashboard/recipes/${id}/edit`}
+              className="btn btn-primary"
+            >
+              <Edit className="h-5 w-5 mr-2" />
+              Edit
+            </Link>
+          </>
         }
       />
 
@@ -118,7 +129,7 @@ export default async function RecipeDetailPage({
                     <div className="mt-4">
                       <h3 className="font-semibold mb-2">Ingredients</h3>
                       <div className="overflow-x-auto">
-                        <table className="table table-sm">
+                        <table className="table table-lg">
                           <thead>
                             <tr>
                               <th>Ingredient</th>
@@ -130,7 +141,7 @@ export default async function RecipeDetailPage({
                           <tbody>
                             {section.ingredients.map((ing) => {
                               const quantity = Number(ing.quantity);
-                              const costPerUnit = Number(ing.ingredient.costPerUnit);
+                              const unitCost = Number(ing.ingredient.costPerUnit);
                               const ingredientUnit = ing.ingredient.unit;
                               const recipeUnit = ing.unit;
 
@@ -138,7 +149,7 @@ export default async function RecipeDetailPage({
                               const totalIngredientCost = calculateIngredientCost(
                                 quantity,
                                 recipeUnit,
-                                costPerUnit,
+                                unitCost,
                                 ingredientUnit
                               );
 
@@ -153,14 +164,14 @@ export default async function RecipeDetailPage({
                                     </Link>
                                   </td>
                                   <td>
-                                    {quantity.toFixed(3)} {formatUnit(recipeUnit)}
+                                    {formatQuantity(quantity)} {formatUnit(recipeUnit)}
                                   </td>
                                   <td>
-                                    ${costPerUnit.toFixed(2)}/{formatUnit(ingredientUnit)}
+                                    {formatCurrency(unitCost)}/{formatUnit(ingredientUnit)}
                                   </td>
                                   <td className="font-semibold">
                                     {totalIngredientCost !== null
-                                      ? `$${totalIngredientCost.toFixed(2)}`
+                                      ? formatCurrency(totalIngredientCost)
                                       : 'N/A'}
                                   </td>
                                 </tr>

@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 import { DashboardSidebar } from './DashboardSidebar';
-import { MobileMenuButton } from './MobileMenuButton';
+import { AppHeader } from './AppHeader';
 import { ToastContainer } from '../ui/ToastContainer';
 
 interface AppLayoutProps {
@@ -28,8 +28,8 @@ export function AppLayout({
 
       {/* Main Content */}
       <div className="drawer-content flex flex-col">
-        {/* Mobile Menu Button */}
-        <MobileMenuButton />
+        {/* App Header with sidebar toggle */}
+        <AppHeader />
 
         {/* Page Content */}
         <main className="flex-1 p-4 lg:p-6 bg-base-200">
@@ -38,14 +38,17 @@ export function AppLayout({
       </div>
 
       {/* Sidebar */}
-      <DashboardSidebar
-        userName={userName}
-        userEmail={userEmail}
-        userRole={userRole}
-        isPlatformAdmin={isPlatformAdmin}
-        bakeries={bakeries}
-        currentBakeryId={currentBakeryId}
-      />
+      <div className="drawer-side z-10 is-drawer-close:z-50 is-drawer-close:overflow-visible">
+        <label htmlFor="sidebar-drawer" aria-label="close sidebar" className="drawer-overlay"></label>
+        <DashboardSidebar
+          userName={userName}
+          userEmail={userEmail}
+          userRole={userRole}
+          isPlatformAdmin={isPlatformAdmin}
+          bakeries={bakeries}
+          currentBakeryId={currentBakeryId}
+        />
+      </div>
 
       {/* Toast Notifications */}
       <ToastContainer />

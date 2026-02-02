@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Pagination, usePageSize } from '@/components/ui/Pagination';
+import { formatQuantity, formatCurrency } from '@/lib/format';
 
 interface Ingredient {
   id: string;
@@ -41,7 +42,7 @@ export function IngredientsTable({ ingredients }: IngredientsTableProps) {
   return (
     <div className="space-y-4">
       <div className="overflow-x-auto">
-        <table className="table table-zebra">
+        <table className="table table-zebra table-lg">
           <thead>
             <tr>
               <th>Name</th>
@@ -69,21 +70,21 @@ export function IngredientsTable({ ingredients }: IngredientsTableProps) {
                     <div className="flex items-center justify-between gap-2">
                       <span className="font-bold">{ingredient.name}</span>
                       {isLowStock && (
-                        <span className="badge badge-warning badge-sm">Low Stock</span>
+                        <span className="badge badge-warning">Low Stock</span>
                       )}
                     </div>
                   </td>
                   <td className="align-top">
                     <span className={isLowStock ? 'text-warning font-semibold' : ''}>
-                      {currentQty.toFixed(3)} {ingredient.unit}
+                      {formatQuantity(currentQty)} {ingredient.unit}
                     </span>
                   </td>
-                  <td className="align-top">${costPerUnit.toFixed(2)}</td>
+                  <td className="align-top">{formatCurrency(costPerUnit)}</td>
                   <td className="align-top">
                     {ingredient.vendors.length > 0 ? (
                       <div className="flex flex-wrap gap-1">
                         {ingredient.vendors.map((iv) => (
-                          <span key={iv.vendor.id} className="badge badge-ghost badge-sm">
+                          <span key={iv.vendor.id} className="badge badge-ghost">
                             {iv.vendor.name}
                           </span>
                         ))}
@@ -96,14 +97,14 @@ export function IngredientsTable({ ingredients }: IngredientsTableProps) {
                     <div className="flex gap-2">
                       <Link
                         href={`/dashboard/ingredients/${ingredient.id}`}
-                        className="btn btn-ghost btn-sm"
+                        className="btn btn-ghost"
                         onClick={(e) => e.stopPropagation()}
                       >
                         View
                       </Link>
                       <Link
                         href={`/dashboard/ingredients/${ingredient.id}/edit`}
-                        className="btn btn-ghost btn-sm"
+                        className="btn btn-ghost"
                         onClick={(e) => e.stopPropagation()}
                       >
                         Edit

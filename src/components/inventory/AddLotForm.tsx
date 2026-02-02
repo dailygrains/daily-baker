@@ -174,21 +174,19 @@ export function AddLotForm({
 
           <fieldset className="fieldset">
             <legend className="fieldset-legend">Cost per Unit *</legend>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base-content/50">
-                $
-              </span>
+            <label className="input input-bordered flex items-center gap-2 w-full">
+              <span className="text-white">$</span>
               <input
                 type="number"
                 step="0.01"
                 min="0"
-                className="input input-bordered w-full pl-8"
+                className="grow bg-transparent outline-none"
                 value={formData.costPerUnit}
                 onChange={(e) => setFormData({ ...formData, costPerUnit: e.target.value })}
                 required
                 placeholder="0.00"
               />
-            </div>
+            </label>
             <label className="label">
               <span className="label-text-alt">
                 Price per {formData.unit || 'unit'} for this purchase

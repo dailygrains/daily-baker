@@ -25,7 +25,7 @@ import {
   type MDXEditorMethods,
 } from '@mdxeditor/editor';
 import '@mdxeditor/editor/style.css';
-import { forwardRef } from 'react';
+import { forwardRef, useState, useEffect } from 'react';
 
 type MDXEditorProps = {
   markdown: string;
@@ -37,6 +37,21 @@ type MDXEditorProps = {
 
 export const MDXEditor = forwardRef<MDXEditorMethods, MDXEditorProps>(
   ({ markdown, onChange, placeholder, readOnly = false, className = '' }, ref) => {
+    const [isMounted, setIsMounted] = useState(false);
+
+    useEffect(() => {
+      setIsMounted(true);
+    }, []);
+
+    // Don't render on server to avoid hydration mismatch from platform detection
+    if (!isMounted) {
+      return (
+        <div className={`mdx-editor-wrapper ${className}`}>
+          <div className="min-h-[200px] border border-base-300 rounded-lg bg-base-100 animate-pulse" />
+        </div>
+      );
+    }
+
     return (
       <div className={`mdx-editor-wrapper ${className}`}>
         <BaseMDXEditor

@@ -505,6 +505,66 @@ export async function updateInventoryLot(data: UpdateInventoryLotInput) {
 }
 
 /**
+ * Get a single inventory lot by ID
+ */
+export async function getInventoryLotById(lotId: string) {
+  try {
+    const currentUser = await getCurrentUser();
+
+    if (!currentUser) {
+      return { success: false, error: 'Unauthorized: You must be logged in' };
+    }
+
+    const lot = await db.inventoryLot.findUnique({
+      where: { id: lotId },
+      include: {
+        inventory: {
+          include: {
+            ingredient: {
+              select: { id: true, name: true, unit: true, bakeryId: true },
+            },
+          },
+        },
+        vendor: { select: { id: true, name: true } },
+      },
+    });
+
+    if (!lot) {
+      return { success: false, error: 'Lot not found' };
+    }
+
+    if (currentUser.bakeryId !== lot.inventory.ingredient.bakeryId) {
+      return {
+        success: false,
+        error: 'Unauthorized: You can only view inventory for your bakery',
+      };
+    }
+
+    return {
+      success: true,
+      data: {
+        id: lot.id,
+        purchaseQty: Number(lot.purchaseQty),
+        remainingQty: Number(lot.remainingQty),
+        purchaseUnit: lot.purchaseUnit,
+        costPerUnit: Number(lot.costPerUnit),
+        purchasedAt: lot.purchasedAt,
+        expiresAt: lot.expiresAt,
+        notes: lot.notes,
+        vendor: lot.vendor,
+        ingredient: lot.inventory.ingredient,
+      },
+    };
+  } catch (error) {
+    console.error('Failed to fetch inventory lot:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to fetch inventory lot',
+    };
+  }
+}
+
+/**
  * Get inventory for an ingredient with aggregates
  */
 export async function getInventoryForIngredient(ingredientId: string) {

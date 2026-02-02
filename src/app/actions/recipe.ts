@@ -9,6 +9,16 @@ import {
   type CreateRecipeInput,
   type UpdateRecipeInput,
 } from '@/lib/validations/recipe';
+import { ZodError } from 'zod';
+
+/**
+ * Format Zod validation errors into a user-friendly message
+ */
+function formatZodError(error: ZodError): string {
+  return error.issues
+    .map((issue) => issue.message)
+    .join('. ');
+}
 import { revalidatePath } from 'next/cache';
 import { Decimal } from '@prisma/client/runtime/library';
 import { convertQuantity } from '@/lib/unitConvert';
@@ -179,9 +189,12 @@ export async function createRecipe(data: CreateRecipeInput) {
     });
 
     revalidatePath('/dashboard/recipes');
-    return { success: true, data: recipe };
+    return { success: true };
   } catch (error) {
     console.error('Failed to create recipe:', error);
+    if (error instanceof ZodError) {
+      return { success: false, error: formatZodError(error) };
+    }
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to create recipe',
@@ -288,9 +301,12 @@ export async function updateRecipe(data: UpdateRecipeInput) {
 
     revalidatePath('/dashboard/recipes');
     revalidatePath(`/dashboard/recipes/${recipe.id}`);
-    return { success: true, data: recipe };
+    return { success: true };
   } catch (error) {
     console.error('Failed to update recipe:', error);
+    if (error instanceof ZodError) {
+      return { success: false, error: formatZodError(error) };
+    }
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to update recipe',

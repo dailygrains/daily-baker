@@ -64,7 +64,7 @@ export function RecipeForm({
   const [formData, setFormData] = useState({
     name: recipe?.name ?? '',
     description: recipe?.description ?? '',
-    yieldQty: recipe?.yieldQty ?? 1,
+    yieldQty: recipe?.yieldQty?.toString() ?? '1',
     yieldUnit: recipe?.yieldUnit ?? '',
   });
 
@@ -96,17 +96,22 @@ export function RecipeForm({
     setError(null);
 
     try {
+      const yieldQty = parseInt(formData.yieldQty) || 1;
       const result = recipe
         ? await updateRecipe({
             id: recipe.id,
-            ...formData,
+            name: formData.name,
             description: formData.description || null,
+            yieldQty,
+            yieldUnit: formData.yieldUnit,
             sections,
           })
         : await createRecipe({
             bakeryId,
-            ...formData,
+            name: formData.name,
             description: formData.description || null,
+            yieldQty,
+            yieldUnit: formData.yieldUnit,
             sections,
           });
 
@@ -284,7 +289,7 @@ export function RecipeForm({
               min="1"
               className="input input-bordered w-24"
               value={formData.yieldQty}
-              onChange={(e) => setFormData({ ...formData, yieldQty: parseInt(e.target.value) || 1 })}
+              onChange={(e) => setFormData({ ...formData, yieldQty: e.target.value })}
               required
             />
             <input

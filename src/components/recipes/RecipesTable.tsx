@@ -2,9 +2,9 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { Layers, ClipboardList } from 'lucide-react';
+import { ClipboardList } from 'lucide-react';
 import { Pagination, usePageSize } from '@/components/ui/Pagination';
+import { formatQuantity, formatCurrency } from '@/lib/format';
 
 interface Recipe {
   id: string;
@@ -47,22 +47,20 @@ export function RecipesTable({ recipes }: RecipesTableProps) {
   return (
     <div className="space-y-4">
       <div className="overflow-x-auto">
-        <table className="table table-zebra">
+        <table className="table table-zebra table-lg">
           <thead>
             <tr>
               <th>Recipe Name</th>
               <th>Yield</th>
-              <th>Sections</th>
               <th>Total Cost</th>
               <th>Cost per Unit</th>
               <th>Production Sheets</th>
-              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
             {currentRecipes.map((recipe) => {
               const totalCost = Number(recipe.totalCost);
-              const costPerUnit = recipe.yieldQty > 0 ? (totalCost / recipe.yieldQty).toFixed(2) : '0.00';
+              const costPerUnit = recipe.yieldQty > 0 ? totalCost / recipe.yieldQty : 0;
 
               return (
                 <tr
@@ -78,56 +76,30 @@ export function RecipesTable({ recipes }: RecipesTableProps) {
                     <div>
                       <span className="font-bold">{recipe.name}</span>
                       {recipe.description && (
-                        <p className="text-sm text-base-content/70 truncate max-w-xs">
+                        <p className="text-base-content/70 truncate max-w-xs">
                           {recipe.description}
                         </p>
                       )}
                     </div>
                   </td>
-                  <td className="align-top">{recipe.yieldQty} {recipe.yieldUnit}</td>
-                  <td className="align-top">
-                    <span className="badge badge-info gap-1">
-                      <Layers className="h-3 w-3" />
-                      {recipe._count.sections}
-                    </span>
-                  </td>
+                  <td className="align-top">{formatQuantity(recipe.yieldQty)} {recipe.yieldUnit}</td>
                   <td className="align-top">
                     <span className="font-semibold text-success">
-                      ${totalCost.toFixed(2)}
+                      {formatCurrency(totalCost)}
                     </span>
                   </td>
                   <td className="align-top">
-                    <span className="text-sm">
-                      ${costPerUnit}
-                    </span>
+                    {formatCurrency(costPerUnit)}
                   </td>
                   <td className="align-top">
                     {recipe._count.productionSheets > 0 ? (
                       <span className="badge badge-secondary gap-1">
-                        <ClipboardList className="h-3 w-3" />
+                        <ClipboardList className="h-4 w-4" />
                         {recipe._count.productionSheets}
                       </span>
                     ) : (
                       <span className="text-base-content/50">None</span>
                     )}
-                  </td>
-                  <td className="align-top">
-                    <div className="flex gap-2">
-                      <Link
-                        href={`/dashboard/recipes/${recipe.id}`}
-                        className="btn btn-ghost btn-sm"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        View
-                      </Link>
-                      <Link
-                        href={`/dashboard/recipes/${recipe.id}/edit`}
-                        className="btn btn-ghost btn-sm"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        Edit
-                      </Link>
-                    </div>
                   </td>
                 </tr>
               );

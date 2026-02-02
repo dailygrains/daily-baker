@@ -61,6 +61,11 @@ export function RecipeEditPageContent({
       <PageHeader
         title={`Edit ${recipe.name}`}
         sticky
+        breadcrumbs={[
+          { label: 'Recipes', href: '/dashboard/recipes' },
+          { label: recipe.name, href: `/dashboard/recipes/${recipe.id}` },
+          { label: 'Edit' },
+        ]}
         actions={
           <>
             <Link href="/dashboard/recipes" className="btn btn-ghost">

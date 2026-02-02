@@ -74,6 +74,10 @@ export default async function IngredientDetailPage({
       <PageHeader
         title={ingredient.name}
         sticky
+        breadcrumbs={[
+          { label: 'Ingredients', href: '/dashboard/ingredients' },
+          { label: ingredient.name },
+        ]}
         actions={
           <Link
             href={`/dashboard/ingredients/${id}/edit`}
@@ -232,53 +236,60 @@ export default async function IngredientDetailPage({
                       const isExpired = lot.expiresAt && new Date(lot.expiresAt) < new Date();
 
                       return (
-                        <tr key={lot.id} className={isDepleted ? 'opacity-50' : ''}>
+                        <tr key={lot.id} className={`hover cursor-pointer ${isDepleted ? 'opacity-50' : ''}`}>
                           <td>
-                            {formatDistanceToNow(new Date(lot.purchasedAt), {
-                              addSuffix: true,
-                            })}
+                            <Link href={`/dashboard/inventory/lots/${lot.id}`} className="block">
+                              {formatDistanceToNow(new Date(lot.purchasedAt), {
+                                addSuffix: true,
+                              })}
+                            </Link>
                           </td>
                           <td>
-                            {lot.vendor ? (
-                              <Link
-                                href={`/dashboard/vendors/${lot.vendor.id}`}
-                                className="hover:text-primary"
-                              >
-                                {lot.vendor.name}
-                              </Link>
-                            ) : (
-                              <span className="text-base-content/50">-</span>
-                            )}
+                            <Link href={`/dashboard/inventory/lots/${lot.id}`} className="block">
+                              {lot.vendor ? lot.vendor.name : <span className="text-base-content/50">-</span>}
+                            </Link>
                           </td>
                           <td>
-                            {lot.purchaseQty.toFixed(2)} {lot.purchaseUnit}
+                            <Link href={`/dashboard/inventory/lots/${lot.id}`} className="block">
+                              {lot.purchaseQty.toFixed(2)} {lot.purchaseUnit}
+                            </Link>
                           </td>
                           <td>
-                            <span className={lot.remainingQty <= 0 ? 'text-base-content/50' : 'font-semibold'}>
-                              {lot.remainingQty.toFixed(2)} {lot.purchaseUnit}
-                            </span>
-                          </td>
-                          <td>${lot.costPerUnit.toFixed(2)}/{lot.purchaseUnit}</td>
-                          <td>
-                            {lot.expiresAt ? (
-                              <span className={`flex items-center gap-1 ${isExpired ? 'text-error' : isExpiringSoon ? 'text-warning' : ''}`}>
-                                {(isExpired || isExpiringSoon) && <AlertTriangle className="h-3 w-3" />}
-                                {formatDistanceToNow(new Date(lot.expiresAt), { addSuffix: true })}
+                            <Link href={`/dashboard/inventory/lots/${lot.id}`} className="block">
+                              <span className={lot.remainingQty <= 0 ? 'text-base-content/50' : 'font-semibold'}>
+                                {lot.remainingQty.toFixed(2)} {lot.purchaseUnit}
                               </span>
-                            ) : (
-                              <span className="text-base-content/50">-</span>
-                            )}
+                            </Link>
                           </td>
                           <td>
-                            {isDepleted ? (
-                              <span className="badge badge-ghost">Depleted</span>
-                            ) : isExpired ? (
-                              <span className="badge badge-error">Expired</span>
-                            ) : isExpiringSoon ? (
-                              <span className="badge badge-warning">Expiring Soon</span>
-                            ) : (
-                              <span className="badge badge-success">Active</span>
-                            )}
+                            <Link href={`/dashboard/inventory/lots/${lot.id}`} className="block">
+                              ${lot.costPerUnit.toFixed(2)}/{lot.purchaseUnit}
+                            </Link>
+                          </td>
+                          <td>
+                            <Link href={`/dashboard/inventory/lots/${lot.id}`} className="block">
+                              {lot.expiresAt ? (
+                                <span className={`flex items-center gap-1 ${isExpired ? 'text-error' : isExpiringSoon ? 'text-warning' : ''}`}>
+                                  {(isExpired || isExpiringSoon) && <AlertTriangle className="h-3 w-3" />}
+                                  {formatDistanceToNow(new Date(lot.expiresAt), { addSuffix: true })}
+                                </span>
+                              ) : (
+                                <span className="text-base-content/50">-</span>
+                              )}
+                            </Link>
+                          </td>
+                          <td>
+                            <Link href={`/dashboard/inventory/lots/${lot.id}`} className="block">
+                              {isDepleted ? (
+                                <span className="badge badge-ghost">Depleted</span>
+                              ) : isExpired ? (
+                                <span className="badge badge-error">Expired</span>
+                              ) : isExpiringSoon ? (
+                                <span className="badge badge-warning">Expiring Soon</span>
+                              ) : (
+                                <span className="badge badge-success">Active</span>
+                              )}
+                            </Link>
                           </td>
                         </tr>
                       );
