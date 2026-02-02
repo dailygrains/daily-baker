@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createIngredient, updateIngredient, assignVendorToIngredient, unassignVendorFromIngredient } from '@/app/actions/ingredient';
+import { createVendor } from '@/app/actions/vendor';
 import { VendorAutocomplete } from '@/components/vendor/VendorAutocomplete';
 import { X } from 'lucide-react';
 import type { Decimal } from '@prisma/client/runtime/library';
@@ -170,6 +171,25 @@ export function IngredientForm({
     }
   };
 
+  const handleCreateVendor = async (name: string): Promise<Vendor | null> => {
+    try {
+      const result = await createVendor({ bakeryId, name });
+      if (result.success && result.data) {
+        showToast(`Vendor "${name}" created successfully`, 'success');
+        router.refresh();
+        return { id: result.data.id, name: result.data.name };
+      } else {
+        const errorMessage = result.error || 'Failed to create vendor';
+        showToast(errorMessage, 'error');
+        return null;
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to create vendor';
+      showToast(errorMessage, 'error');
+      return null;
+    }
+  };
+
   return (
     <form ref={formRef} onSubmit={handleSubmit} className="max-w-3xl mx-auto space-y-8">
       {error && (
@@ -300,6 +320,8 @@ export function IngredientForm({
               onSelect={handleAssignVendor}
               excludeVendorIds={assignedVendors.map((v) => v.id)}
               placeholder="Search and assign vendors..."
+              allowCreate={true}
+              onCreate={handleCreateVendor}
             />
             <label className="label">
               <span className="label-text-alt">
@@ -311,15 +333,18 @@ export function IngredientForm({
           {assignedVendors.length > 0 && (
             <fieldset className="fieldset">
               <legend className="fieldset-legend">Assigned Vendors</legend>
-              <div className="space-y-2">
+              <div className="space-y-1">
                 {assignedVendors.map((vendor) => (
                   <div
                     key={vendor.id}
-                    className="flex items-center justify-between p-3 bg-base-200 rounded-lg"
+                    className="flex items-center justify-between py-1 bg-base-200 rounded-lg"
                   >
-                    <div>
-                      <div className="font-medium">{vendor.name}</div>
-                    </div>
+                    <Link
+                      href={`/dashboard/vendors/${vendor.id}`}
+                      className="flex-1 font-medium hover:underline"
+                    >
+                      {vendor.name}
+                    </Link>
                     <button
                       type="button"
                       onClick={() => handleUnassignVendor(vendor.id)}
