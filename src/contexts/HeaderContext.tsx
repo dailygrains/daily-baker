@@ -13,6 +13,7 @@ export interface HeaderConfig {
   actions?: ReactNode;
   sticky?: boolean;
   breadcrumbs?: Breadcrumb[];
+  hasUnsavedChanges?: boolean;
 }
 
 interface HeaderContextType {

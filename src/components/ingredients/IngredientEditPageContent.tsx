@@ -45,6 +45,7 @@ export function IngredientEditPageContent({
       <SetPageHeader
         title={`Edit ${ingredient.name}`}
         sticky
+        hasUnsavedChanges={hasUnsavedChanges}
         breadcrumbs={[
           { label: 'Ingredients', href: '/dashboard/ingredients' },
           { label: ingredient.name, href: `/dashboard/ingredients/${ingredient.id}` },

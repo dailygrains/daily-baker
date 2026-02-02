@@ -58,6 +58,7 @@ export function RoleEditPageContent({ role }: RoleEditPageContentProps) {
       <SetPageHeader
         title={`Edit Platform Role: ${role.name}`}
         sticky
+        hasUnsavedChanges={hasUnsavedChanges}
         breadcrumbs={[
           { label: 'Roles', href: '/admin/roles' },
           { label: role.name },

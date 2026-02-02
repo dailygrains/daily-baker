@@ -6,6 +6,11 @@
   --foreground: #171717;
 }
 
+/* Fully rounded buttons globally */
+.btn {
+  border-radius: 9999px !important;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

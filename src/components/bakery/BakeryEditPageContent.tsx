@@ -54,6 +54,7 @@ export function BakeryEditPageContent({ bakery }: BakeryEditPageContentProps) {
       <SetPageHeader
         title={`Edit ${bakery.name}`}
         sticky
+        hasUnsavedChanges={hasUnsavedChanges}
         breadcrumbs={[
           { label: 'Bakeries', href: '/admin/bakeries' },
           { label: bakery.name },

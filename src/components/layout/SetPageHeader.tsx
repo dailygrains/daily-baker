@@ -14,6 +14,7 @@ interface SetPageHeaderProps {
   actions?: ReactNode;
   sticky?: boolean;
   breadcrumbs?: Breadcrumb[];
+  hasUnsavedChanges?: boolean;
 }
 
 export function SetPageHeader({
@@ -22,6 +23,7 @@ export function SetPageHeader({
   actions,
   sticky = false,
   breadcrumbs,
+  hasUnsavedChanges = false,
 }: SetPageHeaderProps) {
   const { setHeader, clearHeader } = useHeader();
 
@@ -32,6 +34,7 @@ export function SetPageHeader({
       actions,
       sticky,
       breadcrumbs,
+      hasUnsavedChanges,
     });
 
     return () => {
@@ -39,7 +42,7 @@ export function SetPageHeader({
     };
   }, [title, description, sticky, setHeader, clearHeader]);
 
-  // Update actions separately since they may change independently
+  // Update when any prop changes
   useEffect(() => {
     setHeader({
       title,
@@ -47,8 +50,9 @@ export function SetPageHeader({
       actions,
       sticky,
       breadcrumbs,
+      hasUnsavedChanges,
     });
-  }, [actions, breadcrumbs, title, description, sticky, setHeader]);
+  }, [actions, breadcrumbs, title, description, sticky, hasUnsavedChanges, setHeader]);
 
   return null;
 }

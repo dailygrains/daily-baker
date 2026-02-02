@@ -82,6 +82,7 @@ export function UserEditPageContent({
       <SetPageHeader
         title={`Edit User: ${user.name || user.email}`}
         sticky
+        hasUnsavedChanges={hasUnsavedChanges}
         breadcrumbs={[
           { label: 'Users', href: '/admin/users' },
           { label: user.name || user.email },
