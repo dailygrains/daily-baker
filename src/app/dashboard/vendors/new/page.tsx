@@ -15,17 +15,16 @@ export default async function NewVendorPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-        <SetPageHeader
-          title="Add New Vendor"
-          description="Add a new supplier or service provider"
-        />
+    <>
+      <SetPageHeader
+        title="Add New Vendor"
+        breadcrumbs={[
+          { label: 'Vendors', href: '/dashboard/vendors' },
+          { label: 'New Vendor' },
+        ]}
+      />
 
-        <div className="card bg-base-100 shadow-xl">
-          <div className="card-body">
-            <VendorForm bakeryId={user.bakeryId} />
-          </div>
-        </div>
-      </div>
+      <VendorForm bakeryId={user.bakeryId} />
+    </>
   );
 }

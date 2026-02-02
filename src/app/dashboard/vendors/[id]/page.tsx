@@ -36,13 +36,15 @@ export default async function VendorDetailPage({
     <div className="space-y-6">
         <SetPageHeader
           title={vendor.name}
-          description="Vendor details and linked items"
+          breadcrumbs={[
+            { label: 'Vendors', href: '/dashboard/vendors' },
+            { label: vendor.name },
+          ]}
           actions={
             <Link
               href={`/dashboard/vendors/${id}/edit`}
-              className="btn btn-primary btn-sm"
+              className="btn btn-primary"
             >
-              <Edit className="h-4 w-4" />
               Edit
             </Link>
           }

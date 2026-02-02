@@ -1,7 +1,6 @@
 import { getCurrentUser } from '@/lib/clerk';
-import { redirect } from 'next/navigation';
-import { SetPageHeader } from '@/components/layout/SetPageHeader';
-import { VendorForm } from '@/components/vendors/VendorForm';
+import { redirect, notFound } from 'next/navigation';
+import { VendorEditPageContent } from '@/components/vendors/VendorEditPageContent';
 import { getVendorById } from '@/app/actions/vendor';
 
 export default async function EditVendorPage({
@@ -23,23 +22,15 @@ export default async function EditVendorPage({
   const vendorResult = await getVendorById(id);
 
   if (!vendorResult.success || !vendorResult.data) {
-    redirect('/dashboard/vendors');
+    notFound();
   }
 
   const vendor = vendorResult.data;
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-        <SetPageHeader
-          title="Edit Vendor"
-          description={`Update details for ${vendor.name}`}
-        />
-
-        <div className="card bg-base-100 shadow-xl">
-          <div className="card-body">
-            <VendorForm bakeryId={user.bakeryId} vendor={vendor} />
-          </div>
-        </div>
-      </div>
+    <VendorEditPageContent
+      bakeryId={user.bakeryId}
+      vendor={vendor}
+    />
   );
 }

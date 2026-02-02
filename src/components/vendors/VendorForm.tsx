@@ -1,19 +1,34 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createVendor, updateVendor } from '@/app/actions/vendor';
+import { useToast } from '@/contexts/ToastContext';
 import type { Vendor } from '@/generated/prisma';
 
 interface VendorFormProps {
   bakeryId: string;
   vendor?: Vendor;
+  onFormRefChange?: (ref: HTMLFormElement | null) => void;
+  onSavingChange?: (isSaving: boolean) => void;
+  onUnsavedChangesChange?: (hasChanges: boolean) => void;
+  showBottomActions?: boolean;
 }
 
-export function VendorForm({ bakeryId, vendor }: VendorFormProps) {
+export function VendorForm({
+  bakeryId,
+  vendor,
+  onFormRefChange,
+  onSavingChange,
+  onUnsavedChangesChange,
+  showBottomActions = true,
+}: VendorFormProps) {
   const router = useRouter();
+  const { showToast } = useToast();
+  const formRef = useRef<HTMLFormElement>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   const [formData, setFormData] = useState({
     name: vendor?.name ?? '',
@@ -22,6 +37,27 @@ export function VendorForm({ bakeryId, vendor }: VendorFormProps) {
     website: vendor?.website ?? '',
     notes: vendor?.notes ?? '',
   });
+
+  // Notify parent of form ref changes
+  useEffect(() => {
+    if (onFormRefChange && formRef.current) {
+      onFormRefChange(formRef.current);
+    }
+  }, [onFormRefChange]);
+
+  // Notify parent of saving state changes
+  useEffect(() => {
+    if (onSavingChange) {
+      onSavingChange(isSubmitting);
+    }
+  }, [isSubmitting, onSavingChange]);
+
+  // Notify parent of unsaved changes state
+  useEffect(() => {
+    if (onUnsavedChangesChange) {
+      onUnsavedChangesChange(hasUnsavedChanges);
+    }
+  }, [hasUnsavedChanges, onUnsavedChangesChange]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,127 +84,151 @@ export function VendorForm({ bakeryId, vendor }: VendorFormProps) {
           });
 
       if (result.success) {
-        router.push('/dashboard/vendors');
+        const message = vendor
+          ? `Vendor "${formData.name}" updated successfully`
+          : `Vendor "${formData.name}" created successfully`;
+
+        showToast(message, 'success');
+        setHasUnsavedChanges(false);
+
+        // Only redirect to list after creating, stay on page after editing
+        if (!vendor) {
+          router.push('/dashboard/vendors');
+        }
         router.refresh();
       } else {
-        setError(result.error || 'Failed to save vendor');
+        const errorMessage = result.error || 'Failed to save vendor';
+        setError(errorMessage);
+        showToast(errorMessage, 'error');
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred';
+      setError(errorMessage);
+      showToast(errorMessage, 'error');
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const updateField = (field: string, value: string) => {
+    setFormData({ ...formData, [field]: value });
+    setHasUnsavedChanges(true);
+  };
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form ref={formRef} onSubmit={handleSubmit} className="max-w-3xl mx-auto space-y-8">
       {error && (
         <div className="alert alert-error">
+          <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
           <span>{error}</span>
         </div>
       )}
 
-      <div className="form-control">
-        <label className="label">
-          <span className="label-text">Vendor Name *</span>
-        </label>
-        <input
-          type="text"
-          className="input input-bordered"
-          value={formData.name}
-          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          required
-          maxLength={100}
-          placeholder="e.g., ABC Flour Company"
-        />
-      </div>
+      <div className="space-y-0">
+        <h2 className="text-xl font-semibold">Basic Information</h2>
 
-      <div className="divider">Contact Information</div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="form-control">
-          <label className="label">
-            <span className="label-text">Email</span>
-          </label>
+        <fieldset className="fieldset">
+          <legend className="fieldset-legend">Vendor Name *</legend>
           <input
-            type="email"
-            className="input input-bordered"
-            value={formData.email}
-            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            type="text"
+            className="input input-bordered w-full"
+            value={formData.name}
+            onChange={(e) => updateField('name', e.target.value)}
+            required
             maxLength={100}
-            placeholder="contact@vendor.com"
+            placeholder="e.g., ABC Flour Company"
           />
+        </fieldset>
+      </div>
+
+      <div className="space-y-0">
+        <h2 className="text-xl font-semibold">Contact Information</h2>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+          <fieldset className="fieldset">
+            <legend className="fieldset-legend">Email</legend>
+            <input
+              type="email"
+              className="input input-bordered w-full"
+              value={formData.email}
+              onChange={(e) => updateField('email', e.target.value)}
+              maxLength={100}
+              placeholder="contact@vendor.com"
+            />
+          </fieldset>
+
+          <fieldset className="fieldset">
+            <legend className="fieldset-legend">Phone</legend>
+            <input
+              type="tel"
+              className="input input-bordered w-full"
+              value={formData.phone}
+              onChange={(e) => updateField('phone', e.target.value)}
+              maxLength={20}
+              placeholder="(555) 123-4567"
+            />
+          </fieldset>
         </div>
 
-        <div className="form-control">
-          <label className="label">
-            <span className="label-text">Phone</span>
-          </label>
+        <fieldset className="fieldset">
+          <legend className="fieldset-legend">Website</legend>
           <input
-            type="tel"
-            className="input input-bordered"
-            value={formData.phone}
-            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-            maxLength={20}
-            placeholder="(555) 123-4567"
+            type="url"
+            className="input input-bordered w-full"
+            value={formData.website}
+            onChange={(e) => updateField('website', e.target.value)}
+            maxLength={255}
+            placeholder="https://www.vendor.com"
           />
+        </fieldset>
+      </div>
+
+      <div className="space-y-0">
+        <h2 className="text-xl font-semibold">Additional Details</h2>
+
+        <fieldset className="fieldset">
+          <legend className="fieldset-legend">Notes</legend>
+          <textarea
+            className="textarea textarea-bordered w-full h-32"
+            value={formData.notes}
+            onChange={(e) => updateField('notes', e.target.value)}
+            maxLength={1000}
+            placeholder="Additional notes about this vendor..."
+          />
+          <label className="label">
+            <span className="label-text-alt">
+              Optional notes for internal reference
+            </span>
+          </label>
+        </fieldset>
+      </div>
+
+      {showBottomActions && (
+        <div className="flex gap-3 justify-between pt-4">
+          <div className="flex gap-3 ml-auto">
+            <button
+              type="button"
+              className="btn btn-ghost"
+              onClick={() => router.back()}
+              disabled={isSubmitting}
+            >
+              Cancel
+            </button>
+            <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <span className="loading loading-spinner loading-sm"></span>
+                  {vendor ? 'Saving...' : 'Creating...'}
+                </>
+              ) : (
+                vendor ? 'Save Changes' : 'Create Vendor'
+              )}
+            </button>
+          </div>
         </div>
-      </div>
-
-      <div className="form-control">
-        <label className="label">
-          <span className="label-text">Website</span>
-        </label>
-        <input
-          type="url"
-          className="input input-bordered"
-          value={formData.website}
-          onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-          maxLength={255}
-          placeholder="https://www.vendor.com"
-        />
-      </div>
-
-      <div className="form-control">
-        <label className="label">
-          <span className="label-text">Notes</span>
-        </label>
-        <textarea
-          className="textarea textarea-bordered h-32"
-          value={formData.notes}
-          onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-          maxLength={1000}
-          placeholder="Additional notes about this vendor..."
-        />
-        <label className="label">
-          <span className="label-text-alt">
-            Optional notes for internal reference
-          </span>
-        </label>
-      </div>
-
-      <div className="flex gap-3 justify-end">
-        <button
-          type="button"
-          className="btn btn-ghost"
-          onClick={() => router.back()}
-          disabled={isSubmitting}
-        >
-          Cancel
-        </button>
-        <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
-          {isSubmitting ? (
-            <>
-              <span className="loading loading-spinner loading-sm"></span>
-              Saving...
-            </>
-          ) : vendor ? (
-            'Update Vendor'
-          ) : (
-            'Create Vendor'
-          )}
-        </button>
-      </div>
+      )}
     </form>
   );
 }
