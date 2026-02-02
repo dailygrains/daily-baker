@@ -3,7 +3,7 @@ import { SetPageHeader } from '@/components/layout/SetPageHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { redirect } from 'next/navigation';
 import { getAllInvitations, revokeInvitation } from '@/app/actions/invitation';
-import { Mail, Plus, Copy, X, Clock, CheckCircle2, XCircle } from 'lucide-react';
+import { Mail, Plus, Copy, X } from 'lucide-react';
 import Link from 'next/link';
 
 export default async function InvitationsPage() {
@@ -69,29 +69,18 @@ export default async function InvitationsPage() {
         }
       />
 
-      <div className="stats shadow bg-base-100 mb-6">
-        <div className="stat">
-          <div className="stat-figure text-primary">
-            <Clock className="h-8 w-8" />
-          </div>
-          <div className="stat-title">Pending</div>
-          <div className="stat-value text-primary">{pendingInvitations.length}</div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
+        <div>
+          <p className="text-sm text-base-content/70">Pending</p>
+          <p className="text-2xl font-bold text-primary">{pendingInvitations.length}</p>
         </div>
-
-        <div className="stat">
-          <div className="stat-figure text-success">
-            <CheckCircle2 className="h-8 w-8" />
-          </div>
-          <div className="stat-title">Accepted</div>
-          <div className="stat-value text-success">{acceptedInvitations.length}</div>
+        <div>
+          <p className="text-sm text-base-content/70">Accepted</p>
+          <p className="text-2xl font-bold text-success">{acceptedInvitations.length}</p>
         </div>
-
-        <div className="stat">
-          <div className="stat-figure text-warning">
-            <XCircle className="h-8 w-8" />
-          </div>
-          <div className="stat-title">Expired</div>
-          <div className="stat-value text-warning">{expiredInvitations.length}</div>
+        <div>
+          <p className="text-sm text-base-content/70">Expired</p>
+          <p className="text-2xl font-bold text-warning">{expiredInvitations.length}</p>
         </div>
       </div>
 
@@ -108,8 +97,7 @@ export default async function InvitationsPage() {
           }
         />
       ) : (
-        <div className="card bg-base-100 shadow-sm">
-          <div className="overflow-x-auto">
+        <div className="overflow-x-auto">
             <table className="table">
               <thead>
                 <tr>
@@ -200,7 +188,6 @@ export default async function InvitationsPage() {
               </tbody>
             </table>
           </div>
-        </div>
       )}
     </>
   );

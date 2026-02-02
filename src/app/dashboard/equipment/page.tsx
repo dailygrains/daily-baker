@@ -66,53 +66,40 @@ export default async function EquipmentPage() {
         />
 
         {/* Stats */}
-        <div className="stats stats-horizontal shadow w-full">
-          <div className="stat">
-            <div className="stat-title">Total Equipment</div>
-            <div className="stat-value text-primary">{totalEquipment}</div>
-            <div className="stat-desc">Items tracked</div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div>
+            <p className="text-sm text-base-content/70">Total Equipment</p>
+            <p className="text-2xl font-bold text-primary">{totalEquipment}</p>
           </div>
-
-          <div className="stat">
-            <div className="stat-title">In Use</div>
-            <div className="stat-value text-secondary">{inUse}</div>
-            <div className="stat-desc">Currently active</div>
+          <div>
+            <p className="text-sm text-base-content/70">In Use</p>
+            <p className="text-2xl font-bold">{inUse}</p>
           </div>
-
-          <div className="stat">
-            <div className="stat-title">Maintenance</div>
-            <div className="stat-value text-warning">{maintenance}</div>
-            <div className="stat-desc">Needs attention</div>
+          <div>
+            <p className="text-sm text-base-content/70">Maintenance</p>
+            <p className="text-2xl font-bold text-warning">{maintenance}</p>
           </div>
-
-          <div className="stat">
-            <div className="stat-title">Total Value</div>
-            <div className="stat-value text-accent">${totalCost}</div>
-            <div className="stat-desc">Equipment cost</div>
+          <div>
+            <p className="text-sm text-base-content/70">Total Value</p>
+            <p className="text-2xl font-bold text-success">${totalCost}</p>
           </div>
         </div>
 
         {/* Equipment List */}
         {equipment.length === 0 ? (
-          <div className="card bg-base-100 shadow-xl">
-            <div className="card-body text-center py-12">
-              <h3 className="text-2xl font-bold mb-2">No equipment yet</h3>
-              <p className="text-base-content/70 mb-6">
-                Start tracking your bakery equipment
-              </p>
-              <div>
-                <Link href="/dashboard/equipment/new" className="btn btn-primary">
-                  <Plus className="h-4 w-4" />
-                  Add Your First Equipment
-                </Link>
-              </div>
-            </div>
+          <div className="text-center py-12">
+            <h3 className="text-2xl font-bold mb-2">No equipment yet</h3>
+            <p className="text-base-content/70 mb-6">
+              Start tracking your bakery equipment
+            </p>
+            <Link href="/dashboard/equipment/new" className="btn btn-primary">
+              <Plus className="h-4 w-4" />
+              Add Your First Equipment
+            </Link>
           </div>
         ) : (
-          <div className="card bg-base-100 shadow-xl">
-            <div className="card-body">
-              <div className="overflow-x-auto">
-                <table className="table table-zebra">
+          <div className="overflow-x-auto">
+            <table className="table table-zebra">
                   <thead>
                     <tr>
                       <th>Name</th>
@@ -190,8 +177,6 @@ export default async function EquipmentPage() {
                   </tbody>
                 </table>
               </div>
-            </div>
-          </div>
         )}
       </div>
   );

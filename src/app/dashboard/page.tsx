@@ -3,10 +3,6 @@ import { SetPageHeader } from '@/components/layout/SetPageHeader';
 import { redirect } from 'next/navigation';
 import { getPlatformStats, getRecentActivity } from '@/app/actions/platform-stats';
 import {
-  BarChart3,
-  TrendingUp,
-  Package,
-  Calendar,
   Wheat,
   Users,
   BookOpen,
@@ -44,213 +40,162 @@ export default async function DashboardPage() {
           }
         />
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          {/* Total Bakeries */}
-          <div className="stats shadow bg-base-100">
-            <div className="stat">
-              <div className="stat-figure text-primary">
-                <Wheat className="h-8 w-8" />
-              </div>
-              <div className="stat-title">Total Bakeries</div>
-              <div className="stat-value text-primary">{stats?.totals.bakeries ?? 0}</div>
-              <div className="stat-desc">
-                +{stats?.recent.bakeries ?? 0} in last 30 days
-              </div>
-            </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div>
+            <p className="text-sm text-base-content/70">Total Bakeries</p>
+            <p className="text-2xl font-bold text-primary">{stats?.totals.bakeries ?? 0}</p>
+            <p className="text-sm text-base-content/60">+{stats?.recent.bakeries ?? 0} in last 30 days</p>
           </div>
-
-          {/* Total Users */}
-          <div className="stats shadow bg-base-100">
-            <div className="stat">
-              <div className="stat-figure text-secondary">
-                <Users className="h-8 w-8" />
-              </div>
-              <div className="stat-title">Total Users</div>
-              <div className="stat-value text-secondary">{stats?.totals.users ?? 0}</div>
-              <div className="stat-desc">
-                +{stats?.recent.users ?? 0} in last 30 days
-              </div>
-            </div>
+          <div>
+            <p className="text-sm text-base-content/70">Total Users</p>
+            <p className="text-2xl font-bold">{stats?.totals.users ?? 0}</p>
+            <p className="text-sm text-base-content/60">+{stats?.recent.users ?? 0} in last 30 days</p>
           </div>
-
-          {/* Total Recipes */}
-          <div className="stats shadow bg-base-100">
-            <div className="stat">
-              <div className="stat-figure text-accent">
-                <BookOpen className="h-8 w-8" />
-              </div>
-              <div className="stat-title">Total Recipes</div>
-              <div className="stat-value text-accent">{stats?.totals.recipes ?? 0}</div>
-              <div className="stat-desc">Across all bakeries</div>
-            </div>
+          <div>
+            <p className="text-sm text-base-content/70">Total Recipes</p>
+            <p className="text-2xl font-bold">{stats?.totals.recipes ?? 0}</p>
           </div>
-
-          {/* Total Ingredients */}
-          <div className="stats shadow bg-base-100">
-            <div className="stat">
-              <div className="stat-figure text-info">
-                <Package className="h-8 w-8" />
-              </div>
-              <div className="stat-title">Total Ingredients</div>
-              <div className="stat-value text-info">{stats?.totals.ingredients ?? 0}</div>
-              <div className="stat-desc">In inventory system</div>
-            </div>
+          <div>
+            <p className="text-sm text-base-content/70">Total Ingredients</p>
+            <p className="text-2xl font-bold">{stats?.totals.ingredients ?? 0}</p>
           </div>
         </div>
 
         {/* Top Bakeries */}
         {stats?.topBakeries && stats.topBakeries.length > 0 && (
-          <div className="mt-6">
-            <h2 className="text-xl font-bold mb-4">Recent Bakeries</h2>
+          <section className="mt-8 space-y-4">
+            <h2 className="text-xl font-semibold">Recent Bakeries</h2>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {stats.topBakeries.map((bakery) => (
                 <Link
                   key={bakery.id}
                   href={`/admin/bakeries/${bakery.id}/edit`}
-                  className="card bg-base-100 shadow-sm hover:shadow-md transition-shadow"
+                  className="flex items-center gap-3 p-3 rounded-lg bg-base-200 hover:bg-base-300 transition-colors"
                 >
-                  <div className="card-body">
-                    <div className="flex items-center gap-3">
-                      <div className="avatar placeholder">
-                        <div className="bg-primary text-primary-content rounded-lg w-10">
-                          <Wheat className="h-5 w-5" />
-                        </div>
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="font-bold">{bakery.name}</h3>
-                        <div className="flex gap-4 text-sm text-base-content/60 mt-1">
-                          <span>{bakery._count.users} users</span>
-                          <span>{bakery._count.recipes} recipes</span>
-                        </div>
-                      </div>
+                  <div className="avatar placeholder">
+                    <div className="bg-primary text-primary-content rounded-lg w-10">
+                      <Wheat className="h-5 w-5" />
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-bold">{bakery.name}</h3>
+                    <div className="flex gap-4 text-sm text-base-content/60">
+                      <span>{bakery._count.users} users</span>
+                      <span>{bakery._count.recipes} recipes</span>
                     </div>
                   </div>
                 </Link>
               ))}
             </div>
-          </div>
+          </section>
         )}
 
         {/* Recent Activity */}
         {activity && (
-          <div className="mt-6">
-            <h2 className="text-xl font-bold mb-4">Recent Activity</h2>
+          <section className="mt-8 space-y-4">
+            <h2 className="text-xl font-semibold">Recent Activity</h2>
             <div className="grid gap-6 md:grid-cols-3">
               {/* Recent Bakeries */}
               {activity.bakeries.length > 0 && (
-                <div className="card bg-base-100 shadow-sm">
-                  <div className="card-body">
-                    <h3 className="card-title text-lg flex items-center gap-2">
-                      <Wheat className="h-5 w-5" />
-                      New Bakeries
-                    </h3>
-                    <div className="space-y-3 mt-2">
-                      {activity.bakeries.map((bakery) => (
-                        <div key={bakery.id} className="flex items-center justify-between">
-                          <div>
-                            <p className="font-medium text-sm">{bakery.name}</p>
-                            <p className="text-xs text-base-content/60 flex items-center gap-1">
-                              <Clock className="h-3 w-3" />
-                              {new Date(bakery.createdAt).toLocaleDateString()}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                <div className="space-y-3">
+                  <h3 className="font-semibold flex items-center gap-2">
+                    <Wheat className="h-5 w-5" />
+                    New Bakeries
+                  </h3>
+                  <div className="space-y-3">
+                    {activity.bakeries.map((bakery) => (
+                      <div key={bakery.id}>
+                        <p className="font-medium text-sm">{bakery.name}</p>
+                        <p className="text-xs text-base-content/60 flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {new Date(bakery.createdAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
 
               {/* Recent Users */}
               {activity.users.length > 0 && (
-                <div className="card bg-base-100 shadow-sm">
-                  <div className="card-body">
-                    <h3 className="card-title text-lg flex items-center gap-2">
-                      <Users className="h-5 w-5" />
-                      New Users
-                    </h3>
-                    <div className="space-y-3 mt-2">
-                      {activity.users.map((user) => (
-                        <div key={user.id}>
-                          <p className="font-medium text-sm">{user.name || user.email}</p>
-                          <p className="text-xs text-base-content/60">
-                            {user.bakeries?.[0]?.bakery?.name || 'No bakery'}
-                          </p>
-                          <p className="text-xs text-base-content/60 flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            {new Date(user.createdAt).toLocaleDateString()}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
+                <div className="space-y-3">
+                  <h3 className="font-semibold flex items-center gap-2">
+                    <Users className="h-5 w-5" />
+                    New Users
+                  </h3>
+                  <div className="space-y-3">
+                    {activity.users.map((user) => (
+                      <div key={user.id}>
+                        <p className="font-medium text-sm">{user.name || user.email}</p>
+                        <p className="text-xs text-base-content/60">
+                          {user.bakeries?.[0]?.bakery?.name || 'No bakery'}
+                        </p>
+                        <p className="text-xs text-base-content/60 flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {new Date(user.createdAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
 
               {/* Recent Recipes */}
               {activity.recipes.length > 0 && (
-                <div className="card bg-base-100 shadow-sm">
-                  <div className="card-body">
-                    <h3 className="card-title text-lg flex items-center gap-2">
-                      <BookOpen className="h-5 w-5" />
-                      New Recipes
-                    </h3>
-                    <div className="space-y-3 mt-2">
-                      {activity.recipes.map((recipe) => (
-                        <div key={recipe.id}>
-                          <p className="font-medium text-sm">{recipe.name}</p>
-                          <p className="text-xs text-base-content/60">
-                            {recipe.bakery.name}
-                          </p>
-                          <p className="text-xs text-base-content/60 flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            {new Date(recipe.createdAt).toLocaleDateString()}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
+                <div className="space-y-3">
+                  <h3 className="font-semibold flex items-center gap-2">
+                    <BookOpen className="h-5 w-5" />
+                    New Recipes
+                  </h3>
+                  <div className="space-y-3">
+                    {activity.recipes.map((recipe) => (
+                      <div key={recipe.id}>
+                        <p className="font-medium text-sm">{recipe.name}</p>
+                        <p className="text-xs text-base-content/60">
+                          {recipe.bakery.name}
+                        </p>
+                        <p className="text-xs text-base-content/60 flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {new Date(recipe.createdAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
             </div>
-          </div>
+          </section>
         )}
 
         {/* Quick Actions */}
-        <div className="mt-6">
-          <h2 className="text-xl font-bold mb-4">Quick Actions</h2>
+        <section className="mt-8 space-y-4">
+          <h2 className="text-xl font-semibold">Quick Actions</h2>
           <div className="grid gap-4 md:grid-cols-3">
             <Link
               href="/admin/bakeries/new"
-              className="card bg-base-100 shadow-sm hover:shadow-md transition-shadow"
+              className="p-4 rounded-lg bg-base-200 hover:bg-base-300 transition-colors"
             >
-              <div className="card-body">
-                <h3 className="card-title text-lg">Create Bakery</h3>
-                <p className="text-sm text-base-content/60">Add a new bakery to the platform</p>
-              </div>
+              <h3 className="font-semibold">Create Bakery</h3>
+              <p className="text-sm text-base-content/60">Add a new bakery to the platform</p>
             </Link>
 
             <Link
               href="/admin/users"
-              className="card bg-base-100 shadow-sm hover:shadow-md transition-shadow"
+              className="p-4 rounded-lg bg-base-200 hover:bg-base-300 transition-colors"
             >
-              <div className="card-body">
-                <h3 className="card-title text-lg">Manage Users</h3>
-                <p className="text-sm text-base-content/60">View and assign users</p>
-              </div>
+              <h3 className="font-semibold">Manage Users</h3>
+              <p className="text-sm text-base-content/60">View and assign users</p>
             </Link>
 
             <Link
               href="/admin/bakeries"
-              className="card bg-base-100 shadow-sm hover:shadow-md transition-shadow"
+              className="p-4 rounded-lg bg-base-200 hover:bg-base-300 transition-colors"
             >
-              <div className="card-body">
-                <h3 className="card-title text-lg">View All Bakeries</h3>
-                <p className="text-sm text-base-content/60">See all bakeries on the platform</p>
-              </div>
+              <h3 className="font-semibold">View All Bakeries</h3>
+              <p className="text-sm text-base-content/60">See all bakeries on the platform</p>
             </Link>
           </div>
-        </div>
+        </section>
       </>
     );
   }
@@ -283,94 +228,63 @@ export default async function DashboardPage() {
         description={`${user.bakery.name} Dashboard`}
       />
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        {/* Today's Production */}
-        <div className="stats shadow bg-base-100">
-          <div className="stat">
-            <div className="stat-figure text-primary">
-              <Calendar className="h-8 w-8" />
-            </div>
-            <div className="stat-title">Today&apos;s Production Sheets</div>
-            <div className="stat-value text-primary">1</div>
-            <div className="stat-desc">1 in progress</div>
-          </div>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div>
+          <p className="text-sm text-base-content/70">Today&apos;s Production</p>
+          <p className="text-2xl font-bold text-primary">1</p>
+          <p className="text-sm text-base-content/60">1 in progress</p>
         </div>
-
-        {/* Active Recipes */}
-        <div className="stats shadow bg-base-100">
-          <div className="stat">
-            <div className="stat-figure text-secondary">
-              <BarChart3 className="h-8 w-8" />
-            </div>
-            <div className="stat-title">Active Recipes</div>
-            <div className="stat-value text-secondary">3</div>
-            <div className="stat-desc">Published recipes</div>
-          </div>
+        <div>
+          <p className="text-sm text-base-content/70">Active Recipes</p>
+          <p className="text-2xl font-bold">3</p>
         </div>
-
-        {/* Low Stock Items */}
-        <div className="stats shadow bg-base-100">
-          <div className="stat">
-            <div className="stat-figure text-warning">
-              <Package className="h-8 w-8" />
-            </div>
-            <div className="stat-title">Low Stock Alerts</div>
-            <div className="stat-value text-warning">0</div>
-            <div className="stat-desc">All ingredients stocked</div>
-          </div>
+        <div>
+          <p className="text-sm text-base-content/70">Low Stock Alerts</p>
+          <p className="text-2xl font-bold text-warning">0</p>
         </div>
-
-        {/* This Week's Production */}
-        <div className="stats shadow bg-base-100">
-          <div className="stat">
-            <div className="stat-figure text-accent">
-              <TrendingUp className="h-8 w-8" />
-            </div>
-            <div className="stat-title">This Week&apos;s Production</div>
-            <div className="stat-value text-accent">180</div>
-            <div className="stat-desc">Items produced</div>
-          </div>
+        <div>
+          <p className="text-sm text-base-content/70">This Week&apos;s Production</p>
+          <p className="text-2xl font-bold">180</p>
         </div>
       </div>
 
       {/* Quick Actions */}
-      <div className="mt-6">
-        <h2 className="text-xl font-bold mb-4">Quick Actions</h2>
+      <section className="mt-8 space-y-4">
+        <h2 className="text-xl font-semibold">Quick Actions</h2>
         <div className="grid gap-4 md:grid-cols-3">
-          <Link href="/dashboard/production-sheets" className="card bg-base-100 shadow-sm hover:shadow-md transition-shadow">
-            <div className="card-body">
-              <h3 className="card-title text-lg">View Production Sheets</h3>
-              <p className="text-sm text-base-content/60">See today&apos;s production schedule</p>
-            </div>
+          <Link
+            href="/dashboard/production-sheets"
+            className="p-4 rounded-lg bg-base-200 hover:bg-base-300 transition-colors"
+          >
+            <h3 className="font-semibold">View Production Sheets</h3>
+            <p className="text-sm text-base-content/60">See today&apos;s production schedule</p>
           </Link>
 
-          <Link href="/dashboard/recipes" className="card bg-base-100 shadow-sm hover:shadow-md transition-shadow">
-            <div className="card-body">
-              <h3 className="card-title text-lg">Browse Recipes</h3>
-              <p className="text-sm text-base-content/60">View all bakery recipes</p>
-            </div>
+          <Link
+            href="/dashboard/recipes"
+            className="p-4 rounded-lg bg-base-200 hover:bg-base-300 transition-colors"
+          >
+            <h3 className="font-semibold">Browse Recipes</h3>
+            <p className="text-sm text-base-content/60">View all bakery recipes</p>
           </Link>
 
-          <Link href="/dashboard/ingredients" className="card bg-base-100 shadow-sm hover:shadow-md transition-shadow">
-            <div className="card-body">
-              <h3 className="card-title text-lg">Check Inventory</h3>
-              <p className="text-sm text-base-content/60">Monitor ingredient levels</p>
-            </div>
+          <Link
+            href="/dashboard/ingredients"
+            className="p-4 rounded-lg bg-base-200 hover:bg-base-300 transition-colors"
+          >
+            <h3 className="font-semibold">Check Inventory</h3>
+            <p className="text-sm text-base-content/60">Monitor ingredient levels</p>
           </Link>
         </div>
-      </div>
+      </section>
 
       {/* Recent Activity (placeholder) */}
-      <div className="mt-6">
-        <h2 className="text-xl font-bold mb-4">Recent Activity</h2>
-        <div className="card bg-base-100 shadow-sm">
-          <div className="card-body">
-            <div className="text-center py-8 text-base-content/60">
-              <p>Activity log coming soon...</p>
-            </div>
-          </div>
+      <section className="mt-8 space-y-4">
+        <h2 className="text-xl font-semibold">Recent Activity</h2>
+        <div className="text-center py-8 text-base-content/60">
+          <p>Activity log coming soon...</p>
         </div>
-      </div>
+      </section>
     </>
   );
 }

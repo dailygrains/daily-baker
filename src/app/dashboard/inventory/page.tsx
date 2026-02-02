@@ -5,7 +5,7 @@ import { getIngredientsByBakery } from '@/app/actions/ingredient';
 import { getRecentInventoryActivity } from '@/app/actions/inventory';
 import { InventoryTable } from '@/components/inventory/InventoryTable';
 import Link from 'next/link';
-import { Package, TrendingUp, TrendingDown, AlertTriangle, Boxes, Plus } from 'lucide-react';
+import { Package, TrendingUp, TrendingDown, AlertTriangle, Plus } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 export default async function InventoryPage() {
@@ -87,78 +87,60 @@ export default async function InventoryPage() {
       />
 
       {/* Stats */}
-      <div className="stats stats-vertical lg:stats-horizontal shadow w-full">
-        <div className="stat">
-          <div className="stat-figure text-primary">
-            <Package className="h-8 w-8" />
-          </div>
-          <div className="stat-title">Total Ingredients</div>
-          <div className="stat-value text-primary">{totalIngredients}</div>
-          <div className="stat-desc">{ingredientsWithInventory} with inventory</div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+        <div>
+          <p className="text-sm text-base-content/70">Total Ingredients</p>
+          <p className="text-2xl font-bold text-primary">{totalIngredients}</p>
+          <p className="text-sm text-base-content/60">{ingredientsWithInventory} with inventory</p>
         </div>
-
-        <div className="stat">
-          <div className="stat-figure text-info">
-            <Boxes className="h-8 w-8" />
-          </div>
-          <div className="stat-title">Inventory Lots</div>
-          <div className="stat-value text-info">{totalLots}</div>
-          <div className="stat-desc">Active purchase lots</div>
+        <div>
+          <p className="text-sm text-base-content/70">Inventory Lots</p>
+          <p className="text-2xl font-bold">{totalLots}</p>
         </div>
-
-        <div className="stat">
-          <div className="stat-figure text-secondary">
-            <span className="text-2xl">$</span>
-          </div>
-          <div className="stat-title">Total Inventory Value</div>
-          <div className="stat-value text-secondary">${totalValue.toFixed(2)}</div>
-          <div className="stat-desc">Based on weighted average cost</div>
+        <div>
+          <p className="text-sm text-base-content/70">Total Inventory Value</p>
+          <p className="text-2xl font-bold text-success">${totalValue.toFixed(2)}</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="space-y-8">
         {/* Current Inventory Table */}
-        <div className="card bg-base-100 shadow-xl lg:col-span-2">
-          <div className="card-body">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="card-title">Current Inventory Levels</h2>
-              <Link href="/dashboard/ingredients" className="btn btn-sm btn-ghost">
-                Manage Ingredients
+        <section className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h2 className="text-xl font-semibold">Current Inventory Levels</h2>
+            <Link href="/dashboard/ingredients" className="btn btn-sm btn-ghost">
+              Manage Ingredients
+            </Link>
+          </div>
+
+          {ingredients.length === 0 ? (
+            <div className="text-center py-12">
+              <Package className="h-16 w-16 mx-auto text-base-content/30 mb-4" />
+              <h3 className="text-lg font-semibold mb-2">No ingredients yet</h3>
+              <p className="text-base-content/70 mb-4">
+                Start by adding some ingredients to track
+              </p>
+              <Link href="/dashboard/ingredients/new" className="btn btn-primary">
+                Add Ingredient
               </Link>
             </div>
-
-            {ingredients.length === 0 ? (
-              <div className="text-center py-12">
-                <Package className="h-16 w-16 mx-auto text-base-content/30 mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No ingredients yet</h3>
-                <p className="text-base-content/70 mb-4">
-                  Start by adding some ingredients to track
-                </p>
-                <Link href="/dashboard/ingredients/new" className="btn btn-primary">
-                  Add Ingredient
-                </Link>
-              </div>
-            ) : (
-              <InventoryTable ingredients={ingredients} />
-            )}
-          </div>
-        </div>
+          ) : (
+            <InventoryTable ingredients={ingredients} />
+          )}
+        </section>
 
         {/* Recent Activity */}
-        <div className="card bg-base-100 shadow-xl lg:col-span-2">
-          <div className="card-body">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="card-title">Recent Inventory Activity</h2>
-            </div>
+        <section className="space-y-4">
+          <h2 className="text-xl font-semibold">Recent Inventory Activity</h2>
 
-            {recentActivity.length === 0 ? (
-              <div className="text-center py-8">
-                <TrendingUp className="h-12 w-12 mx-auto text-base-content/30 mb-2" />
-                <p className="text-base-content/70">No recent activity</p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="table">
+          {recentActivity.length === 0 ? (
+            <div className="text-center py-8">
+              <TrendingUp className="h-12 w-12 mx-auto text-base-content/30 mb-2" />
+              <p className="text-base-content/70">No recent activity</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="table">
                   <thead>
                     <tr>
                       <th>Type</th>
@@ -199,13 +181,12 @@ export default async function InventoryPage() {
                           })}
                         </td>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        </div>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
       </div>
     </div>
   );

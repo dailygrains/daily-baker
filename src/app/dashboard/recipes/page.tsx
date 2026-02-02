@@ -74,23 +74,18 @@ export default async function RecipesPage() {
       ) : (
         <>
           {/* Stats */}
-          <div className="stats stats-horizontal shadow w-full">
-            <div className="stat">
-              <div className="stat-title">Total Recipes</div>
-              <div className="stat-value text-primary">{totalRecipes}</div>
-              <div className="stat-desc">Active recipes</div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            <div>
+              <p className="text-sm text-base-content/70">Total Recipes</p>
+              <p className="text-2xl font-bold text-primary">{totalRecipes}</p>
             </div>
-
-            <div className="stat">
-              <div className="stat-title">Total Cost</div>
-              <div className="stat-value text-secondary">${totalCost}</div>
-              <div className="stat-desc">Combined ingredient cost</div>
+            <div>
+              <p className="text-sm text-base-content/70">Total Cost</p>
+              <p className="text-2xl font-bold text-success">${totalCost}</p>
             </div>
-
-            <div className="stat">
-              <div className="stat-title">Average Cost</div>
-              <div className="stat-value text-accent">${avgCost}</div>
-              <div className="stat-desc">Per recipe</div>
+            <div>
+              <p className="text-sm text-base-content/70">Average Cost</p>
+              <p className="text-2xl font-bold">${avgCost}</p>
             </div>
           </div>
 

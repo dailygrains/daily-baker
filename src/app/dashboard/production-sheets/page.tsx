@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import { SetPageHeader } from '@/components/layout/SetPageHeader';
 import { getProductionSheetsByBakery } from '@/app/actions/productionSheet';
 import Link from 'next/link';
-import { Plus, Briefcase, CheckCircle2, Clock } from 'lucide-react';
+import { Plus, Briefcase } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 export default async function ProductionSheetsPage() {
@@ -50,43 +50,28 @@ export default async function ProductionSheetsPage() {
         />
 
         {/* Stats */}
-        <div className="stats stats-vertical lg:stats-horizontal shadow w-full">
-          <div className="stat">
-            <div className="stat-figure text-warning">
-              <Clock className="h-8 w-8" />
-            </div>
-            <div className="stat-title">Pending</div>
-            <div className="stat-value text-warning">{pendingProductionSheets.length}</div>
-            <div className="stat-desc">Waiting to be completed</div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+          <div>
+            <p className="text-sm text-base-content/70">Pending</p>
+            <p className="text-2xl font-bold text-warning">{pendingProductionSheets.length}</p>
           </div>
-
-          <div className="stat">
-            <div className="stat-figure text-success">
-              <CheckCircle2 className="h-8 w-8" />
-            </div>
-            <div className="stat-title">Completed</div>
-            <div className="stat-value text-success">{completedProductionSheets.length}</div>
-            <div className="stat-desc">Production runs finished</div>
+          <div>
+            <p className="text-sm text-base-content/70">Completed</p>
+            <p className="text-2xl font-bold text-success">{completedProductionSheets.length}</p>
           </div>
-
-          <div className="stat">
-            <div className="stat-figure text-primary">
-              <Briefcase className="h-8 w-8" />
-            </div>
-            <div className="stat-title">Total</div>
-            <div className="stat-value text-primary">{productionSheets.length}</div>
-            <div className="stat-desc">All production sheets</div>
+          <div>
+            <p className="text-sm text-base-content/70">Total</p>
+            <p className="text-2xl font-bold text-primary">{productionSheets.length}</p>
           </div>
         </div>
 
         {/* Pending Production Sheets */}
         {pendingProductionSheets.length > 0 && (
-          <div className="card bg-base-100 shadow-xl">
-            <div className="card-body">
-              <h2 className="card-title">Pending Production Sheets</h2>
+          <section className="space-y-4">
+            <h2 className="text-xl font-semibold">Pending Production Sheets</h2>
 
-              <div className="overflow-x-auto">
-                <table className="table">
+            <div className="overflow-x-auto">
+              <table className="table">
                   <thead>
                     <tr>
                       <th>Recipe</th>
@@ -127,22 +112,20 @@ export default async function ProductionSheetsPage() {
                           </Link>
                         </td>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          </div>
+          </section>
         )}
 
         {/* Completed Production Sheets */}
         {completedProductionSheets.length > 0 && (
-          <div className="card bg-base-100 shadow-xl">
-            <div className="card-body">
-              <h2 className="card-title">Completed Production Sheets</h2>
+          <section className="space-y-4">
+            <h2 className="text-xl font-semibold">Completed Production Sheets</h2>
 
-              <div className="overflow-x-auto">
-                <table className="table">
+            <div className="overflow-x-auto">
+              <table className="table">
                   <thead>
                     <tr>
                       <th>Recipe</th>
@@ -188,33 +171,28 @@ export default async function ProductionSheetsPage() {
                           </Link>
                         </td>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          </div>
+          </section>
         )}
 
         {/* Empty State */}
         {productionSheets.length === 0 && (
-          <div className="card bg-base-100 shadow-xl">
-            <div className="card-body">
-              <div className="text-center py-12">
-                <Briefcase className="h-16 w-16 mx-auto text-base-content/30 mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No production sheets yet</h3>
-                <p className="text-base-content/70 mb-4">
-                  Create a production sheet to start a production run
-                </p>
-                <Link
-                  href="/dashboard/production-sheets/new"
-                  className="btn btn-primary"
-                >
-                  <Plus className="h-4 w-4" />
-                  Create Production Sheet
-                </Link>
-              </div>
-            </div>
+          <div className="text-center py-12">
+            <Briefcase className="h-16 w-16 mx-auto text-base-content/30 mb-4" />
+            <h3 className="text-lg font-semibold mb-2">No production sheets yet</h3>
+            <p className="text-base-content/70 mb-4">
+              Create a production sheet to start a production run
+            </p>
+            <Link
+              href="/dashboard/production-sheets/new"
+              className="btn btn-primary"
+            >
+              <Plus className="h-4 w-4" />
+              Create Production Sheet
+            </Link>
           </div>
         )}
       </div>

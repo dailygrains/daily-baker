@@ -59,28 +59,23 @@ export default async function IngredientsPage() {
         />
       ) : (
         <>
-          <div className="stats shadow w-full">
-            <div className="stat">
-              <div className="stat-figure text-primary">
-                <Package className="h-8 w-8" />
-              </div>
-              <div className="stat-title">Total Ingredients</div>
-              <div className="stat-value text-primary">{ingredients.length}</div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            <div>
+              <p className="text-sm text-base-content/70">Total Ingredients</p>
+              <p className="text-2xl font-bold text-primary">{ingredients.length}</p>
             </div>
-
-            <div className="stat">
-              <div className="stat-title">Low Stock Items</div>
-              <div className="stat-value text-warning">
+            <div>
+              <p className="text-sm text-base-content/70">Low Stock Items</p>
+              <p className="text-2xl font-bold text-warning">
                 {ingredients.filter((i) => {
                   const threshold = i.lowStockThreshold;
                   return threshold != null && threshold > 0 && Number(i.currentQty) < threshold;
                 }).length}
-              </div>
+              </p>
             </div>
-
-            <div className="stat">
-              <div className="stat-title">Total Inventory Value</div>
-              <div className="stat-value text-success">
+            <div>
+              <p className="text-sm text-base-content/70">Total Inventory Value</p>
+              <p className="text-2xl font-bold text-success">
                 $
                 {ingredients
                   .reduce(
@@ -88,7 +83,7 @@ export default async function IngredientsPage() {
                     0
                   )
                   .toFixed(2)}
-              </div>
+              </p>
             </div>
           </div>
 

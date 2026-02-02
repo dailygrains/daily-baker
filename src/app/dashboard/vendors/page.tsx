@@ -45,47 +45,36 @@ export default async function VendorsPage() {
         />
 
         {/* Stats */}
-        <div className="stats stats-horizontal shadow w-full">
-          <div className="stat">
-            <div className="stat-title">Total Vendors</div>
-            <div className="stat-value text-primary">{totalVendors}</div>
-            <div className="stat-desc">Active suppliers</div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+          <div>
+            <p className="text-sm text-base-content/70">Total Vendors</p>
+            <p className="text-2xl font-bold text-primary">{totalVendors}</p>
           </div>
-
-          <div className="stat">
-            <div className="stat-title">With Email</div>
-            <div className="stat-value text-secondary">{vendorsWithEmail}</div>
-            <div className="stat-desc">Email contacts available</div>
+          <div>
+            <p className="text-sm text-base-content/70">With Email</p>
+            <p className="text-2xl font-bold">{vendorsWithEmail}</p>
           </div>
-
-          <div className="stat">
-            <div className="stat-title">With Phone</div>
-            <div className="stat-value text-accent">{vendorsWithPhone}</div>
-            <div className="stat-desc">Phone contacts available</div>
+          <div>
+            <p className="text-sm text-base-content/70">With Phone</p>
+            <p className="text-2xl font-bold">{vendorsWithPhone}</p>
           </div>
         </div>
 
         {/* Vendors List */}
         {vendors.length === 0 ? (
-          <div className="card bg-base-100 shadow-xl">
-            <div className="card-body text-center py-12">
-              <h3 className="text-2xl font-bold mb-2">No vendors yet</h3>
-              <p className="text-base-content/70 mb-6">
-                Get started by adding your first vendor
-              </p>
-              <div>
-                <Link href="/dashboard/vendors/new" className="btn btn-primary">
-                  <Plus className="h-4 w-4" />
-                  Add Your First Vendor
-                </Link>
-              </div>
-            </div>
+          <div className="text-center py-12">
+            <h3 className="text-2xl font-bold mb-2">No vendors yet</h3>
+            <p className="text-base-content/70 mb-6">
+              Get started by adding your first vendor
+            </p>
+            <Link href="/dashboard/vendors/new" className="btn btn-primary">
+              <Plus className="h-4 w-4" />
+              Add Your First Vendor
+            </Link>
           </div>
         ) : (
-          <div className="card bg-base-100 shadow-xl">
-            <div className="card-body">
-              <div className="overflow-x-auto">
-                <table className="table table-zebra">
+          <div className="overflow-x-auto">
+            <table className="table table-zebra">
                   <thead>
                     <tr>
                       <th>Vendor Name</th>
@@ -177,8 +166,6 @@ export default async function VendorsPage() {
                   </tbody>
                 </table>
               </div>
-            </div>
-          </div>
         )}
       </div>
   );

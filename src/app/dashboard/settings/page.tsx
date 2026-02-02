@@ -20,14 +20,12 @@ export default async function SettingsPage() {
           description="Configure platform-wide settings"
         />
 
-        <div className="card bg-base-100 shadow-sm">
-          <div className="card-body">
-            <h2 className="card-title">Platform Configuration</h2>
-            <p className="text-base-content/60">
-              Platform administration features coming soon.
-            </p>
-          </div>
-        </div>
+        <section className="space-y-4">
+          <h2 className="text-xl font-semibold">Platform Configuration</h2>
+          <p className="text-base-content/60">
+            Platform administration features coming soon.
+          </p>
+        </section>
       </>
     );
   }
