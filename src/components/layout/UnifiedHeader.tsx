@@ -74,11 +74,11 @@ export function UnifiedHeader() {
                 )}
               </div>
               {/* Actions - vertically aligned with back button auto-added */}
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center gap-2 shrink-0 [&_.btn]:btn-lg">
                 {backUrl && (
                   <Link
                     href={backUrl}
-                    className="btn btn-ghost"
+                    className="btn btn-ghost btn-lg"
                     onClick={handleBackClick}
                   >
                     <ArrowLeft className="h-5 w-5" />
