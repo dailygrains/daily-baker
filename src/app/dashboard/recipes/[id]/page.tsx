@@ -4,7 +4,7 @@ import { SetPageHeader } from '@/components/layout/SetPageHeader';
 import { MarkdownViewer } from '@/components/ui/MarkdownViewer';
 import { getRecipeById } from '@/app/actions/recipe';
 import Link from 'next/link';
-import { Edit, DollarSign, Layers, ClipboardList, Package, ArrowLeft } from 'lucide-react';
+import { Edit, DollarSign, Layers, ClipboardList, Package } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { calculateIngredientCost, formatUnit } from '@/lib/unitConvert';
 import { formatQuantity, formatCurrency } from '@/lib/format';
@@ -59,19 +59,13 @@ export default async function RecipeDetailPage({
           { label: recipe.name },
         ]}
         actions={
-          <>
-            <Link href="/dashboard/recipes" className="btn btn-ghost">
-              <ArrowLeft className="h-5 w-5 mr-2" />
-              Back
-            </Link>
-            <Link
-              href={`/dashboard/recipes/${id}/edit`}
-              className="btn btn-primary"
-            >
-              <Edit className="h-5 w-5 mr-2" />
-              Edit
-            </Link>
-          </>
+          <Link
+            href={`/dashboard/recipes/${id}/edit`}
+            className="btn btn-primary"
+          >
+            <Edit className="h-5 w-5 mr-2" />
+            Edit
+          </Link>
         }
       />
 

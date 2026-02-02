@@ -7,8 +7,7 @@ import { RoleForm } from '@/components/role/RoleForm';
 import { deleteRole } from '@/app/actions/role';
 import { useToast } from '@/contexts/ToastContext';
 import type { Role } from '@/generated/prisma';
-import { Trash2, Save, ArrowLeft } from 'lucide-react';
-import Link from 'next/link';
+import { Trash2, Save } from 'lucide-react';
 
 interface RoleEditPageContentProps {
   role: Role & {
@@ -59,31 +58,29 @@ export function RoleEditPageContent({ role }: RoleEditPageContentProps) {
       <SetPageHeader
         title={`Edit Platform Role: ${role.name}`}
         sticky
+        breadcrumbs={[
+          { label: 'Roles', href: '/admin/roles' },
+          { label: role.name },
+        ]}
         actions={
-          <>
-            <Link href="/admin/roles" className="btn btn-ghost">
-              <ArrowLeft className="h-5 w-5 mr-2" />
-              Back
-            </Link>
-            <button
-              type="button"
-              onClick={handleSave}
-              className="btn btn-primary"
-              disabled={isSaving || isDeleting || !hasUnsavedChanges}
-            >
-              {isSaving ? (
-                <>
-                  <span className="loading loading-spinner loading-sm"></span>
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4" />
-                  Save Changes
-                </>
-              )}
-            </button>
-          </>
+          <button
+            type="button"
+            onClick={handleSave}
+            className="btn btn-primary"
+            disabled={isSaving || isDeleting || !hasUnsavedChanges}
+          >
+            {isSaving ? (
+              <>
+                <span className="loading loading-spinner loading-sm"></span>
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4" />
+                Save Changes
+              </>
+            )}
+          </button>
         }
       />
 

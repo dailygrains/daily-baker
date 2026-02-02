@@ -7,8 +7,7 @@ import { UserAssignmentForm } from '@/components/user/UserAssignmentForm';
 import { deleteUser } from '@/app/actions/user';
 import { useToast } from '@/contexts/ToastContext';
 import type { User, Bakery, Role } from '@/generated/prisma';
-import { Trash2, Save, ArrowLeft } from 'lucide-react';
-import Link from 'next/link';
+import { Trash2, Save } from 'lucide-react';
 
 interface UserEditPageContentProps {
   user: User & {
@@ -83,31 +82,29 @@ export function UserEditPageContent({
       <SetPageHeader
         title={`Edit User: ${user.name || user.email}`}
         sticky
+        breadcrumbs={[
+          { label: 'Users', href: '/admin/users' },
+          { label: user.name || user.email },
+        ]}
         actions={
-          <>
-            <Link href="/admin/users" className="btn btn-ghost">
-              <ArrowLeft className="h-5 w-5 mr-2" />
-              Back
-            </Link>
-            <button
-              type="button"
-              onClick={handleSave}
-              className="btn btn-primary"
-              disabled={isSaving || isDeleting || !hasUnsavedChanges}
-            >
-              {isSaving ? (
-                <>
-                  <span className="loading loading-spinner loading-sm"></span>
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4" />
-                  Save Changes
-                </>
-              )}
-            </button>
-          </>
+          <button
+            type="button"
+            onClick={handleSave}
+            className="btn btn-primary"
+            disabled={isSaving || isDeleting || !hasUnsavedChanges}
+          >
+            {isSaving ? (
+              <>
+                <span className="loading loading-spinner loading-sm"></span>
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4" />
+                Save Changes
+              </>
+            )}
+          </button>
         }
       />
 

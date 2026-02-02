@@ -3,8 +3,7 @@
 import { useState } from 'react';
 import { SetPageHeader } from '@/components/layout/SetPageHeader';
 import { IngredientForm } from '@/components/ingredients/IngredientForm';
-import { Save, ArrowLeft } from 'lucide-react';
-import Link from 'next/link';
+import { Save } from 'lucide-react';
 
 interface IngredientNewPageContentProps {
   bakeryId: string;
@@ -27,31 +26,29 @@ export function IngredientNewPageContent({
       <SetPageHeader
         title="Add New Ingredient"
         sticky
+        breadcrumbs={[
+          { label: 'Ingredients', href: '/dashboard/ingredients' },
+          { label: 'New' },
+        ]}
         actions={
-          <>
-            <Link href="/dashboard/ingredients" className="btn btn-ghost">
-              <ArrowLeft className="h-5 w-5 mr-2" />
-              Back
-            </Link>
-            <button
-              type="button"
-              onClick={handleSave}
-              className="btn btn-primary"
-              disabled={isSaving}
-            >
-              {isSaving ? (
-                <>
-                  <span className="loading loading-spinner loading-sm"></span>
-                  Creating...
-                </>
-              ) : (
-                <>
-                  <Save className="h-5 w-5 mr-2" />
-                  Create Ingredient
-                </>
-              )}
-            </button>
-          </>
+          <button
+            type="button"
+            onClick={handleSave}
+            className="btn btn-primary"
+            disabled={isSaving}
+          >
+            {isSaving ? (
+              <>
+                <span className="loading loading-spinner loading-sm"></span>
+                Creating...
+              </>
+            ) : (
+              <>
+                <Save className="h-5 w-5 mr-2" />
+                Create Ingredient
+              </>
+            )}
+          </button>
         }
       />
 

@@ -2,8 +2,6 @@ import { getCurrentUser } from '@/lib/clerk';
 import { SetPageHeader } from '@/components/layout/SetPageHeader';
 import { RoleForm } from '@/components/role/RoleForm';
 import { redirect } from 'next/navigation';
-import { ArrowLeft } from 'lucide-react';
-import Link from 'next/link';
 
 export default async function NewRolePage() {
   const user = await getCurrentUser();
@@ -22,12 +20,10 @@ export default async function NewRolePage() {
         <SetPageHeader
         title="Create Platform Role"
         description="Define a new platform-wide role with specific permissions"
-        actions={
-          <Link href="/admin/roles" className="btn btn-ghost">
-            <ArrowLeft className="h-5 w-5 mr-2" />
-            Back to Roles
-          </Link>
-        }
+        breadcrumbs={[
+          { label: 'Roles', href: '/admin/roles' },
+          { label: 'New' },
+        ]}
       />
 
       <RoleForm mode="create" />

@@ -8,8 +8,6 @@ import { deleteBakery } from '@/app/actions/bakery';
 import { useToast } from '@/contexts/ToastContext';
 import type { Bakery } from '@/generated/prisma';
 import { Trash2, Save } from 'lucide-react';
-import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
 
 interface BakeryEditPageContentProps {
   bakery: Bakery & { _count: { users: number } };
@@ -56,31 +54,29 @@ export function BakeryEditPageContent({ bakery }: BakeryEditPageContentProps) {
       <SetPageHeader
         title={`Edit ${bakery.name}`}
         sticky
+        breadcrumbs={[
+          { label: 'Bakeries', href: '/admin/bakeries' },
+          { label: bakery.name },
+        ]}
         actions={
-          <>
-            <Link href="/admin/bakeries" className="btn btn-ghost">
-              <ArrowLeft className="h-5 w-5 mr-2" />
-              Back
-            </Link>
-            <button
-              type="button"
-              onClick={handleSave}
-              className="btn btn-primary"
-              disabled={isSaving || isDeleting || !hasUnsavedChanges}
-            >
-              {isSaving ? (
-                <>
-                  <span className="loading loading-spinner loading-sm"></span>
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4" />
-                  Save Changes
-                </>
-              )}
-            </button>
-          </>
+          <button
+            type="button"
+            onClick={handleSave}
+            className="btn btn-primary"
+            disabled={isSaving || isDeleting || !hasUnsavedChanges}
+          >
+            {isSaving ? (
+              <>
+                <span className="loading loading-spinner loading-sm"></span>
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4" />
+                Save Changes
+              </>
+            )}
+          </button>
         }
       />
 

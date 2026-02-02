@@ -6,7 +6,6 @@ import { SetPageHeader } from '@/components/layout/SetPageHeader';
 import { EditLotForm } from '@/components/inventory/EditLotForm';
 import { deleteInventoryLot } from '@/app/actions/inventory';
 import { useToast } from '@/contexts/ToastContext';
-import Link from 'next/link';
 import { Trash2 } from 'lucide-react';
 
 interface Vendor {
@@ -78,29 +77,21 @@ export function EditLotPageContent({ lot, vendors }: EditLotPageContentProps) {
           { label: 'Edit' },
         ]}
         actions={
-          <>
-            <Link
-              href={`/dashboard/ingredients/${lot.ingredient.id}`}
-              className="btn btn-ghost"
-            >
-              Cancel
-            </Link>
-            <button
-              type="button"
-              onClick={handleSave}
-              className="btn btn-primary"
-              disabled={isSaving || isDeleting}
-            >
-              {isSaving ? (
-                <>
-                  <span className="loading loading-spinner loading-sm"></span>
-                  Saving...
-                </>
-              ) : (
-                'Save Changes'
-              )}
-            </button>
-          </>
+          <button
+            type="button"
+            onClick={handleSave}
+            className="btn btn-primary"
+            disabled={isSaving || isDeleting}
+          >
+            {isSaving ? (
+              <>
+                <span className="loading loading-spinner loading-sm"></span>
+                Saving...
+              </>
+            ) : (
+              'Save Changes'
+            )}
+          </button>
         }
       />
 

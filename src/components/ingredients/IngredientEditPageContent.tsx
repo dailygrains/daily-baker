@@ -3,8 +3,7 @@
 import { useState } from 'react';
 import { SetPageHeader } from '@/components/layout/SetPageHeader';
 import { IngredientForm } from '@/components/ingredients/IngredientForm';
-import { Save, ArrowLeft } from 'lucide-react';
-import Link from 'next/link';
+import { Save } from 'lucide-react';
 import type { Decimal } from '@prisma/client/runtime/library';
 
 interface Vendor {
@@ -52,30 +51,24 @@ export function IngredientEditPageContent({
           { label: 'Edit' },
         ]}
         actions={
-          <>
-            <Link href="/dashboard/ingredients" className="btn btn-ghost">
-              <ArrowLeft className="h-5 w-5 mr-2" />
-              Back
-            </Link>
-            <button
-              type="button"
-              onClick={handleSave}
-              className="btn btn-primary"
-              disabled={isSaving || !hasUnsavedChanges}
-            >
-              {isSaving ? (
-                <>
-                  <span className="loading loading-spinner loading-sm"></span>
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Save className="h-5 w-5 mr-2" />
-                  Save Changes
-                </>
-              )}
-            </button>
-          </>
+          <button
+            type="button"
+            onClick={handleSave}
+            className="btn btn-primary"
+            disabled={isSaving || !hasUnsavedChanges}
+          >
+            {isSaving ? (
+              <>
+                <span className="loading loading-spinner loading-sm"></span>
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="h-5 w-5 mr-2" />
+                Save Changes
+              </>
+            )}
+          </button>
         }
       />
 

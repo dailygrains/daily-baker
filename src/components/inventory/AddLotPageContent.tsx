@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { SetPageHeader } from '@/components/layout/SetPageHeader';
 import { AddLotForm } from '@/components/inventory/AddLotForm';
-import Link from 'next/link';
 
 interface Ingredient {
   id: string;
@@ -41,27 +40,26 @@ export function AddLotPageContent({
       <SetPageHeader
         title="Add Inventory Lot"
         sticky
+        breadcrumbs={[
+          { label: 'Inventory', href: '/dashboard/inventory' },
+          { label: 'New Lot' },
+        ]}
         actions={
-          <>
-            <Link href={preselectedIngredientId ? `/dashboard/ingredients/${preselectedIngredientId}` : '/dashboard/inventory'} className="btn btn-ghost">
-              Cancel
-            </Link>
-            <button
-              type="button"
-              onClick={handleSave}
-              className="btn btn-primary"
-              disabled={isSaving}
-            >
-              {isSaving ? (
-                <>
-                  <span className="loading loading-spinner loading-sm"></span>
-                  Adding...
-                </>
-              ) : (
-                'Add Lot'
-              )}
-            </button>
-          </>
+          <button
+            type="button"
+            onClick={handleSave}
+            className="btn btn-primary"
+            disabled={isSaving}
+          >
+            {isSaving ? (
+              <>
+                <span className="loading loading-spinner loading-sm"></span>
+                Adding...
+              </>
+            ) : (
+              'Add Lot'
+            )}
+          </button>
         }
       />
 

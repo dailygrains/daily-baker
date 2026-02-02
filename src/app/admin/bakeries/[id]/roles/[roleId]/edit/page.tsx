@@ -4,8 +4,6 @@ import { RoleForm } from '@/components/role/RoleForm';
 import { getRoleById } from '@/app/actions/role';
 import { getBakeryById } from '@/app/actions/bakery';
 import { redirect } from 'next/navigation';
-import { ArrowLeft } from 'lucide-react';
-import Link from 'next/link';
 
 export default async function EditRolePage({
   params,
@@ -61,12 +59,11 @@ export default async function EditRolePage({
         <SetPageHeader
         title={`Edit Platform Role: ${role.name}`}
         description="Update platform-wide role details and permissions"
-        actions={
-          <Link href={`/admin/bakeries/${id}/roles`} className="btn btn-ghost">
-            <ArrowLeft className="h-5 w-5 mr-2" />
-            Back to Roles
-          </Link>
-        }
+        breadcrumbs={[
+          { label: 'Bakeries', href: '/admin/bakeries' },
+          { label: bakery.name, href: `/admin/bakeries/${id}/roles` },
+          { label: role.name },
+        ]}
       />
 
       <RoleForm role={role} bakery={bakery} mode="edit" />

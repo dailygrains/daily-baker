@@ -4,8 +4,6 @@ import { InvitationForm } from '@/components/invitation/InvitationForm';
 import { getAllBakeries } from '@/app/actions/bakery';
 import { getAllRoles } from '@/app/actions/user';
 import { redirect } from 'next/navigation';
-import { ArrowLeft } from 'lucide-react';
-import Link from 'next/link';
 
 export default async function NewInvitationPage() {
   const user = await getCurrentUser();
@@ -32,12 +30,10 @@ export default async function NewInvitationPage() {
         <SetPageHeader
         title="Send Invitation"
         description="Invite a new user to the platform"
-        actions={
-          <Link href="/admin/invitations" className="btn btn-ghost">
-            <ArrowLeft className="h-5 w-5 mr-2" />
-            Back to Invitations
-          </Link>
-        }
+        breadcrumbs={[
+          { label: 'Invitations', href: '/admin/invitations' },
+          { label: 'New' },
+        ]}
       />
 
       <InvitationForm bakeries={bakeries} roles={roles} />

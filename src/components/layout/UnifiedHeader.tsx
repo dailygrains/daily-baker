@@ -1,6 +1,6 @@
 'use client';
 
-import { PanelLeft } from 'lucide-react';
+import { PanelLeft, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useHeader } from '@/contexts/HeaderContext';
 
@@ -11,22 +11,28 @@ export function UnifiedHeader() {
     ? 'sticky top-0 z-10 shadow-sm'
     : '';
 
+  // Determine back URL from breadcrumbs - last breadcrumb with an href
+  const backUrl = config?.breadcrumbs
+    ?.filter(crumb => crumb.href)
+    .slice(-1)[0]?.href;
+
   return (
     <header className={`bg-base-100 border-b border-base-300 ${stickyClass}`}>
-      <div className="flex items-start gap-2 px-4 py-2">
-        {/* Sidebar Toggle - aligned to top */}
+      <div className="flex items-start gap-2 px-4 py-3">
+        {/* Sidebar Toggle */}
         <label
           htmlFor="sidebar-drawer"
           aria-label="toggle sidebar"
-          className="btn btn-square btn-ghost btn-sm mt-1"
+          className="btn btn-square btn-ghost btn-sm"
         >
           <PanelLeft className="h-5 w-5" />
         </label>
 
         {/* Page Header Content */}
         {config ? (
-          <div className="flex flex-1 flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
+          <div className="flex flex-1 flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4">
             <div className="min-w-0 flex-1">
+              <h1 className="text-3xl font-bold truncate">{config.title}</h1>
               {config.breadcrumbs && config.breadcrumbs.length > 0 && (
                 <div className="breadcrumbs text-sm py-0">
                   <ul>
@@ -44,16 +50,20 @@ export function UnifiedHeader() {
                   </ul>
                 </div>
               )}
-              <h1 className="text-xl font-bold truncate">{config.title}</h1>
               {config.description && (
                 <p className="text-sm text-base-content/60 truncate">{config.description}</p>
               )}
             </div>
-            {config.actions && (
-              <div className="flex gap-2 shrink-0">
-                {config.actions}
-              </div>
-            )}
+            {/* Actions - vertically aligned with back button auto-added */}
+            <div className="flex items-center gap-2 shrink-0">
+              {backUrl && (
+                <Link href={backUrl} className="btn btn-ghost">
+                  <ArrowLeft className="h-5 w-5" />
+                  Back
+                </Link>
+              )}
+              {config.actions}
+            </div>
           </div>
         ) : (
           <div className="flex-1">

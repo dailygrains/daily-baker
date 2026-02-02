@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import { getInventoryLotById } from '@/app/actions/inventory';
 import { SetPageHeader } from '@/components/layout/SetPageHeader';
 import Link from 'next/link';
-import { Edit, ArrowLeft, Package, DollarSign, Calendar, AlertTriangle } from 'lucide-react';
+import { Edit, Package, DollarSign, Calendar, AlertTriangle } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 import { formatQuantity, formatCurrency } from '@/lib/format';
 
@@ -50,22 +50,13 @@ export default async function LotDetailPage({
           { label: 'Lot' },
         ]}
         actions={
-          <>
-            <Link
-              href={`/dashboard/ingredients/${lot.ingredient.id}`}
-              className="btn btn-ghost"
-            >
-              <ArrowLeft className="h-5 w-5 mr-2" />
-              Back
-            </Link>
-            <Link
-              href={`/dashboard/inventory/lots/${id}/edit`}
-              className="btn btn-primary"
-            >
-              <Edit className="h-5 w-5 mr-2" />
-              Edit
-            </Link>
-          </>
+          <Link
+            href={`/dashboard/inventory/lots/${id}/edit`}
+            className="btn btn-primary"
+          >
+            <Edit className="h-5 w-5 mr-2" />
+            Edit
+          </Link>
         }
       />
 
