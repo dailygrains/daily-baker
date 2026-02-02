@@ -64,7 +64,8 @@ export function RecipeForm({
   const [formData, setFormData] = useState({
     name: recipe?.name ?? '',
     description: recipe?.description ?? '',
-    yield: recipe?.yield ?? '',
+    yieldQty: recipe?.yieldQty ?? 1,
+    yieldUnit: recipe?.yieldUnit ?? '',
   });
 
   const [sections, setSections] = useState<SectionFormData[]>(
@@ -277,17 +278,27 @@ export function RecipeForm({
 
         <fieldset className="fieldset">
           <legend className="fieldset-legend">Yield *</legend>
-          <input
-            type="text"
-            className="input input-bordered w-full"
-            value={formData.yield}
-            onChange={(e) => setFormData({ ...formData, yield: e.target.value })}
-            required
-            maxLength={100}
-            placeholder="e.g., 2 loaves, 12 baguettes"
-          />
+          <div className="flex gap-2">
+            <input
+              type="number"
+              min="1"
+              className="input input-bordered w-24"
+              value={formData.yieldQty}
+              onChange={(e) => setFormData({ ...formData, yieldQty: parseInt(e.target.value) || 1 })}
+              required
+            />
+            <input
+              type="text"
+              className="input input-bordered flex-1"
+              value={formData.yieldUnit}
+              onChange={(e) => setFormData({ ...formData, yieldUnit: e.target.value })}
+              required
+              maxLength={100}
+              placeholder="e.g., loaves, baguettes, dozen cookies"
+            />
+          </div>
           <label className="label">
-            <span className="label-text-alt">Total quantity produced by this recipe</span>
+            <span className="label-text-alt">Quantity and description of what this recipe produces</span>
           </label>
         </fieldset>
       </div>

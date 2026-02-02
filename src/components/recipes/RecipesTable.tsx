@@ -10,7 +10,8 @@ interface Recipe {
   id: string;
   name: string;
   description: string | null;
-  yield: string;
+  yieldQty: number;
+  yieldUnit: string;
   totalCost: string;
   _count: {
     sections: number;
@@ -60,10 +61,8 @@ export function RecipesTable({ recipes }: RecipesTableProps) {
           </thead>
           <tbody>
             {currentRecipes.map((recipe) => {
-              const yieldMatch = recipe.yield.match(/(\d+)/);
-              const yieldNum = yieldMatch ? parseInt(yieldMatch[1]) : 1;
               const totalCost = Number(recipe.totalCost);
-              const costPerUnit = yieldNum > 0 ? (totalCost / yieldNum).toFixed(2) : '0.00';
+              const costPerUnit = recipe.yieldQty > 0 ? (totalCost / recipe.yieldQty).toFixed(2) : '0.00';
 
               return (
                 <tr
@@ -85,7 +84,7 @@ export function RecipesTable({ recipes }: RecipesTableProps) {
                       )}
                     </div>
                   </td>
-                  <td className="align-top">{recipe.yield}</td>
+                  <td className="align-top">{recipe.yieldQty} {recipe.yieldUnit}</td>
                   <td className="align-top">
                     <span className="badge badge-info gap-1">
                       <Layers className="h-3 w-3" />

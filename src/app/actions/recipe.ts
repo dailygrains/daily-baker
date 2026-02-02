@@ -131,7 +131,8 @@ export async function createRecipe(data: CreateRecipeInput) {
         bakeryId: validatedData.bakeryId,
         name: validatedData.name,
         description: validatedData.description || null,
-        yield: validatedData.yield,
+        yieldQty: validatedData.yieldQty,
+        yieldUnit: validatedData.yieldUnit,
         totalCost: new Decimal(totalCost),
         sections: {
           create: validatedData.sections.map((section) => ({
@@ -171,7 +172,7 @@ export async function createRecipe(data: CreateRecipeInput) {
       description: `Created recipe "${recipe.name}"`,
       metadata: {
         recipeId: recipe.id,
-        yield: recipe.yield,
+        yield: `${recipe.yieldQty} ${recipe.yieldUnit}`,
         sectionCount: recipe.sections.length,
       },
       bakeryId: recipe.bakeryId,
@@ -237,7 +238,8 @@ export async function updateRecipe(data: UpdateRecipeInput) {
       data: {
         name: validatedData.name,
         description: validatedData.description,
-        yield: validatedData.yield,
+        yieldQty: validatedData.yieldQty,
+        yieldUnit: validatedData.yieldUnit,
         ...(totalCost !== undefined && { totalCost: new Decimal(totalCost) }),
         ...(validatedData.sections && {
           sections: {

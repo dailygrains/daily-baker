@@ -825,7 +825,8 @@ async function main() {
       bakeryId: dailyGrains.id,
       name: 'Country Sourdough Bread',
       description: 'Our signature naturally leavened sourdough with a blend of heritage whole-grain flours.',
-      yield: '2 loaves',
+      yieldQty: 2,
+      yieldUnit: 'loaves',
       totalCost: 0,
     },
   });
@@ -854,7 +855,8 @@ async function main() {
       bakeryId: dailyGrains.id,
       name: 'Brown Butter Dark Chocolate Chip Cookie',
       description: 'Chewy cookies made with heritage whole wheat flour blend and brown butter.',
-      yield: '24 cookies',
+      yieldQty: 24,
+      yieldUnit: 'cookies',
       totalCost: 0,
     },
   });
@@ -888,7 +890,8 @@ async function main() {
       bakeryId: dailyGrains.id,
       name: 'Brioche Cinnamon Roll',
       description: 'Rich brioche dough with cinnamon sugar filling and vanilla glaze.',
-      yield: '12 rolls',
+      yieldQty: 12,
+      yieldUnit: 'rolls',
       totalCost: 0,
     },
   });
@@ -939,7 +942,8 @@ async function main() {
       bakeryId: dailyGrains.id,
       name: 'Apricot Cherry Sourdough Bread',
       description: 'Einkorn sourdough studded with organic dried apricots and cherries, with a hint of lemon.',
-      yield: '2 loaves',
+      yieldQty: 2,
+      yieldUnit: 'loaves',
       totalCost: 0,
     },
   });
@@ -971,7 +975,8 @@ async function main() {
       bakeryId: dailyGrains.id,
       name: 'Oatmeal Cookie',
       description: 'Classic oatmeal cookies with thick rolled oats and White Sonora whole wheat.',
-      yield: '36 cookies',
+      yieldQty: 36,
+      yieldUnit: 'cookies',
       totalCost: 0,
     },
   });

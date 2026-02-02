@@ -140,7 +140,8 @@ model Recipe {
   bakery      Bakery   @relation(fields: [bakeryId], references: [id], onDelete: Cascade)
   name        String
   description String?  @db.Text
-  yield       String // "10 loaves", "24 rolls"
+  yieldQty    Int      // Numeric yield amount (e.g., 2)
+  yieldUnit   String   // Yield description (e.g., "loaves", "dozen rolls")
   totalCost   Decimal  @default(0) @db.Decimal(10, 2) // Computed from sections
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

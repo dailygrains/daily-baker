@@ -12,7 +12,8 @@ interface RecipeEditPageContentProps {
     id: string;
     name: string;
     description: string | null;
-    yield: string;
+    yieldQty: number;
+    yieldUnit: string;
     totalCost: string;
     createdAt: Date;
     updatedAt: Date;

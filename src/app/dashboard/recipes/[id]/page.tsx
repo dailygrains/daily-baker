@@ -46,9 +46,7 @@ export default async function RecipeDetailPage({
   }, 0);
 
   // Calculate cost per unit
-  const yieldMatch = recipe.yield.match(/(\d+)/);
-  const yieldNum = yieldMatch ? parseInt(yieldMatch[1]) : 1;
-  const costPerUnit = yieldNum > 0 ? (totalCost / yieldNum).toFixed(2) : '0.00';
+  const costPerUnit = recipe.yieldQty > 0 ? (totalCost / recipe.yieldQty).toFixed(2) : '0.00';
 
   return (
     <>
@@ -79,7 +77,7 @@ export default async function RecipeDetailPage({
                 <div className="grid grid-cols-2 gap-4 mt-4">
                   <div>
                     <p className="text-sm text-base-content/70">Yield</p>
-                    <p className="text-2xl font-bold">{recipe.yield}</p>
+                    <p className="text-2xl font-bold">{recipe.yieldQty} {recipe.yieldUnit}</p>
                   </div>
 
                   <div>

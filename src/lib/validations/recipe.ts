@@ -28,7 +28,8 @@ export const createRecipeSchema = z.object({
   bakeryId: z.string().cuid(),
   name: z.string().min(1, 'Recipe name is required').max(200),
   description: z.string().max(2000).optional().nullable(),
-  yield: z.string().min(1, 'Yield is required').max(100),
+  yieldQty: z.number().int().positive('Yield quantity must be a positive number'),
+  yieldUnit: z.string().min(1, 'Yield unit is required').max(100),
   sections: z.array(recipeSectionSchema).min(1, 'At least one section is required'),
 });
 
@@ -39,7 +40,8 @@ export const updateRecipeSchema = z.object({
   id: z.string().cuid(),
   name: z.string().min(1, 'Recipe name is required').max(200).optional(),
   description: z.string().max(2000).optional().nullable(),
-  yield: z.string().min(1, 'Yield is required').max(100).optional(),
+  yieldQty: z.number().int().positive('Yield quantity must be a positive number').optional(),
+  yieldUnit: z.string().min(1, 'Yield unit is required').max(100).optional(),
   sections: z.array(recipeSectionSchema).optional(),
 });
 
