@@ -16,11 +16,13 @@ async function main() {
     await prisma.recipeSectionIngredient.deleteMany();
     await prisma.recipeSection.deleteMany();
     await prisma.recipe.deleteMany();
+    await prisma.ingredientVendor.deleteMany();
     await prisma.ingredient.deleteMany();
     await prisma.unitConversion.deleteMany();
     await prisma.vendorContact.deleteMany();
     await prisma.vendor.deleteMany();
     await prisma.equipment.deleteMany();
+    await prisma.userBakery.deleteMany();
     await prisma.user.deleteMany();
     await prisma.role.deleteMany();
     await prisma.bakery.deleteMany();
@@ -32,14 +34,14 @@ async function main() {
   // ==========================================================================
   console.log('🏪 Creating bakeries...');
 
-  const artisanBakery = await prisma.bakery.create({
+  const dailyGrains = await prisma.bakery.create({
     data: {
-      name: 'Artisan Sourdough Co.',
-      slug: 'artisan-sourdough',
-      address: '123 Main Street, Portland, OR 97201',
+      name: 'Daily Grains Bakery',
+      slug: 'daily-grains',
+      address: '123 Heritage Lane, Portland, OR 97201',
       phone: '(503) 555-0100',
-      email: 'hello@artisansourdough.com',
-      website: 'https://artisansourdough.com',
+      email: 'hello@dailygrains.co',
+      website: 'https://dailygrains.co',
       isActive: true,
     },
   });
@@ -68,7 +70,7 @@ async function main() {
     },
   });
 
-  console.log(`✅ Created ${3} bakeries\n`);
+  console.log(`✅ Created 3 bakeries\n`);
 
   // ==========================================================================
   // Create Platform-Wide Roles
@@ -120,7 +122,7 @@ async function main() {
     },
   });
 
-  console.log(`✅ Created ${3} platform-wide roles\n`);
+  console.log(`✅ Created 3 platform-wide roles\n`);
 
   // ==========================================================================
   // Create Users
@@ -138,50 +140,50 @@ async function main() {
     },
   });
 
-  // Artisan Sourdough Users
-  const _artisanOwner = await prisma.user.create({
+  // Daily Grains Users
+  const _dailyGrainsOwner = await prisma.user.create({
     data: {
-      clerkId: 'user_artisan_owner',
-      email: 'owner@artisansourdough.com',
-      name: 'Sarah Johnson',
+      clerkId: 'user_dailygrains_owner',
+      email: 'owner@dailygrains.co',
+      name: 'Paul Bonneville',
       roleId: ownerRole.id,
       isPlatformAdmin: false,
       lastLoginAt: new Date(),
       bakeries: {
         create: {
-          bakeryId: artisanBakery.id,
+          bakeryId: dailyGrains.id,
         },
       },
     },
   });
 
-  const artisanManager = await prisma.user.create({
+  const dailyGrainsManager = await prisma.user.create({
     data: {
-      clerkId: 'user_artisan_manager',
-      email: 'manager@artisansourdough.com',
+      clerkId: 'user_dailygrains_manager',
+      email: 'manager@dailygrains.co',
       name: 'Michael Chen',
       roleId: managerRole.id,
       isPlatformAdmin: false,
       lastLoginAt: new Date(),
       bakeries: {
         create: {
-          bakeryId: artisanBakery.id,
+          bakeryId: dailyGrains.id,
         },
       },
     },
   });
 
-  const artisanBaker = await prisma.user.create({
+  const dailyGrainsBaker = await prisma.user.create({
     data: {
-      clerkId: 'user_artisan_baker',
-      email: 'baker@artisansourdough.com',
+      clerkId: 'user_dailygrains_baker',
+      email: 'baker@dailygrains.co',
       name: 'Emma Rodriguez',
       roleId: bakerRole.id,
       isPlatformAdmin: false,
       lastLoginAt: new Date(),
       bakeries: {
         create: {
-          bakeryId: artisanBakery.id,
+          bakeryId: dailyGrains.id,
         },
       },
     },
@@ -204,7 +206,7 @@ async function main() {
     },
   });
 
-  console.log(`✅ Created ${5} users\n`);
+  console.log(`✅ Created 5 users\n`);
 
   // ==========================================================================
   // Create Unit Conversions
@@ -220,6 +222,8 @@ async function main() {
       { fromUnit: 'oz', toUnit: 'lb', factor: 0.0625, category: 'weight' },
       { fromUnit: 'kg', toUnit: 'lb', factor: 2.20462, category: 'weight' },
       { fromUnit: 'lb', toUnit: 'kg', factor: 0.453592, category: 'weight' },
+      { fromUnit: 'lb', toUnit: 'g', factor: 453.592, category: 'weight' },
+      { fromUnit: 'g', toUnit: 'oz', factor: 0.035274, category: 'weight' },
 
       // Volume conversions
       { fromUnit: 'L', toUnit: 'mL', factor: 1000, category: 'volume' },
@@ -233,28 +237,49 @@ async function main() {
     ],
   });
 
-  console.log(`✅ Created ${14} unit conversions\n`);
+  console.log(`✅ Created 16 unit conversions\n`);
 
   // ==========================================================================
-  // Create Vendors (for Artisan Sourdough)
+  // Create Vendors (for Daily Grains)
   // ==========================================================================
   console.log('🚚 Creating vendors...');
 
   const flourVendor = await prisma.vendor.create({
     data: {
-      bakeryId: artisanBakery.id,
-      name: 'Northwest Grain Suppliers',
-      email: 'orders@nwgrain.com',
-      phone: '(503) 555-1000',
-      website: 'https://nwgrain.com',
-      notes: 'Primary flour supplier - organic and conventional',
+      bakeryId: dailyGrains.id,
+      name: 'Camas Country Mill',
+      email: 'orders@camascountrymill.com',
+      phone: '(541) 555-1000',
+      website: 'https://camascountrymill.com',
+      notes: 'Local heritage grain supplier - organic whole grain flours',
       contacts: {
         create: [
           {
             name: 'Tom Williams',
             title: 'Sales Representative',
-            email: 'tom@nwgrain.com',
-            phone: '(503) 555-1001',
+            email: 'tom@camascountrymill.com',
+            phone: '(541) 555-1001',
+          },
+        ],
+      },
+    },
+  });
+
+  const organicFlourVendor = await prisma.vendor.create({
+    data: {
+      bakeryId: dailyGrains.id,
+      name: 'Central Milling Company',
+      email: 'orders@centralmilling.com',
+      phone: '(801) 555-1100',
+      website: 'https://centralmilling.com',
+      notes: 'Organic bread flour and specialty flours',
+      contacts: {
+        create: [
+          {
+            name: 'Sarah Mills',
+            title: 'Account Manager',
+            email: 'sarah@centralmilling.com',
+            phone: '(801) 555-1101',
           },
         ],
       },
@@ -263,141 +288,469 @@ async function main() {
 
   const dairyVendor = await prisma.vendor.create({
     data: {
-      bakeryId: artisanBakery.id,
-      name: 'Valley Fresh Dairy',
-      email: 'orders@valleydairy.com',
-      phone: '(503) 555-2000',
-      website: 'https://valleydairy.com',
-      notes: 'Organic butter and milk',
+      bakeryId: dailyGrains.id,
+      name: 'Organic Valley',
+      email: 'orders@organicvalley.coop',
+      phone: '(888) 555-2000',
+      website: 'https://organicvalley.coop',
+      notes: 'Organic butter, milk, and eggs',
       contacts: {
         create: [
           {
             name: 'Lisa Anderson',
             title: 'Account Manager',
-            email: 'lisa@valleydairy.com',
-            phone: '(503) 555-2001',
+            email: 'lisa@organicvalley.coop',
+            phone: '(888) 555-2001',
           },
         ],
       },
     },
   });
 
-  console.log(`✅ Created ${2} vendors\n`);
+  const chocolateVendor = await prisma.vendor.create({
+    data: {
+      bakeryId: dailyGrains.id,
+      name: 'Guittard Chocolate',
+      email: 'orders@guittard.com',
+      phone: '(650) 555-3000',
+      website: 'https://guittard.com',
+      notes: 'Premium chocolate chips and chunks',
+      contacts: {
+        create: [
+          {
+            name: 'Mark Chen',
+            title: 'Sales Rep',
+            email: 'mark@guittard.com',
+            phone: '(650) 555-3001',
+          },
+        ],
+      },
+    },
+  });
+
+  const dryGoodsVendor = await prisma.vendor.create({
+    data: {
+      bakeryId: dailyGrains.id,
+      name: 'Azure Standard',
+      email: 'orders@azurestandard.com',
+      phone: '(541) 555-4000',
+      website: 'https://azurestandard.com',
+      notes: 'Organic dried fruits, nuts, seeds, sugars, and spices',
+      contacts: {
+        create: [
+          {
+            name: 'Emily Rose',
+            title: 'Customer Service',
+            email: 'emily@azurestandard.com',
+            phone: '(541) 555-4001',
+          },
+        ],
+      },
+    },
+  });
+
+  console.log(`✅ Created 5 vendors\n`);
 
   // ==========================================================================
-  // Create Ingredients (for Artisan Sourdough)
+  // Create Ingredients (for Daily Grains) - Real ingredients from Square menu
   // ==========================================================================
   console.log('🧪 Creating ingredients...');
 
+  // ----- FLOURS & GRAINS -----
   const breadFlour = await prisma.ingredient.create({
-    data: {
-      bakeryId: artisanBakery.id,
-      name: 'Bread Flour (Organic)',
-      unit: 'kg',
-    },
+    data: { bakeryId: dailyGrains.id, name: 'Organic Bread Flour', unit: 'lb' },
   });
 
-  const wholeWheatFlour = await prisma.ingredient.create({
-    data: {
-      bakeryId: artisanBakery.id,
-      name: 'Whole Wheat Flour',
-      unit: 'kg',
-    },
+  const allPurposeFlour = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Organic All-Purpose Flour', unit: 'lb' },
   });
 
-  const _ryeFlour = await prisma.ingredient.create({
-    data: {
-      bakeryId: artisanBakery.id,
-      name: 'Rye Flour',
-      unit: 'kg',
-    },
+  const whiteSonoraFlour = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'White Sonora Whole Wheat Flour', unit: 'lb' },
   });
 
-  const salt = await prisma.ingredient.create({
-    data: {
-      bakeryId: artisanBakery.id,
-      name: 'Sea Salt',
-      unit: 'kg',
-    },
+  const turkeyRedFlour = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Turkey Red Whole Wheat Flour', unit: 'lb' },
   });
 
-  const water = await prisma.ingredient.create({
-    data: {
-      bakeryId: artisanBakery.id,
-      name: 'Filtered Water',
-      unit: 'L',
-    },
+  const rougeFlour = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Rouge de Bordeaux Whole Wheat Flour', unit: 'lb' },
   });
 
-  const yeast = await prisma.ingredient.create({
-    data: {
-      bakeryId: artisanBakery.id,
-      name: 'Active Dry Yeast',
-      unit: 'kg',
-    },
+  const einkornFlour = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Einkorn Whole Grain Flour', unit: 'lb' },
   });
 
+  const speltFlour = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Organic Spelt Whole Grain Flour', unit: 'lb' },
+  });
+
+  const kamutFlour = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Organic Kamut Whole Grain Flour', unit: 'lb' },
+  });
+
+  const kernzaFlour = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Kernza Whole Grain Flour', unit: 'lb' },
+  });
+
+  const yecoraRojoFlour = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Yecora Rojo Whole Wheat Flour', unit: 'lb' },
+  });
+
+  const emmerFlour = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Emmer Whole Grain Flour', unit: 'lb' },
+  });
+
+  const darkRyeFlour = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Organic Dark Rye Flour', unit: 'lb' },
+  });
+
+  const oatFlour = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Whole Grain Oat Flour', unit: 'lb' },
+  });
+
+  const riceFlour = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Rice Flour (for prep)', unit: 'lb' },
+  });
+
+  const thickRolledOats = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Thick Rolled Oats', unit: 'lb' },
+  });
+
+  const wholeOatGroats = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Organic Whole Oat Groats', unit: 'lb' },
+  });
+
+  const ryeFlakes = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Organic Rye Flakes', unit: 'lb' },
+  });
+
+  const wheatFlakes = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Organic Wheat Flakes', unit: 'lb' },
+  });
+
+  // ----- DAIRY & EGGS -----
   const butter = await prisma.ingredient.create({
-    data: {
-      bakeryId: artisanBakery.id,
-      name: 'Unsalted Butter (Organic)',
-      unit: 'kg',
-    },
-  });
-
-  const milk = await prisma.ingredient.create({
-    data: {
-      bakeryId: artisanBakery.id,
-      name: 'Whole Milk',
-      unit: 'L',
-    },
+    data: { bakeryId: dailyGrains.id, name: 'Organic Unsalted Butter', unit: 'lb' },
   });
 
   const eggs = await prisma.ingredient.create({
-    data: {
-      bakeryId: artisanBakery.id,
-      name: 'Large Eggs (Organic)',
-      unit: 'unit',
-    },
+    data: { bakeryId: dailyGrains.id, name: 'Organic Eggs', unit: 'dozen' },
   });
 
-  const sugar = await prisma.ingredient.create({
-    data: {
-      bakeryId: artisanBakery.id,
-      name: 'Granulated Sugar',
-      unit: 'kg',
-    },
+  const milk = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Organic Whole Milk', unit: 'gal' },
   });
 
-  console.log(`✅ Created ${10} ingredients`);
+  const buttermilk = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Buttermilk', unit: 'qt' },
+  });
+
+  const nonfatDryMilk = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Nonfat Dry Milk', unit: 'lb' },
+  });
+
+  const parmesanCheese = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Parmesan Cheese', unit: 'lb' },
+  });
+
+  const cheddarCheese = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Extra Sharp Cheddar Cheese', unit: 'lb' },
+  });
+
+  // ----- SUGARS & SWEETENERS -----
+  const caneS = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Organic Cane Sugar', unit: 'lb' },
+  });
+
+  const brownSugar = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Organic Brown Sugar', unit: 'lb' },
+  });
+
+  const powderedSugar = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Powdered Sugar', unit: 'lb' },
+  });
+
+  const honey = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Organic Honey', unit: 'lb' },
+  });
+
+  const molasses = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Molasses', unit: 'qt' },
+  });
+
+  // ----- CHOCOLATE -----
+  const darkChocolateChips = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Bittersweet Dark Chocolate Chips', unit: 'lb' },
+  });
+
+  const milkChocolateChips = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Milk Chocolate Chips', unit: 'lb' },
+  });
+
+  const whiteChocolateChips = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'White Chocolate Chips', unit: 'lb' },
+  });
+
+  const darkChocolateChunks = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Dark Chocolate Chunks', unit: 'lb' },
+  });
+
+  const cocoaPowder = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Organic Cocoa Powder', unit: 'lb' },
+  });
+
+  // ----- NUTS & SEEDS -----
+  const pecans = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Organic Pecans', unit: 'lb' },
+  });
+
+  const pistachios = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Pistachios', unit: 'lb' },
+  });
+
+  const sunflowerSeeds = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Organic Sunflower Seeds', unit: 'lb' },
+  });
+
+  const sesameSeeds = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Sesame Seeds', unit: 'lb' },
+  });
+
+  const flaxseed = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Organic Brown Flaxseed', unit: 'lb' },
+  });
+
+  const poppySeeds = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Poppy Seeds', unit: 'lb' },
+  });
+
+  const hulledMillet = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Organic Hulled Millet', unit: 'lb' },
+  });
+
+  // ----- DRIED FRUITS -----
+  const driedApples = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Organic Dried Apples', unit: 'lb' },
+  });
+
+  const driedApricots = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Organic Unsulfured Dried Apricots', unit: 'lb' },
+  });
+
+  const driedCherries = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Organic Unsulfured Dried Cherries', unit: 'lb' },
+  });
+
+  const raisins = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Organic Raisins', unit: 'lb' },
+  });
+
+  const driedCranberries = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Organic Dried Cranberries', unit: 'lb' },
+  });
+
+  // ----- SPICES & FLAVORINGS -----
+  const seaSalt = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Sea Salt', unit: 'lb' },
+  });
+
+  const cinnamon = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Organic Cinnamon', unit: 'oz' },
+  });
+
+  const nutmeg = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Organic Nutmeg', unit: 'oz' },
+  });
+
+  const cardamom = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Organic Cardamom', unit: 'oz' },
+  });
+
+  const ginger = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Organic Ground Ginger', unit: 'oz' },
+  });
+
+  const allspice = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Organic Allspice', unit: 'oz' },
+  });
+
+  const vanilla = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Organic Vanilla Extract', unit: 'oz' },
+  });
+
+  const cloves = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Ground Cloves', unit: 'oz' },
+  });
+
+  const blackPepper = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Black Peppercorns', unit: 'oz' },
+  });
+
+  const turmeric = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Organic Ground Turmeric', unit: 'oz' },
+  });
+
+  const creamOfTartar = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Cream of Tartar', unit: 'oz' },
+  });
+
+  // ----- HERBS -----
+  const freshRosemary = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Organic Fresh Rosemary', unit: 'oz' },
+  });
+
+  const sage = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Organic Sage', unit: 'oz' },
+  });
+
+  const driedBasil = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Dried Basil', unit: 'oz' },
+  });
+
+  const driedOregano = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Dried Oregano', unit: 'oz' },
+  });
+
+  const redPepperFlakes = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Red Pepper Flakes', unit: 'oz' },
+  });
+
+  const garlicPowder = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Garlic Powder', unit: 'oz' },
+  });
+
+  const onionPowder = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Onion Powder', unit: 'oz' },
+  });
+
+  // ----- OTHER -----
+  const sourdoughCulture = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Sourdough Culture (Starter)', unit: 'lb' },
+  });
+
+  const oliveOil = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Organic Extra Virgin Olive Oil', unit: 'L' },
+  });
+
+  const instantYeast = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Instant Yeast', unit: 'lb' },
+  });
+
+  const bakingSoda = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Baking Soda', unit: 'lb' },
+  });
+
+  const bakingPowder = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Baking Powder', unit: 'lb' },
+  });
+
+  const lemonZest = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Organic Lemon Zest', unit: 'oz' },
+  });
+
+  const lemonJuice = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Organic Lemon Juice', unit: 'oz' },
+  });
+
+  const orangeZest = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Orange Zest', unit: 'oz' },
+  });
+
+  const butterflyPeaFlowers = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Dried Butterfly Pea Flowers', unit: 'oz' },
+  });
+
+  const water = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Filtered Water', unit: 'gal' },
+  });
+
+  console.log(`✅ Created 75 ingredients`);
 
   // Assign vendors to ingredients
+  const ingredientVendorAssignments = [
+    // Heritage/Specialty flours from Camas Country Mill
+    { ingredientId: whiteSonoraFlour.id, vendorId: flourVendor.id },
+    { ingredientId: turkeyRedFlour.id, vendorId: flourVendor.id },
+    { ingredientId: rougeFlour.id, vendorId: flourVendor.id },
+    { ingredientId: einkornFlour.id, vendorId: flourVendor.id },
+    { ingredientId: speltFlour.id, vendorId: flourVendor.id },
+    { ingredientId: kamutFlour.id, vendorId: flourVendor.id },
+    { ingredientId: kernzaFlour.id, vendorId: flourVendor.id },
+    { ingredientId: yecoraRojoFlour.id, vendorId: flourVendor.id },
+    { ingredientId: emmerFlour.id, vendorId: flourVendor.id },
+
+    // Organic flours from Central Milling
+    { ingredientId: breadFlour.id, vendorId: organicFlourVendor.id },
+    { ingredientId: allPurposeFlour.id, vendorId: organicFlourVendor.id },
+    { ingredientId: darkRyeFlour.id, vendorId: organicFlourVendor.id },
+    { ingredientId: oatFlour.id, vendorId: organicFlourVendor.id },
+    { ingredientId: riceFlour.id, vendorId: organicFlourVendor.id },
+
+    // Dairy from Organic Valley
+    { ingredientId: butter.id, vendorId: dairyVendor.id },
+    { ingredientId: eggs.id, vendorId: dairyVendor.id },
+    { ingredientId: milk.id, vendorId: dairyVendor.id },
+    { ingredientId: buttermilk.id, vendorId: dairyVendor.id },
+
+    // Chocolate from Guittard
+    { ingredientId: darkChocolateChips.id, vendorId: chocolateVendor.id },
+    { ingredientId: milkChocolateChips.id, vendorId: chocolateVendor.id },
+    { ingredientId: whiteChocolateChips.id, vendorId: chocolateVendor.id },
+    { ingredientId: darkChocolateChunks.id, vendorId: chocolateVendor.id },
+    { ingredientId: cocoaPowder.id, vendorId: chocolateVendor.id },
+
+    // Dry goods from Azure Standard
+    { ingredientId: thickRolledOats.id, vendorId: dryGoodsVendor.id },
+    { ingredientId: wholeOatGroats.id, vendorId: dryGoodsVendor.id },
+    { ingredientId: ryeFlakes.id, vendorId: dryGoodsVendor.id },
+    { ingredientId: wheatFlakes.id, vendorId: dryGoodsVendor.id },
+    { ingredientId: caneS.id, vendorId: dryGoodsVendor.id },
+    { ingredientId: brownSugar.id, vendorId: dryGoodsVendor.id },
+    { ingredientId: powderedSugar.id, vendorId: dryGoodsVendor.id },
+    { ingredientId: honey.id, vendorId: dryGoodsVendor.id },
+    { ingredientId: molasses.id, vendorId: dryGoodsVendor.id },
+    { ingredientId: pecans.id, vendorId: dryGoodsVendor.id },
+    { ingredientId: pistachios.id, vendorId: dryGoodsVendor.id },
+    { ingredientId: sunflowerSeeds.id, vendorId: dryGoodsVendor.id },
+    { ingredientId: sesameSeeds.id, vendorId: dryGoodsVendor.id },
+    { ingredientId: flaxseed.id, vendorId: dryGoodsVendor.id },
+    { ingredientId: poppySeeds.id, vendorId: dryGoodsVendor.id },
+    { ingredientId: hulledMillet.id, vendorId: dryGoodsVendor.id },
+    { ingredientId: driedApples.id, vendorId: dryGoodsVendor.id },
+    { ingredientId: driedApricots.id, vendorId: dryGoodsVendor.id },
+    { ingredientId: driedCherries.id, vendorId: dryGoodsVendor.id },
+    { ingredientId: raisins.id, vendorId: dryGoodsVendor.id },
+    { ingredientId: driedCranberries.id, vendorId: dryGoodsVendor.id },
+    { ingredientId: seaSalt.id, vendorId: dryGoodsVendor.id },
+    { ingredientId: cinnamon.id, vendorId: dryGoodsVendor.id },
+    { ingredientId: nutmeg.id, vendorId: dryGoodsVendor.id },
+    { ingredientId: cardamom.id, vendorId: dryGoodsVendor.id },
+    { ingredientId: ginger.id, vendorId: dryGoodsVendor.id },
+    { ingredientId: allspice.id, vendorId: dryGoodsVendor.id },
+    { ingredientId: vanilla.id, vendorId: dryGoodsVendor.id },
+    { ingredientId: cloves.id, vendorId: dryGoodsVendor.id },
+    { ingredientId: oliveOil.id, vendorId: dryGoodsVendor.id },
+    { ingredientId: instantYeast.id, vendorId: dryGoodsVendor.id },
+    { ingredientId: bakingSoda.id, vendorId: dryGoodsVendor.id },
+    { ingredientId: bakingPowder.id, vendorId: dryGoodsVendor.id },
+  ];
+
   await prisma.ingredientVendor.createMany({
-    data: [
-      { ingredientId: breadFlour.id, vendorId: flourVendor.id },
-      { ingredientId: wholeWheatFlour.id, vendorId: flourVendor.id },
-      { ingredientId: _ryeFlour.id, vendorId: flourVendor.id },
-      { ingredientId: salt.id, vendorId: flourVendor.id },
-      { ingredientId: yeast.id, vendorId: flourVendor.id },
-      { ingredientId: butter.id, vendorId: dairyVendor.id },
-      { ingredientId: milk.id, vendorId: dairyVendor.id },
-      { ingredientId: eggs.id, vendorId: dairyVendor.id },
-      { ingredientId: sugar.id, vendorId: flourVendor.id },
-      { ingredientId: water.id, vendorId: flourVendor.id },
-    ],
+    data: ingredientVendorAssignments,
   });
 
-  console.log(`✅ Assigned vendors to ingredients\n`);
+  console.log(`✅ Assigned vendors to ${ingredientVendorAssignments.length} ingredients\n`);
 
   // ==========================================================================
-  // Create Equipment (for Artisan Sourdough)
+  // Create Equipment (for Daily Grains)
   // ==========================================================================
   console.log('🔧 Creating equipment...');
 
   await prisma.equipment.createMany({
     data: [
       {
-        bakeryId: artisanBakery.id,
+        bakeryId: dailyGrains.id,
         name: 'Spiral Mixer (80L)',
         status: EquipmentStatus.IN_USE,
         purchaseDate: new Date('2023-01-15'),
@@ -407,7 +760,7 @@ async function main() {
         notes: 'Hobart HL800 - Primary dough mixer - handles up to 50kg flour',
       },
       {
-        bakeryId: artisanBakery.id,
+        bakeryId: dailyGrains.id,
         name: 'Deck Oven (3-deck)',
         status: EquipmentStatus.IN_USE,
         purchaseDate: new Date('2022-06-10'),
@@ -417,7 +770,7 @@ async function main() {
         notes: 'Blodgett DeckMaster-3 - Steam injection capable - primary bread oven',
       },
       {
-        bakeryId: artisanBakery.id,
+        bakeryId: dailyGrains.id,
         name: 'Proofing Cabinet (Full-size)',
         status: EquipmentStatus.IN_USE,
         purchaseDate: new Date('2023-03-20'),
@@ -427,7 +780,7 @@ async function main() {
         notes: 'Bakers Pride ProofMaster-2000',
       },
       {
-        bakeryId: artisanBakery.id,
+        bakeryId: dailyGrains.id,
         name: 'Dough Sheeter',
         status: EquipmentStatus.IN_USE,
         purchaseDate: new Date('2021-11-05'),
@@ -437,7 +790,7 @@ async function main() {
         notes: 'Somerset CDR-2000',
       },
       {
-        bakeryId: artisanBakery.id,
+        bakeryId: dailyGrains.id,
         name: 'Walk-in Refrigerator',
         status: EquipmentStatus.IN_USE,
         purchaseDate: new Date('2020-08-15'),
@@ -447,94 +800,31 @@ async function main() {
         notes: 'Kolpak WalkIn-1012 - 10ft x 12ft, temperature: 34-38°F',
       },
       {
-        bakeryId: artisanBakery.id,
+        bakeryId: dailyGrains.id,
         name: 'Stand Mixer (20qt)',
         status: EquipmentStatus.MAINTENANCE,
         purchaseDate: new Date('2023-07-12'),
         cost: 1200.00,
         quantity: 1,
         serialNumber: 'KA-2023-067',
-        notes: 'KitchenAid Commercial-20 - Motor needs replacement - scheduled for next week',
+        notes: 'KitchenAid Commercial-20 - For cookie doughs and small batches',
       },
     ],
   });
 
-  console.log(`✅ Created ${6} pieces of equipment\n`);
+  console.log(`✅ Created 6 pieces of equipment\n`);
 
   // ==========================================================================
-  // Create Recipes (for Artisan Sourdough)
+  // Create Recipes (for Daily Grains) - Real recipes from Square menu
   // ==========================================================================
   console.log('📝 Creating recipes...');
 
-  // Classic Sourdough Recipe
-  const sourdoughRecipe = await prisma.recipe.create({
+  // Country Sourdough Recipe
+  const countrySourdough = await prisma.recipe.create({
     data: {
-      bakeryId: artisanBakery.id,
-      name: 'Classic Sourdough Bread',
-      description: 'Our signature naturally leavened sourdough bread with a crispy crust and open crumb structure.',
-      yield: '2 loaves',
-      totalCost: 0,
-    },
-  });
-
-  // Create recipe sections and ingredients for Sourdough
-  const _levainSection = await prisma.recipeSection.create({
-    data: {
-      recipeId: sourdoughRecipe.id,
-      name: 'Levain (Sourdough Starter)',
-      order: 0,
-      instructions: '# Levain\n\nMix sourdough starter with flour and water. Let ferment overnight at room temperature until bubbly and doubled in size.',
-      ingredients: {
-        create: [
-          {
-            ingredientId: breadFlour.id,
-            quantity: 100,
-            unit: 'g',
-          },
-          {
-            ingredientId: water.id,
-            quantity: 100,
-            unit: 'mL',
-          },
-        ],
-      },
-    },
-  });
-
-  const _doughSection = await prisma.recipeSection.create({
-    data: {
-      recipeId: sourdoughRecipe.id,
-      name: 'Main Dough',
-      order: 1,
-      instructions: '# Main Dough\n\n## Autolyse\nMix bread flour and water. Rest for 30-60 minutes.\n\n## Mix\nAdd levain and salt. Mix until well incorporated. Perform stretch and folds.\n\n## Bulk Fermentation\nLet dough rise for 4-6 hours at 75°F. Perform stretch and folds every 30 minutes for first 2 hours.\n\n## Shape & Proof\nDivide into two portions. Pre-shape, rest 20 minutes, then final shape. Refrigerate overnight (12-18 hours) or proof at room temp for 3-4 hours.\n\n## Bake\nPreheat oven to 475°F with Dutch oven inside. Score loaves. Bake covered for 20 minutes, then uncovered for 25 minutes until deep golden.',
-      ingredients: {
-        create: [
-          {
-            ingredientId: breadFlour.id,
-            quantity: 900,
-            unit: 'g',
-          },
-          {
-            ingredientId: water.id,
-            quantity: 630,
-            unit: 'mL',
-          },
-          {
-            ingredientId: salt.id,
-            quantity: 20,
-            unit: 'g',
-          },
-        ],
-      },
-    },
-  });
-
-  // Whole Wheat Bread Recipe
-  const wholeWheatRecipe = await prisma.recipe.create({
-    data: {
-      bakeryId: artisanBakery.id,
-      name: 'Honey Whole Wheat Bread',
-      description: 'Hearty whole wheat bread with a touch of honey for natural sweetness.',
+      bakeryId: dailyGrains.id,
+      name: 'Country Sourdough Bread',
+      description: 'Our signature naturally leavened sourdough with a blend of heritage whole-grain flours.',
       yield: '2 loaves',
       totalCost: 0,
     },
@@ -542,101 +832,83 @@ async function main() {
 
   await prisma.recipeSection.create({
     data: {
-      recipeId: wholeWheatRecipe.id,
+      recipeId: countrySourdough.id,
       name: 'Ingredients',
       order: 0,
-      instructions: '# Honey Whole Wheat Bread\n\n## Mixing\nCombine warm water and yeast, let proof 5 minutes. Add honey, salt, and butter. Mix in whole wheat flour and bread flour. Knead for 10 minutes until smooth.\n\n## First Rise\nPlace in oiled bowl. Cover and let rise 60 minutes.\n\n## Shape and Second Rise\nDivide into two loaves. Shape and place in greased pans. Let rise 45 minutes.\n\n## Bake\nPreheat oven to 350°F. Bake 40 minutes until golden. Internal temp should reach 190°F.',
+      instructions: '# Country Sourdough\n\n## Autolyse\nMix bread flour, whole wheat flour blend, and water. Rest for 30-60 minutes.\n\n## Mix\nAdd sourdough culture and salt. Mix until well incorporated. Perform stretch and folds.\n\n## Bulk Fermentation\nLet dough rise for 4-6 hours at 75°F. Perform stretch and folds every 30 minutes for first 2 hours.\n\n## Shape & Proof\nDivide into two portions. Pre-shape, rest 20 minutes, then final shape. Refrigerate overnight (12-18 hours).\n\n## Bake\nPreheat oven to 475°F with Dutch oven inside. Score loaves. Bake covered for 20 minutes, then uncovered for 25 minutes.\n\n*Trace amounts of olive oil and rice flour used for prep.*',
       ingredients: {
         create: [
-          {
-            ingredientId: wholeWheatFlour.id,
-            quantity: 600,
-            unit: 'g',
-          },
-          {
-            ingredientId: breadFlour.id,
-            quantity: 400,
-            unit: 'g',
-          },
-          {
-            ingredientId: water.id,
-            quantity: 650,
-            unit: 'mL',
-          },
-          {
-            ingredientId: yeast.id,
-            quantity: 14,
-            unit: 'g',
-          },
-          {
-            ingredientId: salt.id,
-            quantity: 18,
-            unit: 'g',
-          },
-          {
-            ingredientId: butter.id,
-            quantity: 50,
-            unit: 'g',
-          },
-          {
-            ingredientId: sugar.id,
-            quantity: 75,
-            unit: 'g',
-          },
+          { ingredientId: breadFlour.id, quantity: 800, unit: 'g' },
+          { ingredientId: turkeyRedFlour.id, quantity: 200, unit: 'g' },
+          { ingredientId: water.id, quantity: 750, unit: 'mL' },
+          { ingredientId: sourdoughCulture.id, quantity: 200, unit: 'g' },
+          { ingredientId: seaSalt.id, quantity: 22, unit: 'g' },
         ],
       },
     },
   });
 
-  // Croissant Recipe
-  const croissantRecipe = await prisma.recipe.create({
+  // Brown Butter Chocolate Chip Cookie
+  const chocolateChipCookie = await prisma.recipe.create({
     data: {
-      bakeryId: artisanBakery.id,
-      name: 'Butter Croissants',
-      description: 'Flaky, buttery croissants with hundreds of delicate layers.',
-      yield: '24 croissants',
+      bakeryId: dailyGrains.id,
+      name: 'Brown Butter Dark Chocolate Chip Cookie',
+      description: 'Chewy cookies made with heritage whole wheat flour blend and brown butter.',
+      yield: '24 cookies',
       totalCost: 0,
     },
   });
 
   await prisma.recipeSection.create({
     data: {
-      recipeId: croissantRecipe.id,
-      name: 'Dough',
+      recipeId: chocolateChipCookie.id,
+      name: 'Ingredients',
       order: 0,
-      instructions: '# Day 1: Dough\n\nMake dough with flour, milk, yeast, sugar, salt. Refrigerate overnight.',
+      instructions: '# Brown Butter Dark Chocolate Chip Cookies\n\n## Brown the Butter\nMelt butter in saucepan over medium heat until golden brown with nutty aroma. Cool slightly.\n\n## Mix Wet\nWhisk brown butter with sugars. Add eggs and vanilla.\n\n## Mix Dry\nCombine flour blend, baking soda, and salt.\n\n## Combine\nFold dry into wet. Add chocolate chips. Chill dough 24 hours for best results.\n\n## Bake\nScoop onto parchment-lined sheets. Bake at 350°F for 12-14 minutes until edges are set.',
       ingredients: {
         create: [
-          {
-            ingredientId: breadFlour.id,
-            quantity: 1000,
-            unit: 'g',
-          },
-          {
-            ingredientId: milk.id,
-            quantity: 500,
-            unit: 'mL',
-          },
-          {
-            ingredientId: yeast.id,
-            quantity: 20,
-            unit: 'g',
-          },
-          {
-            ingredientId: sugar.id,
-            quantity: 100,
-            unit: 'g',
-          },
-          {
-            ingredientId: salt.id,
-            quantity: 20,
-            unit: 'g',
-          },
-          {
-            ingredientId: butter.id,
-            quantity: 100,
-            unit: 'g',
-          },
+          { ingredientId: turkeyRedFlour.id, quantity: 150, unit: 'g' },
+          { ingredientId: whiteSonoraFlour.id, quantity: 150, unit: 'g' },
+          { ingredientId: butter.id, quantity: 230, unit: 'g' },
+          { ingredientId: darkChocolateChips.id, quantity: 340, unit: 'g' },
+          { ingredientId: brownSugar.id, quantity: 200, unit: 'g' },
+          { ingredientId: caneS.id, quantity: 100, unit: 'g' },
+          { ingredientId: eggs.id, quantity: 2, unit: 'unit' },
+          { ingredientId: vanilla.id, quantity: 10, unit: 'mL' },
+          { ingredientId: seaSalt.id, quantity: 8, unit: 'g' },
+          { ingredientId: bakingSoda.id, quantity: 5, unit: 'g' },
+        ],
+      },
+    },
+  });
+
+  // Brioche Cinnamon Roll
+  const cinnamonRoll = await prisma.recipe.create({
+    data: {
+      bakeryId: dailyGrains.id,
+      name: 'Brioche Cinnamon Roll',
+      description: 'Rich brioche dough with cinnamon sugar filling and vanilla glaze.',
+      yield: '12 rolls',
+      totalCost: 0,
+    },
+  });
+
+  await prisma.recipeSection.create({
+    data: {
+      recipeId: cinnamonRoll.id,
+      name: 'Brioche Dough',
+      order: 0,
+      instructions: '# Brioche Dough\n\nCombine Rouge de Bordeaux flour, bread flour, milk, yeast, and sugar. Mix until smooth. Add eggs one at a time. Add softened butter gradually. Knead until smooth and elastic. Refrigerate overnight.',
+      ingredients: {
+        create: [
+          { ingredientId: rougeFlour.id, quantity: 200, unit: 'g' },
+          { ingredientId: breadFlour.id, quantity: 300, unit: 'g' },
+          { ingredientId: milk.id, quantity: 120, unit: 'mL' },
+          { ingredientId: butter.id, quantity: 170, unit: 'g' },
+          { ingredientId: eggs.id, quantity: 4, unit: 'unit' },
+          { ingredientId: caneS.id, quantity: 60, unit: 'g' },
+          { ingredientId: instantYeast.id, quantity: 10, unit: 'g' },
+          { ingredientId: seaSalt.id, quantity: 8, unit: 'g' },
         ],
       },
     },
@@ -644,351 +916,184 @@ async function main() {
 
   await prisma.recipeSection.create({
     data: {
-      recipeId: croissantRecipe.id,
-      name: 'Butter Block (for lamination)',
+      recipeId: cinnamonRoll.id,
+      name: 'Filling & Glaze',
       order: 1,
-      instructions: '# Day 2: Lamination\n\nRoll out butter block. Encase butter in dough. Perform 3 sets of letter folds. Rest between folds.',
+      instructions: '# Filling\nMix softened butter with brown sugar and cinnamon. Spread on rolled dough. Roll tightly and cut into 12 pieces.\n\n# Glaze\nWhisk powdered sugar with vanilla and milk until smooth.\n\n## Bake\nProof 1-2 hours until puffy. Bake at 350°F for 25-30 minutes. Drizzle with glaze while warm.',
       ingredients: {
         create: [
-          {
-            ingredientId: butter.id,
-            quantity: 600,
-            unit: 'g',
-          },
+          { ingredientId: butter.id, quantity: 115, unit: 'g' },
+          { ingredientId: brownSugar.id, quantity: 200, unit: 'g' },
+          { ingredientId: cinnamon.id, quantity: 15, unit: 'g' },
+          { ingredientId: powderedSugar.id, quantity: 200, unit: 'g' },
+          { ingredientId: vanilla.id, quantity: 5, unit: 'mL' },
+          { ingredientId: milk.id, quantity: 45, unit: 'mL' },
         ],
       },
+    },
+  });
+
+  // Apricot Cherry Sourdough
+  const apricotCherrySourdough = await prisma.recipe.create({
+    data: {
+      bakeryId: dailyGrains.id,
+      name: 'Apricot Cherry Sourdough Bread',
+      description: 'Einkorn sourdough studded with organic dried apricots and cherries, with a hint of lemon.',
+      yield: '2 loaves',
+      totalCost: 0,
     },
   });
 
   await prisma.recipeSection.create({
     data: {
-      recipeId: croissantRecipe.id,
-      name: 'Egg Wash',
-      order: 2,
-      instructions: '# Shaping and Baking\n\nRoll dough to 5mm thickness. Cut triangles. Roll from wide end to point. Curve into crescent shape. Proof 2-3 hours until puffy. Egg wash. Bake at 375°F for 20 minutes until golden.',
+      recipeId: apricotCherrySourdough.id,
+      name: 'Ingredients',
+      order: 0,
+      instructions: '# Apricot Cherry Sourdough\n\nFollow standard sourdough method. Add chopped dried fruit during final fold. The lemon zest brightens the sweetness of the fruit.\n\n*Trace amounts of olive oil and rice flour for prep.*',
       ingredients: {
         create: [
-          {
-            ingredientId: eggs.id,
-            quantity: 2,
-            unit: 'unit',
-          },
-          {
-            ingredientId: milk.id,
-            quantity: 50,
-            unit: 'mL',
-          },
+          { ingredientId: einkornFlour.id, quantity: 300, unit: 'g' },
+          { ingredientId: breadFlour.id, quantity: 700, unit: 'g' },
+          { ingredientId: sourdoughCulture.id, quantity: 200, unit: 'g' },
+          { ingredientId: driedApricots.id, quantity: 100, unit: 'g' },
+          { ingredientId: driedCherries.id, quantity: 100, unit: 'g' },
+          { ingredientId: seaSalt.id, quantity: 20, unit: 'g' },
+          { ingredientId: lemonZest.id, quantity: 5, unit: 'g' },
+          { ingredientId: water.id, quantity: 700, unit: 'mL' },
         ],
       },
     },
   });
 
-  console.log(`✅ Created ${3} recipes with sections\n`);
+  // Oatmeal Cookie
+  const oatmealCookie = await prisma.recipe.create({
+    data: {
+      bakeryId: dailyGrains.id,
+      name: 'Oatmeal Cookie',
+      description: 'Classic oatmeal cookies with thick rolled oats and White Sonora whole wheat.',
+      yield: '36 cookies',
+      totalCost: 0,
+    },
+  });
+
+  await prisma.recipeSection.create({
+    data: {
+      recipeId: oatmealCookie.id,
+      name: 'Ingredients',
+      order: 0,
+      instructions: '# Oatmeal Cookies\n\n## Cream\nBeat butter and sugars until fluffy. Add egg.\n\n## Mix Dry\nCombine flour, oats, baking soda, salt, and cinnamon.\n\n## Combine\nFold dry into wet.\n\n## Bake\nScoop onto sheets. Bake at 350°F for 10-12 minutes.',
+      ingredients: {
+        create: [
+          { ingredientId: thickRolledOats.id, quantity: 300, unit: 'g' },
+          { ingredientId: butter.id, quantity: 230, unit: 'g' },
+          { ingredientId: brownSugar.id, quantity: 150, unit: 'g' },
+          { ingredientId: whiteSonoraFlour.id, quantity: 190, unit: 'g' },
+          { ingredientId: eggs.id, quantity: 1, unit: 'unit' },
+          { ingredientId: caneS.id, quantity: 100, unit: 'g' },
+          { ingredientId: bakingSoda.id, quantity: 5, unit: 'g' },
+          { ingredientId: seaSalt.id, quantity: 3, unit: 'g' },
+          { ingredientId: cinnamon.id, quantity: 5, unit: 'g' },
+        ],
+      },
+    },
+  });
+
+  console.log(`✅ Created 5 recipes with sections\n`);
 
   // ==========================================================================
   // Create Inventory with Lots (FIFO system)
   // ==========================================================================
   console.log('📦 Creating inventory with lots...');
 
-  // Create inventory records for each ingredient and add lots
-  const breadFlourInventory = await prisma.inventory.create({
-    data: {
-      bakeryId: artisanBakery.id,
-      ingredientId: breadFlour.id,
-      displayUnit: 'kg',
-      lots: {
-        create: [
-          {
-            purchaseQty: 100,
-            remainingQty: 50, // 50kg used
-            purchaseUnit: 'kg',
-            costPerUnit: 2.40,
-            purchasedAt: new Date('2025-01-01'),
-            vendorId: flourVendor.id,
-            notes: 'First delivery of the year',
-          },
-          {
-            purchaseQty: 150,
-            remainingQty: 150,
-            purchaseUnit: 'kg',
-            costPerUnit: 2.50,
-            purchasedAt: new Date('2025-01-10'),
-            vendorId: flourVendor.id,
-            notes: 'Weekly flour delivery from Northwest Grain',
-          },
-        ],
-      },
-    },
-  });
+  // Create inventory for key ingredients
+  const inventoryItems = [
+    { ingredient: breadFlour, qty: 200, unit: 'lb', cost: 0.85, vendor: organicFlourVendor },
+    { ingredient: whiteSonoraFlour, qty: 50, unit: 'lb', cost: 2.50, vendor: flourVendor },
+    { ingredient: turkeyRedFlour, qty: 50, unit: 'lb', cost: 2.50, vendor: flourVendor },
+    { ingredient: einkornFlour, qty: 25, unit: 'lb', cost: 4.00, vendor: flourVendor },
+    { ingredient: rougeFlour, qty: 25, unit: 'lb', cost: 2.75, vendor: flourVendor },
+    { ingredient: butter, qty: 40, unit: 'lb', cost: 5.50, vendor: dairyVendor },
+    { ingredient: eggs, qty: 30, unit: 'dozen', cost: 4.50, vendor: dairyVendor },
+    { ingredient: milk, qty: 10, unit: 'gal', cost: 6.00, vendor: dairyVendor },
+    { ingredient: darkChocolateChips, qty: 25, unit: 'lb', cost: 8.00, vendor: chocolateVendor },
+    { ingredient: thickRolledOats, qty: 50, unit: 'lb', cost: 1.50, vendor: dryGoodsVendor },
+    { ingredient: brownSugar, qty: 50, unit: 'lb', cost: 0.90, vendor: dryGoodsVendor },
+    { ingredient: caneS, qty: 50, unit: 'lb', cost: 0.75, vendor: dryGoodsVendor },
+    { ingredient: seaSalt, qty: 25, unit: 'lb', cost: 0.60, vendor: dryGoodsVendor },
+    { ingredient: cinnamon, qty: 32, unit: 'oz', cost: 0.50, vendor: dryGoodsVendor },
+    { ingredient: sourdoughCulture, qty: 10, unit: 'lb', cost: 0.00, vendor: null },
+    { ingredient: driedCherries, qty: 10, unit: 'lb', cost: 12.00, vendor: dryGoodsVendor },
+    { ingredient: driedApricots, qty: 10, unit: 'lb', cost: 10.00, vendor: dryGoodsVendor },
+    { ingredient: pecans, qty: 10, unit: 'lb', cost: 14.00, vendor: dryGoodsVendor },
+    { ingredient: instantYeast, qty: 5, unit: 'lb', cost: 6.00, vendor: dryGoodsVendor },
+  ];
 
-  const wholeWheatInventory = await prisma.inventory.create({
-    data: {
-      bakeryId: artisanBakery.id,
-      ingredientId: wholeWheatFlour.id,
-      displayUnit: 'kg',
-      lots: {
-        create: [
-          {
-            purchaseQty: 100,
-            remainingQty: 95, // 5kg adjustment
-            purchaseUnit: 'kg',
-            costPerUnit: 3.00,
-            purchasedAt: new Date('2025-01-05'),
-            vendorId: flourVendor.id,
-            notes: 'Whole wheat flour delivery',
-          },
-        ],
-      },
-    },
-  });
-
-  await prisma.inventory.create({
-    data: {
-      bakeryId: artisanBakery.id,
-      ingredientId: _ryeFlour.id,
-      displayUnit: 'kg',
-      lots: {
-        create: [
-          {
-            purchaseQty: 50,
-            remainingQty: 50,
-            purchaseUnit: 'kg',
-            costPerUnit: 3.50,
-            purchasedAt: new Date('2025-01-03'),
-            vendorId: flourVendor.id,
-            notes: 'Rye flour for specialty breads',
-          },
-        ],
-      },
-    },
-  });
-
-  await prisma.inventory.create({
-    data: {
-      bakeryId: artisanBakery.id,
-      ingredientId: salt.id,
-      displayUnit: 'kg',
-      lots: {
-        create: [
-          {
-            purchaseQty: 20,
-            remainingQty: 20,
-            purchaseUnit: 'kg',
-            costPerUnit: 8.00,
-            purchasedAt: new Date('2025-01-02'),
-            vendorId: flourVendor.id,
-          },
-        ],
-      },
-    },
-  });
-
-  await prisma.inventory.create({
-    data: {
-      bakeryId: artisanBakery.id,
-      ingredientId: water.id,
-      displayUnit: 'L',
-      lots: {
-        create: [
-          {
-            purchaseQty: 500,
-            remainingQty: 500,
-            purchaseUnit: 'L',
-            costPerUnit: 0.01,
-            purchasedAt: new Date('2025-01-01'),
-          },
-        ],
-      },
-    },
-  });
-
-  await prisma.inventory.create({
-    data: {
-      bakeryId: artisanBakery.id,
-      ingredientId: yeast.id,
-      displayUnit: 'kg',
-      lots: {
-        create: [
-          {
-            purchaseQty: 5,
-            remainingQty: 5,
-            purchaseUnit: 'kg',
-            costPerUnit: 15.00,
-            purchasedAt: new Date('2025-01-08'),
-            expiresAt: new Date('2025-03-08'),
-            vendorId: flourVendor.id,
-            notes: 'Active dry yeast - refrigerate',
-          },
-        ],
-      },
-    },
-  });
-
-  await prisma.inventory.create({
-    data: {
-      bakeryId: artisanBakery.id,
-      ingredientId: butter.id,
-      displayUnit: 'kg',
-      lots: {
-        create: [
-          {
-            purchaseQty: 30,
-            remainingQty: 30,
-            purchaseUnit: 'kg',
-            costPerUnit: 12.00,
-            purchasedAt: new Date('2025-01-12'),
-            expiresAt: new Date('2025-02-12'),
-            vendorId: dairyVendor.id,
-            notes: 'Monthly butter order from Valley Fresh Dairy',
-          },
-        ],
-      },
-    },
-  });
-
-  await prisma.inventory.create({
-    data: {
-      bakeryId: artisanBakery.id,
-      ingredientId: milk.id,
-      displayUnit: 'L',
-      lots: {
-        create: [
-          {
-            purchaseQty: 40,
-            remainingQty: 40,
-            purchaseUnit: 'L',
-            costPerUnit: 2.00,
-            purchasedAt: new Date('2025-01-14'),
-            expiresAt: new Date('2025-01-28'),
-            vendorId: dairyVendor.id,
-          },
-        ],
-      },
-    },
-  });
-
-  await prisma.inventory.create({
-    data: {
-      bakeryId: artisanBakery.id,
-      ingredientId: eggs.id,
-      displayUnit: 'unit',
-      lots: {
-        create: [
-          {
-            purchaseQty: 600,
-            remainingQty: 600,
-            purchaseUnit: 'unit',
-            costPerUnit: 0.50,
-            purchasedAt: new Date('2025-01-15'),
-            expiresAt: new Date('2025-02-15'),
-            vendorId: dairyVendor.id,
-          },
-        ],
-      },
-    },
-  });
-
-  await prisma.inventory.create({
-    data: {
-      bakeryId: artisanBakery.id,
-      ingredientId: sugar.id,
-      displayUnit: 'kg',
-      lots: {
-        create: [
-          {
-            purchaseQty: 75,
-            remainingQty: 75,
-            purchaseUnit: 'kg',
-            costPerUnit: 2.00,
-            purchasedAt: new Date('2025-01-05'),
-            vendorId: flourVendor.id,
-          },
-        ],
-      },
-    },
-  });
-
-  // Create some usage records (simulating FIFO consumption from bread flour)
-  const oldestBreadFlourLot = await prisma.inventoryLot.findFirst({
-    where: { inventory: { ingredientId: breadFlour.id } },
-    orderBy: { purchasedAt: 'asc' },
-  });
-
-  if (oldestBreadFlourLot) {
-    await prisma.inventoryUsage.create({
+  for (const item of inventoryItems) {
+    await prisma.inventory.create({
       data: {
-        lotId: oldestBreadFlourLot.id,
-        quantity: 50,
-        reason: UsageReason.USE,
-        notes: 'Used in sourdough production - Week 1',
-        createdBy: artisanBaker.id,
+        bakeryId: dailyGrains.id,
+        ingredientId: item.ingredient.id,
+        displayUnit: item.unit,
+        lots: {
+          create: [
+            {
+              purchaseQty: item.qty,
+              remainingQty: item.qty,
+              purchaseUnit: item.unit,
+              costPerUnit: item.cost,
+              purchasedAt: new Date('2026-01-15'),
+              vendorId: item.vendor?.id,
+              notes: 'Initial inventory',
+            },
+          ],
+        },
       },
     });
   }
 
-  // Create adjustment record for whole wheat
-  const wholeWheatLot = await prisma.inventoryLot.findFirst({
-    where: { inventory: { ingredientId: wholeWheatFlour.id } },
-  });
-
-  if (wholeWheatLot) {
-    await prisma.inventoryUsage.create({
-      data: {
-        lotId: wholeWheatLot.id,
-        quantity: 5,
-        reason: UsageReason.ADJUST,
-        notes: 'Inventory count adjustment - damaged bag',
-        createdBy: artisanManager.id,
-      },
-    });
-  }
-
-  console.log(`✅ Created ${10} inventory records with lots\n`);
+  console.log(`✅ Created ${inventoryItems.length} inventory records with lots\n`);
 
   // ==========================================================================
   // Create Production Sheets
   // ==========================================================================
   console.log('🥖 Creating production sheets...');
 
-  // Completed production sheet
   await prisma.productionSheet.create({
     data: {
-      recipeId: sourdoughRecipe.id,
-      bakeryId: artisanBakery.id,
-      scale: 25,
-      quantity: '50 loaves',
+      recipeId: countrySourdough.id,
+      bakeryId: dailyGrains.id,
+      scale: 10,
+      quantity: '20 loaves',
       completed: true,
-      completedAt: new Date('2025-01-16T14:30:00'),
-      completedBy: artisanBaker.id,
-      notes: 'Morning production batch',
+      completedAt: new Date('2026-01-31T14:30:00'),
+      completedBy: dailyGrainsBaker.id,
+      notes: 'Morning sourdough batch',
     },
   });
 
-  // In-progress production sheet
   await prisma.productionSheet.create({
     data: {
-      recipeId: wholeWheatRecipe.id,
-      bakeryId: artisanBakery.id,
-      scale: 15,
-      quantity: '30 loaves',
+      recipeId: chocolateChipCookie.id,
+      bakeryId: dailyGrains.id,
+      scale: 4,
+      quantity: '96 cookies',
       completed: false,
-      notes: 'Today\'s whole wheat production',
+      notes: 'Weekend cookie production',
     },
   });
 
-  // Scheduled production sheet
   await prisma.productionSheet.create({
     data: {
-      recipeId: croissantRecipe.id,
-      bakeryId: artisanBakery.id,
-      scale: 4.17,
-      quantity: '100 croissants',
+      recipeId: cinnamonRoll.id,
+      bakeryId: dailyGrains.id,
+      scale: 3,
+      quantity: '36 rolls',
       completed: false,
-      notes: 'Weekend pastry production',
+      notes: 'Sunday morning cinnamon rolls',
     },
   });
 
-  console.log(`✅ Created ${3} production sheets\n`);
+  console.log(`✅ Created 3 production sheets\n`);
 
   // ==========================================================================
   // Summary
@@ -997,24 +1102,21 @@ async function main() {
   console.log('Summary:');
   console.log('--------');
   console.log(`✅ Bakeries: 3`);
-  console.log(`✅ Roles: 4`);
+  console.log(`✅ Roles: 3`);
   console.log(`✅ Users: 5 (including 1 platform admin)`);
-  console.log(`✅ Vendors: 2`);
-  console.log(`✅ Vendor Contacts: 2`);
-  console.log(`✅ Ingredients: 10`);
+  console.log(`✅ Vendors: 5`);
+  console.log(`✅ Ingredients: 75`);
   console.log(`✅ Equipment: 6`);
-  console.log(`✅ Recipes: 3`);
-  console.log(`✅ Recipe Sections: 5`);
-  console.log(`✅ Unit Conversions: 14`);
-  console.log(`✅ Inventory Records: 10`);
-  console.log(`✅ Inventory Lots: 12`);
+  console.log(`✅ Recipes: 5`);
+  console.log(`✅ Unit Conversions: 16`);
+  console.log(`✅ Inventory Records: ${inventoryItems.length}`);
   console.log(`✅ Production Sheets: 3`);
   console.log('\n📧 Login Credentials (Development Only):');
   console.log('----------------------------------------');
-  console.log('Platform Admin: admin@dailybaker.com');
-  console.log('Artisan Owner: owner@artisansourdough.com');
-  console.log('Artisan Manager: manager@artisansourdough.com');
-  console.log('Artisan Baker: baker@artisansourdough.com');
+  console.log('Platform Admin: ' + (process.env.PLATFORM_ADMIN_EMAIL || 'admin@dailybaker.com'));
+  console.log('Daily Grains Owner: owner@dailygrains.co');
+  console.log('Daily Grains Manager: manager@dailygrains.co');
+  console.log('Daily Grains Baker: baker@dailygrains.co');
   console.log('Sweet Treats Owner: owner@sweettreats.com');
   console.log('\n💡 Note: These are demo accounts for development/testing only.');
   console.log('In production, users will sign up via Clerk authentication.\n');

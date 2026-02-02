@@ -21,11 +21,14 @@ export default async function IngredientsPage() {
   const ingredientsResult = await getIngredientsByBakery(user.bakeryId);
   const ingredients = ingredientsResult.success ? ingredientsResult.data! : [];
 
-  // Serialize Decimal values for client component
+  // Serialize only needed fields for client component (avoid passing Decimal objects)
   const serializedIngredients = ingredients.map(ingredient => ({
-    ...ingredient,
+    id: ingredient.id,
+    name: ingredient.name,
+    unit: ingredient.unit,
     currentQty: ingredient.currentQty.toString(),
     costPerUnit: ingredient.costPerUnit.toString(),
+    vendors: ingredient.vendors,
   }));
 
   return (
