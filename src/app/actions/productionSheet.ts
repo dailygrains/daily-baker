@@ -34,6 +34,10 @@ import {
   type ProductionSheetRecipeEntry,
 } from '@/lib/ingredientAggregation';
 import { createProductionSheetSnapshot } from '@/lib/productionSheetSnapshot';
+import {
+  productionSheetSnapshotService,
+  buildProductionSheetEntity,
+} from '@/lib/snapshot';
 
 // Helper to build recipe include for inventory checking
 const recipeWithIngredientsInclude = {
@@ -225,6 +229,52 @@ export async function createProductionSheet(data: CreateProductionSheetInput) {
       },
       bakeryId: validatedData.bakeryId,
     });
+
+    // Create snapshot for the new production sheet
+    try {
+      const entityForSnapshot = buildProductionSheetEntity({
+        id: productionSheet.id,
+        description: productionSheet.description,
+        recipes: validatedData.recipes.map((r, idx) => {
+          const recipe = recipes.find((rec) => rec.id === r.recipeId)!;
+          return {
+            id: `temp-${idx}`, // ID not yet assigned
+            scale: r.scale,
+            order: r.order ?? idx,
+            recipe: {
+              id: recipe.id,
+              name: recipe.name,
+              yieldQty: recipe.yieldQty,
+              yieldUnit: recipe.yieldUnit,
+              totalCost: recipe.totalCost,
+              sections: recipe.sections.map((s) => ({
+                id: s.id,
+                name: s.name,
+                order: s.order,
+                ingredients: s.ingredients.map((i) => ({
+                  id: i.id,
+                  quantity: i.quantity,
+                  unit: i.unit,
+                  ingredient: i.ingredient,
+                })),
+              })),
+            },
+          };
+        }),
+      });
+
+      await productionSheetSnapshotService.createSnapshot(
+        entityForSnapshot,
+        validatedData.bakeryId,
+        productionSheet.id,
+        validatedData.description || recipeNames,
+        'SAVE',
+        currentUser.id
+      );
+    } catch (snapshotError) {
+      // Log but don't fail the creation if snapshot fails
+      console.error('Failed to create production sheet snapshot:', snapshotError);
+    }
 
     revalidatePath('/dashboard/production-sheets');
 
@@ -512,6 +562,68 @@ export async function updateProductionSheet(data: UpdateProductionSheetInput) {
       description: `Updated production sheet`,
       bakeryId: existingProductionSheet.bakeryId,
     });
+
+    // Create snapshot for the updated production sheet
+    try {
+      // Fetch the full production sheet with recipe data for snapshot
+      const fullSheet = await db.productionSheet.findUnique({
+        where: { id: validatedData.id },
+        include: {
+          recipes: {
+            include: {
+              recipe: {
+                include: recipeWithIngredientsInclude,
+              },
+            },
+            orderBy: { order: 'asc' },
+          },
+        },
+      });
+
+      if (fullSheet) {
+        const entityForSnapshot = buildProductionSheetEntity({
+          id: fullSheet.id,
+          description: fullSheet.description,
+          recipes: fullSheet.recipes.map((r) => ({
+            id: r.id,
+            scale: r.scale,
+            order: r.order,
+            recipe: {
+              id: r.recipe.id,
+              name: r.recipe.name,
+              yieldQty: r.recipe.yieldQty,
+              yieldUnit: r.recipe.yieldUnit,
+              totalCost: r.recipe.totalCost,
+              sections: r.recipe.sections.map((s) => ({
+                id: s.id,
+                name: s.name,
+                order: s.order,
+                ingredients: s.ingredients.map((i) => ({
+                  id: i.id,
+                  quantity: i.quantity,
+                  unit: i.unit,
+                  ingredient: i.ingredient,
+                })),
+              })),
+            },
+          })),
+        });
+
+        const recipeNames = fullSheet.recipes.map((r) => r.recipe.name).join(', ');
+
+        await productionSheetSnapshotService.createSnapshot(
+          entityForSnapshot,
+          existingProductionSheet.bakeryId,
+          fullSheet.id,
+          fullSheet.description || recipeNames,
+          'SAVE',
+          currentUser.id
+        );
+      }
+    } catch (snapshotError) {
+      // Log but don't fail the update if snapshot fails
+      console.error('Failed to create production sheet snapshot:', snapshotError);
+    }
 
     revalidatePath('/dashboard/production-sheets');
     revalidatePath(`/dashboard/production-sheets/${validatedData.id}`);
@@ -1048,6 +1160,50 @@ export async function completeProductionSheet(data: CompleteProductionSheetInput
       },
       bakeryId: productionSheet.bakeryId,
     });
+
+    // Create S3 snapshot for the completed production sheet (in addition to database snapshot)
+    try {
+      const entityForSnapshot = buildProductionSheetEntity({
+        id: productionSheet.id,
+        description: productionSheet.description,
+        recipes: productionSheet.recipes.map((r) => ({
+          id: r.id,
+          scale: r.scale,
+          order: r.order,
+          recipe: {
+            id: r.recipe.id,
+            name: r.recipe.name,
+            yieldQty: r.recipe.yieldQty,
+            yieldUnit: r.recipe.yieldUnit,
+            totalCost: r.recipe.totalCost,
+            sections: r.recipe.sections.map((s) => ({
+              id: s.id,
+              name: s.name,
+              order: s.order,
+              ingredients: s.ingredients.map((i) => ({
+                id: i.id,
+                quantity: i.quantity,
+                unit: i.unit,
+                ingredient: i.ingredient,
+              })),
+            })),
+          },
+        })),
+      });
+
+      await productionSheetSnapshotService.createSnapshot(
+        entityForSnapshot,
+        productionSheet.bakeryId,
+        productionSheet.id,
+        productionSheet.description || recipeNames,
+        'COMPLETE',
+        currentUser.id
+      );
+    } catch (snapshotError) {
+      // Log but don't fail the completion if S3 snapshot fails
+      // The database snapshot is already saved
+      console.error('Failed to create S3 production sheet snapshot:', snapshotError);
+    }
 
     revalidatePath('/dashboard/production-sheets');
     revalidatePath(`/dashboard/production-sheets/${validatedData.id}`);

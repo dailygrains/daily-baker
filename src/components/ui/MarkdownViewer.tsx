@@ -1,4 +1,6 @@
-import Markdown from 'markdown-to-jsx';
+'use client';
+
+import ReactMarkdown from 'react-markdown';
 
 interface MarkdownViewerProps {
   content: string;
@@ -8,9 +10,7 @@ interface MarkdownViewerProps {
 export function MarkdownViewer({ content, className = '' }: MarkdownViewerProps) {
   return (
     <div className={className}>
-      <Markdown options={{ forceBlock: true, disableParsingRawHTML: true }}>
-        {content}
-      </Markdown>
+      <ReactMarkdown>{content}</ReactMarkdown>
     </div>
   );
 }

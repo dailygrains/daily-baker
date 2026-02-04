@@ -23,6 +23,7 @@ import { revalidatePath } from 'next/cache';
 import { Decimal } from '@prisma/client/runtime/library';
 import { convertQuantity } from '@/lib/unitConvert';
 import { getWeightedAverageCost, type InventoryWithLots } from '@/lib/inventory';
+import { recipeSnapshotService, type RecipeEntity } from '@/lib/snapshot';
 
 /**
  * Calculate total cost of a recipe based on ingredients
@@ -188,6 +189,46 @@ export async function createRecipe(data: CreateRecipeInput) {
       bakeryId: recipe.bakeryId,
     });
 
+    // Create snapshot for the new recipe
+    try {
+      const recipeEntity: RecipeEntity = {
+        id: recipe.id,
+        name: recipe.name,
+        description: recipe.description,
+        yieldQty: recipe.yieldQty,
+        yieldUnit: recipe.yieldUnit,
+        totalCost: recipe.totalCost,
+        sections: recipe.sections.map((section) => ({
+          id: section.id,
+          name: section.name,
+          order: section.order,
+          instructions: section.instructions,
+          ingredients: section.ingredients.map((ing) => ({
+            id: ing.id,
+            quantity: ing.quantity,
+            unit: ing.unit,
+            ingredient: {
+              id: ing.ingredient.id,
+              name: ing.ingredient.name,
+              unit: ing.ingredient.unit,
+            },
+          })),
+        })),
+      };
+
+      await recipeSnapshotService.createSnapshot(
+        recipeEntity,
+        recipe.bakeryId,
+        recipe.id,
+        recipe.name,
+        'SAVE',
+        currentUser.id
+      );
+    } catch (snapshotError) {
+      // Log but don't fail the recipe creation if snapshot fails
+      console.error('Failed to create recipe snapshot:', snapshotError);
+    }
+
     revalidatePath('/dashboard/recipes');
     return { success: true };
   } catch (error) {
@@ -298,6 +339,46 @@ export async function updateRecipe(data: UpdateRecipeInput) {
       },
       bakeryId: recipe.bakeryId,
     });
+
+    // Create snapshot for the updated recipe
+    try {
+      const recipeEntity: RecipeEntity = {
+        id: recipe.id,
+        name: recipe.name,
+        description: recipe.description,
+        yieldQty: recipe.yieldQty,
+        yieldUnit: recipe.yieldUnit,
+        totalCost: recipe.totalCost,
+        sections: recipe.sections.map((section) => ({
+          id: section.id,
+          name: section.name,
+          order: section.order,
+          instructions: section.instructions,
+          ingredients: section.ingredients.map((ing) => ({
+            id: ing.id,
+            quantity: ing.quantity,
+            unit: ing.unit,
+            ingredient: {
+              id: ing.ingredient.id,
+              name: ing.ingredient.name,
+              unit: ing.ingredient.unit,
+            },
+          })),
+        })),
+      };
+
+      await recipeSnapshotService.createSnapshot(
+        recipeEntity,
+        recipe.bakeryId,
+        recipe.id,
+        recipe.name,
+        'SAVE',
+        currentUser.id
+      );
+    } catch (snapshotError) {
+      // Log but don't fail the recipe update if snapshot fails
+      console.error('Failed to create recipe snapshot:', snapshotError);
+    }
 
     revalidatePath('/dashboard/recipes');
     revalidatePath(`/dashboard/recipes/${recipe.id}`);
