@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import { SnapshotHistory } from '@/components/snapshot/SnapshotHistory';
 
 interface ProductionSheetDetailTabsProps {
@@ -14,38 +13,30 @@ export function ProductionSheetDetailTabs({
   bakeryId,
   detailsContent,
 }: ProductionSheetDetailTabsProps) {
-  const [activeTab, setActiveTab] = useState<'details' | 'history'>('details');
-
   return (
-    <div className="space-y-6">
-      {/* Tabs */}
-      <div role="tablist" className="tabs tabs-bordered">
-        <button
-          role="tab"
-          className={`tab ${activeTab === 'details' ? 'tab-active' : ''}`}
-          onClick={() => setActiveTab('details')}
-        >
-          Details
-        </button>
-        <button
-          role="tab"
-          className={`tab ${activeTab === 'history' ? 'tab-active' : ''}`}
-          onClick={() => setActiveTab('history')}
-        >
-          History
-        </button>
-      </div>
+    <div role="tablist" className="tabs tabs-border">
+      <input
+        type="radio"
+        name="production_sheet_detail_tabs"
+        className="tab"
+        aria-label="Details"
+        defaultChecked
+      />
+      <div className="tab-content pt-6">{detailsContent}</div>
 
-      {/* Tab Content */}
-      {activeTab === 'details' ? (
-        detailsContent
-      ) : (
+      <input
+        type="radio"
+        name="production_sheet_detail_tabs"
+        className="tab"
+        aria-label="History"
+      />
+      <div className="tab-content pt-6">
         <SnapshotHistory
           entityType="production-sheet"
           entityId={productionSheetId}
           bakeryId={bakeryId}
         />
-      )}
+      </div>
     </div>
   );
 }
