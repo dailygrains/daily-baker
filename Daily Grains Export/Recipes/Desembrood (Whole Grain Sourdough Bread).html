@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <style type="text/css">
+            /* Shared styles */
+            body {
+                font-family: Helvetica, sans-serif;
+                font-size: 16.0px;
+                color: #34302e;
+                margin: 0.25in;
+                min-width: 1024px;
+            }
+            @page {
+                size: letter portrait;
+                margin: 0.25in;
+            }
+            .name {
+                font-size: 18.0px;
+                font-family: Helvetica, sans-serif;
+                font-weight: normal;
+                margin: 0 0 10px 0;
+            }
+            .categories {
+                color: #605D5D;
+                font-size: 14.0px;
+                font-family: Helvetica, sans-serif;
+                font-style: italic;
+            }
+            .rating {
+                color: #d10505;
+                font-size: 14.0px;
+            }
+            .metadata {
+                font-size: 14.0px;
+            }
+            .infobox p {
+                margin: 0;
+                line-height: 150%;
+            }
+            .subhead {
+                color: #d10505;
+                font-weight: bold;
+                font-size: 14.0px;
+                text-transform: uppercase;
+                margin: 10px 0;
+            }
+            
+            .ingredients p {
+                margin: 4px 0;
+            }
+            /* To prevent nutrition/directions from getting too close
+               to ingredients */
+            .ingredients {
+                padding-bottom: 10px;
+            }
+            .clear {
+                clear:both;
+            }
+            a {
+                color: #4990E2;
+                text-decoration: none;
+            }
+            /* Full page specific styles */
+            .text {
+                line-height: 130%;
+            }
+            .photobox {
+                
+                float: left;
+                margin-right: 14px;
+                
+                
+            }
+            .photo {
+                max-width: 140.0px;
+                max-height: 140.0px;
+                width: auto;
+                height: auto;
+            }
+            
+            .inline-image {
+                max-width: 25%;
+                max-height: 25%;
+                width: auto;
+                height: auto;
+            }
+            .photoswipe {
+                border: 1px #dddddd solid;
+                cursor: pointer;
+            }
+            .pswp__caption__center {
+                text-align: center !important;
+            }
+            .recipe {
+                
+                page-break-after: always;
+                
+                
+            }
+            .recipe:first-child {
+                border-top: 0 none;
+                margin-top: 0;
+                padding-top: 0;
+            }
+        </style>
+    </head>
+    <body>
+        <!-- Recipe -->
+<div class="recipe" itemscope itemtype="http://schema.org/Recipe" >
+    
+    <div class="infobox">
+
+        <!-- Image -->
+        
+        <div class="photobox">
+            
+            <a href="https://breadtopia.com/wp-content/uploads/2023/10/20230228_133109-4x3-1-1200x900.jpg">
+                <img src="Images/41D6DED2-1600-4359-8B58-47234AC5D320/7F4E26CD-2930-4F9B-AB78-75D8A2DE8B43.jpg" itemprop="image" class="photo photoswipe"/>
+            </a>
+            
+            
+        </div>
+        
+
+        <!-- Name -->
+        <h1 itemprop="name" class="name">Desembrood (Whole Grain Sourdough Bread)</h1>
+        
+        <!-- Info -->
+        
+        
+        <!-- Rating, categories -->
+        <p itemprop="aggregateRating" class="rating" value="0"></p>
+        
+            <p itemprop="recipeCategory" class="categories">Bread, Daily Grains</p>
+        
+        
+        <p class="metadata">
+        
+            <!-- Cook time, prep time, servings, difficulty -->
+            
+            <b>Prep Time: </b><span itemprop="prepTime">1 hour</span>
+            
+            <b>Cook Time: </b><span itemprop="cookTime">30 minutes</span>
+            
+
+            <!-- Source -->
+            
+                <b>Source: </b>
+                
+                    <a itemprop="url" href="https://breadtopia.com/whole-grain-desem-bread/">
+                        <span itemprop="author">breadtopia.com</span>
+                    </a>
+                
+                
+            
+        </p>
+        
+        
+        
+        <div class="clear"></div>
+        
+
+    </div>
+    
+    <div class="left-column">
+
+        <!-- Ingredients -->
+        
+        <div class="ingredientsbox">
+            <h3 class="subhead">Ingredients</h3>
+            <div class="ingredients text">
+                <p class="line" itemprop="recipeIngredient">Desem / Levain</p><p class="line" itemprop="recipeIngredient"><strong>20</strong> grams desem (1-2 Tbsp)</p><p class="line" itemprop="recipeIngredient"><strong>40</strong> grams water (2 Tbsp + 2 tsp)</p><p class="line" itemprop="recipeIngredient"><strong>50</strong> grams whole grain flour (1/3 cup +1 tsp)</p><p class="line" itemprop="recipeIngredient">Dough</p><p class="line" itemprop="recipeIngredient"><strong>300</strong> grams hard white spring whole grain flour (2 1/3 cups)</p><p class="line" itemprop="recipeIngredient"><strong>100</strong> grams red fife whole grain flour (3/4 cup)</p><p class="line" itemprop="recipeIngredient"><strong>325</strong> gram water* (1 1/3 cups)</p><p class="line" itemprop="recipeIngredient"><strong>100</strong> grams ripe desem/levain, from above</p><p class="line" itemprop="recipeIngredient"><strong>8</strong> grams salt (1 1/2 tsp)</p>
+            </div>
+        </div>
+        
+        
+        <!-- Nutrition (in two-column mode it goes below the ingredients) -->
+        
+
+    </div>
+    
+    <div class="right-column">
+    
+    <!-- Description -->
+    
+
+    <!-- Directions -->
+    
+    <div class="directionsbox">
+        <h3 class="subhead">Directions</h3>
+        <div itemprop="recipeInstructions" class="directions text">
+            <p class="line">Before putting away your bowls, spoons, scale etc; refresh the desem mother culture at approximately 75% hydration e.g. 15g desem, 36g water, 50g whole grain flour. You can use the flour you scraped off the mother earlier or fresh flour. After kneading it to thoroughly mix, press it into the original jar, layer fresh flour on top, cover with a lid. Leave this jar at room temperature for a few hours and then refrigerate until you next plan to bake.</p><p class="line">Dough Bulk Fermentation (4-8 hours)</p><p class="line">Thoroughly mix together all of the dough ingredients in a large bowl. Transfer to a straight-walled container if you have one.</p><p class="line">Cover and let the dough rest for 20-30 minutes. Do a round of stretching and folding of the dough. Cover and rest the dough again for 20-30 minutes, then do a second round of stretching and folding. You can do 1-2 more rounds of stretching and folding if you&apos;d like.</p><p class="line">When the dough has expanded by about 90% (not quite double), scrape it out onto a floured work surface and shape it to fit your proofing basket. Alternatively, you can also end the first rise sooner, at around 75% expansion, preshape the dough, bench rest for 20-30 minutes, and then shape.</p><p class="line">Final Proof (1-16 hours)</p><p class="line">Place the shaped dough in the proofing basket, cover, and let rise again for 1-2 hours at room temperature before baking. Alternatively, you can let the dough rise 20-40 minutes at room temperature, then refrigerate overnight (8-16 hours). If your kitchen and dough are hot, you might want to refrigerate the dough immediately; or if very cold, refrigerate after closer to 1 hour. If the dough is warm, you also have the option to place the dough in the freezer for 20 minutes to stiffen it during the oven preheat.</p><p class="line">Flip the dough out of the proofing basket and onto a sheet of parchment paper or onto the base of your hot baking vessel. Score, cover, and return the vessel to the oven.</p><p class="line">500°F for 15 minutes, lid on</p><p class="line">450°F for 5 minutes, lid on</p><p class="line">450°F for 10 minutes, lid off</p><p class="line">If your baking vessel is cast iron, after 15 minutes place a baking sheet directly under the cast iron on the same shelf. This will prevent the base of the bread from burning.</p><p class="line">When baking is complete, the bread should have an internal temperature over 205F and it should sound hollow when you knock on the bottom of the loaf.</p><p class="line">Let the bread cool for a couple of hours before you slice it.</p>
+        </div>
+    </div>
+    
+
+    <!-- Notes -->
+    
+
+    <!-- Nutrition (in regular mode it goes below the notes) -->
+    
+        <!-- Used in two different places depending on the recipe layout -->
+
+
+    
+    
+    </div>
+    
+    <div class="clear"></div>
+
+</div>
+
+
+
+
+
+    </body>
+</html>

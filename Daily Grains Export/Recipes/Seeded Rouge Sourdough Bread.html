@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <style type="text/css">
+            /* Shared styles */
+            body {
+                font-family: Helvetica, sans-serif;
+                font-size: 16.0px;
+                color: #34302e;
+                margin: 0.25in;
+                min-width: 1024px;
+            }
+            @page {
+                size: letter portrait;
+                margin: 0.25in;
+            }
+            .name {
+                font-size: 18.0px;
+                font-family: Helvetica, sans-serif;
+                font-weight: normal;
+                margin: 0 0 10px 0;
+            }
+            .categories {
+                color: #605D5D;
+                font-size: 14.0px;
+                font-family: Helvetica, sans-serif;
+                font-style: italic;
+            }
+            .rating {
+                color: #d10505;
+                font-size: 14.0px;
+            }
+            .metadata {
+                font-size: 14.0px;
+            }
+            .infobox p {
+                margin: 0;
+                line-height: 150%;
+            }
+            .subhead {
+                color: #d10505;
+                font-weight: bold;
+                font-size: 14.0px;
+                text-transform: uppercase;
+                margin: 10px 0;
+            }
+            
+            .ingredients p {
+                margin: 4px 0;
+            }
+            /* To prevent nutrition/directions from getting too close
+               to ingredients */
+            .ingredients {
+                padding-bottom: 10px;
+            }
+            .clear {
+                clear:both;
+            }
+            a {
+                color: #4990E2;
+                text-decoration: none;
+            }
+            /* Full page specific styles */
+            .text {
+                line-height: 130%;
+            }
+            .photobox {
+                
+                float: left;
+                margin-right: 14px;
+                
+                
+            }
+            .photo {
+                max-width: 140.0px;
+                max-height: 140.0px;
+                width: auto;
+                height: auto;
+            }
+            
+            .inline-image {
+                max-width: 25%;
+                max-height: 25%;
+                width: auto;
+                height: auto;
+            }
+            .photoswipe {
+                border: 1px #dddddd solid;
+                cursor: pointer;
+            }
+            .pswp__caption__center {
+                text-align: center !important;
+            }
+            .recipe {
+                
+                page-break-after: always;
+                
+                
+            }
+            .recipe:first-child {
+                border-top: 0 none;
+                margin-top: 0;
+                padding-top: 0;
+            }
+        </style>
+    </head>
+    <body>
+        <!-- Recipe -->
+<div class="recipe" itemscope itemtype="http://schema.org/Recipe" >
+    
+    <div class="infobox">
+
+        <!-- Image -->
+        
+        <div class="photobox">
+            
+            <a href="https://breadtopia.com/wp-content/uploads/2017/07/20170708_092516-Copy-420x371.jpg">
+                <img src="Images/AB9E4A07-133C-4ECE-9592-3A6CA9BAF15C/7F4604B0-3EA3-4D35-B517-E4D02F98F625.jpg" itemprop="image" class="photo photoswipe"/>
+            </a>
+            
+            
+        </div>
+        
+
+        <!-- Name -->
+        <h1 itemprop="name" class="name">Seeded Rouge Sourdough Bread</h1>
+        
+        <!-- Info -->
+        
+        
+        <!-- Rating, categories -->
+        <p itemprop="aggregateRating" class="rating" value="0"></p>
+        
+            <p itemprop="recipeCategory" class="categories">Daily Grains</p>
+        
+        
+        <p class="metadata">
+        
+            <!-- Cook time, prep time, servings, difficulty -->
+            
+            <b>Prep Time: </b><span itemprop="prepTime">50 minutes</span>
+            
+            <b>Cook Time: </b><span itemprop="cookTime">40 minutes</span>
+            
+
+            <!-- Source -->
+            
+                <b>Source: </b>
+                
+                    <a itemprop="url" href="https://breadtopia.com/seeded-sourdough-bread/">
+                        <span itemprop="author">breadtopia.com</span>
+                    </a>
+                
+                
+            
+        </p>
+        
+        
+        
+        <div class="clear"></div>
+        
+
+    </div>
+    
+    <div class="left-column">
+
+        <!-- Ingredients -->
+        
+        <div class="ingredientsbox">
+            <h3 class="subhead">Ingredients</h3>
+            <div class="ingredients text">
+                <p class="line" itemprop="recipeIngredient"><strong>500</strong>g bread flour (4 cups) - I did 40% Rouge</p><p class="line" itemprop="recipeIngredient"><strong>375</strong>g water for autolyse (scant 1 2/3 cup)</p><p class="line" itemprop="recipeIngredient"><strong>80</strong>g sourdough starter (1/3 heaping cup)</p><p class="line" itemprop="recipeIngredient"><strong>100</strong>g water for soaking seeds, do not drain  - I did 50g when adding to dough (scant 1/2 cup)</p><p class="line" itemprop="recipeIngredient"><strong>30</strong>g poppy seeds (3 Tbsp)</p><p class="line" itemprop="recipeIngredient"><strong>30</strong>g chia seeds (3 Tbsp)</p><p class="line" itemprop="recipeIngredient"><strong>25</strong>g toasted sesame seeds (3 Tbsp)</p><p class="line" itemprop="recipeIngredient"><strong>9</strong>g salt (1.5 tsp)</p><p class="line" itemprop="recipeIngredient">~10g each of additional poppy, chia, and sesame seeds to decorate the top of the bread (~1 Tbsp each)</p>
+            </div>
+        </div>
+        
+        
+        <!-- Nutrition (in two-column mode it goes below the ingredients) -->
+        
+
+    </div>
+    
+    <div class="right-column">
+    
+    <!-- Description -->
+    
+
+    <!-- Directions -->
+    
+    <div class="directionsbox">
+        <h3 class="subhead">Directions</h3>
+        <div itemprop="recipeInstructions" class="directions text">
+            <p class="line">Toast the sesame seeds in a dry skillet on medium-low heat for 2-3 minutes or until golden brown.</p><p class="line">Combine all three kinds of seeds in a small bowl and add the 100g of water, allowing the seeds to soak up the water (especially the chia seeds) during the dough’s autolyse stage.</p><p class="line">Mix the flour and water and cover the dough to autolyse for about 1 hour.</p><p class="line">Knead and pinch the salt and leaven into the dough. Mark the time, and cover and let the dough rest for about 30 minutes.</p><p class="line">Begin a series of 4-6 stretch and folds 20-30 minutes apart, covering between each stretch and fold, and adding in the watery seed mixture at the second stretch and fold.</p><p class="line">Let ferment until the dough is puffy and bubbly. From the marked time the leaven was added, this bulk ferment can be as little as 3-4 hours if your room temperature is over 80F or as long as 10-11 hours if your room temperature is under 70F. My dough fermented 5.5 hours at 77F.</p><p class="line">Scrape your fermented dough out onto a floured countertop. Press out the gases while you creating a rectangular shape with the dough, then fold the dough in thirds on the long side, and then in half to make a tall square shape.</p><p class="line">Cover with plastic and let the dough rest for 15 minutes.</p><p class="line">Prep your counter with extra chia, sesame, and poppy seeds in a circle if you’re making a boule and an oval if you’re making a batard. Also, prep your banneton with flour as well.</p><p class="line">If you’re using a tea towel to line a bowl or basket, you have the option of laying it flat on your counter, flouring it and then coating it in seeds.</p><p class="line">Shape your dough into a boule or batard by knitting the sides together, and then rolling and pressing the top into the middle several times until the dough is completely flipped over. OR Flip your dough over, and tuck in the sides while rotating it in a circle.</p><p class="line">Let the dough rest a few minutes to close the seams on the underside, then dampen the top of the loaf with a wet hand or by spraying it. Use your dough scraper to lift your boule/batard off the counter and flip it onto the layer of prepped seeds, rolling it a bit to capture as many as possible.</p><p class="line">Transfer the dough to your floured basket. Cover and proof until it has expanded and does not rebound as readily when poked. This could be as little as 45 minutes at room temperatures and as long as 10 hours in the refrigerator. My dough proofed for 2.75 hours in the refrigerator.</p><p class="line">30 minutes before your proofing stage is over, preheat your oven to 500F (or the recommended temp for your baking vessel) with the baking vessel inside.</p><p class="line">Bake at 500F for 30 minutes, lid on</p><p class="line">Bake at 450F for 10 minutes, lid off</p><p class="line">Or until the internal temperature of the bread is about 205F.</p>
+        </div>
+    </div>
+    
+
+    <!-- Notes -->
+    
+
+    <!-- Nutrition (in regular mode it goes below the notes) -->
+    
+        <!-- Used in two different places depending on the recipe layout -->
+
+
+    
+    
+    </div>
+    
+    <div class="clear"></div>
+
+</div>
+
+
+
+
+
+    </body>
+</html>

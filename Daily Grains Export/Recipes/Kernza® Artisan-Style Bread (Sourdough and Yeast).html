@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <style type="text/css">
+            /* Shared styles */
+            body {
+                font-family: Helvetica, sans-serif;
+                font-size: 16.0px;
+                color: #34302e;
+                margin: 0.25in;
+                min-width: 1024px;
+            }
+            @page {
+                size: letter portrait;
+                margin: 0.25in;
+            }
+            .name {
+                font-size: 18.0px;
+                font-family: Helvetica, sans-serif;
+                font-weight: normal;
+                margin: 0 0 10px 0;
+            }
+            .categories {
+                color: #605D5D;
+                font-size: 14.0px;
+                font-family: Helvetica, sans-serif;
+                font-style: italic;
+            }
+            .rating {
+                color: #d10505;
+                font-size: 14.0px;
+            }
+            .metadata {
+                font-size: 14.0px;
+            }
+            .infobox p {
+                margin: 0;
+                line-height: 150%;
+            }
+            .subhead {
+                color: #d10505;
+                font-weight: bold;
+                font-size: 14.0px;
+                text-transform: uppercase;
+                margin: 10px 0;
+            }
+            
+            .ingredients p {
+                margin: 4px 0;
+            }
+            /* To prevent nutrition/directions from getting too close
+               to ingredients */
+            .ingredients {
+                padding-bottom: 10px;
+            }
+            .clear {
+                clear:both;
+            }
+            a {
+                color: #4990E2;
+                text-decoration: none;
+            }
+            /* Full page specific styles */
+            .text {
+                line-height: 130%;
+            }
+            .photobox {
+                
+                float: left;
+                margin-right: 14px;
+                
+                
+            }
+            .photo {
+                max-width: 140.0px;
+                max-height: 140.0px;
+                width: auto;
+                height: auto;
+            }
+            
+            .inline-image {
+                max-width: 25%;
+                max-height: 25%;
+                width: auto;
+                height: auto;
+            }
+            .photoswipe {
+                border: 1px #dddddd solid;
+                cursor: pointer;
+            }
+            .pswp__caption__center {
+                text-align: center !important;
+            }
+            .recipe {
+                
+                page-break-after: always;
+                
+                
+            }
+            .recipe:first-child {
+                border-top: 0 none;
+                margin-top: 0;
+                padding-top: 0;
+            }
+        </style>
+    </head>
+    <body>
+        <!-- Recipe -->
+<div class="recipe" itemscope itemtype="http://schema.org/Recipe" >
+    
+    <div class="infobox">
+
+        <!-- Image -->
+        
+        <div class="photobox">
+            
+            <a href="https://breadtopia.com/wp-content/uploads/2023/08/20230811_162431-Copy.jpg">
+                <img src="Images/81D34BB8-65C9-4663-975B-BAE74A5304E8/A2A73326-31F5-47E0-877C-0A345F8163D2.jpg" itemprop="image" class="photo photoswipe"/>
+            </a>
+            
+            
+        </div>
+        
+
+        <!-- Name -->
+        <h1 itemprop="name" class="name">Kernza® Artisan-Style Bread (Sourdough and Yeast)</h1>
+        
+        <!-- Info -->
+        
+        
+        <!-- Rating, categories -->
+        <p itemprop="aggregateRating" class="rating" value="0"></p>
+        
+            <p itemprop="recipeCategory" class="categories">Bread, Daily Grains</p>
+        
+        
+        <p class="metadata">
+        
+            <!-- Cook time, prep time, servings, difficulty -->
+            
+            <b>Prep Time: </b><span itemprop="prepTime">40 minutes</span>
+            
+            <b>Cook Time: </b><span itemprop="cookTime">35 minutes</span>
+            
+
+            <!-- Source -->
+            
+                <b>Source: </b>
+                
+                    <a itemprop="url" href="https://breadtopia.com/kernza-artisan-bread/">
+                        <span itemprop="author">breadtopia.com</span>
+                    </a>
+                
+                
+            
+        </p>
+        
+        
+        
+        <div class="clear"></div>
+        
+
+    </div>
+    
+    <div class="left-column">
+
+        <!-- Ingredients -->
+        
+        <div class="ingredientsbox">
+            <h3 class="subhead">Ingredients</h3>
+            <div class="ingredients text">
+                <p class="line" itemprop="recipeIngredient">Updated bread flour, salt, levain in March 2025</p><br/><p class="line" itemprop="recipeIngredient">SOURDOUGH</p><p class="line" itemprop="recipeIngredient"><strong>518</strong> grams bread flour</p><p class="line" itemprop="recipeIngredient"><strong>140</strong> grams home-milled Kernza</p><p class="line" itemprop="recipeIngredient"><strong>456</strong> grams water</p><p class="line" itemprop="recipeIngredient"><strong>12</strong> grams salt</p><p class="line" itemprop="recipeIngredient"><strong>117</strong> grams ripe sourdough starter</p>
+            </div>
+        </div>
+        
+        
+        <!-- Nutrition (in two-column mode it goes below the ingredients) -->
+        
+
+    </div>
+    
+    <div class="right-column">
+    
+    <!-- Description -->
+    
+    <div class="descriptionbox">
+        <h3 class="subhead">Description</h3>
+        <div itemprop="description" class="description text">
+            <p>It makes an 1106g loaf. </p>
+        </div>
+    </div>
+    
+
+    <!-- Directions -->
+    
+    <div class="directionsbox">
+        <h3 class="subhead">Directions</h3>
+        <div itemprop="recipeInstructions" class="directions text">
+            <p class="line">Saltolyse</p><p class="line">Thoroughly mix the flours, water, and salt in a bowl. Cover and let sit 30-60 minutes to hydrate the flours, soften the bran, and begin developing the gluten in the dough. The salt inhibits the enzymatic activity from taking off too fast, which is helpful in warm weather and with whole grain flours. If it is cold, feel free to add the salt later with the starter or preferment.</p><p class="line">Mix and Bulk Fermentation</p><p class="line">Combine the sourdough starter or preferment with the dough and mix thoroughly. At this point, you might transfer the dough to a straight-walled bucket. Cover and let the dough rest 20-30 minutes.</p><p class="line">Perform 3-4 rounds of gluten development with 20-30 minute rests between. If you&apos;re doing the yeast version, you should aim for 20 minute rests. Ideally, you&apos;ll do one round of stretching and folding, one lamination, and one or two more rounds of coil folding.</p><p class="line">When the dough has expanded by about 85%, you can shape it. In a warm summer kitchen, my sourdough dough needed five hours and my yeast dough needed 2 hours to expand.</p><p class="line">Shape and Final Proof</p><p class="line">Shape the dough and place it seam-side up in your proofing basket.</p><p class="line">Yeast: Cover and let the dough expand in the basket for 30-60 minutes depending on the room temperature. Preheat the oven and baking vessel right away if you do this room temp final proof. If you want a cold final proof, immediately refrigerate the dough. If your dough is warm, the dough may expand quickly in the refrigerator so you may need to bake it a couple of hours later rather than let it go all night. My yeast dough was in the refrigerator 3 hours and expanded a bit too much. The crumb and flavor were lovely, but the loaf height was slightly compromised.</p><p class="line">Sourdough: Cover and let the dough expand in the basket for 1-2 hours depending on the room temperature OR if you want a cold final proof, immediately refrigerate the dough if it&apos;s warm or let the dough sit at room temperature for 30-60 minutes before refrigerating if it&apos;s cool. My dough proofed in the refrigerator overnight.</p><p class="line">Preheat your oven and baking vessel to 500°F for 30 minutes.</p><p class="line">Flip your dough onto the base of your baking vessel or a sheet of parchment paper. This can be done directly from the refrigerator if you did a cold final proof.</p><p class="line">Score and transfer the dough to your baking vessel, cover, and place in the oven on the middle shelf.</p><p class="line">20 minutes at 500°F lid on</p><p class="line">15 minutes at 450°F lid off</p><p class="line">Let the bread cool for a few hours before serving.</p>
+        </div>
+    </div>
+    
+
+    <!-- Notes -->
+    
+
+    <!-- Nutrition (in regular mode it goes below the notes) -->
+    
+        <!-- Used in two different places depending on the recipe layout -->
+
+
+    
+    
+    </div>
+    
+    <div class="clear"></div>
+
+</div>
+
+
+
+
+
+    </body>
+</html>
