@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import { formatDistanceToNow } from 'date-fns';
 import { MarkdownViewer } from '@/components/ui/MarkdownViewer';
 import { calculateIngredientCost, formatUnit } from '@/lib/unitConvert';
 import { formatQuantity, formatCurrency } from '@/lib/format';
@@ -27,69 +26,18 @@ interface RecipeDetailContentProps {
     id: string;
     name: string;
     description?: string | null;
-    yieldQty: number;
-    yieldUnit: string;
-    updatedAt: Date;
     sections: RecipeSection[];
-    _count: {
-      sections: number;
-      productionSheetRecipes: number;
-    };
   };
-  totalCost: number;
-  costPerUnit: number;
-  totalIngredients: number;
 }
 
 export function RecipeDetailContent({
   recipe,
-  totalCost,
-  costPerUnit,
-  totalIngredients,
 }: RecipeDetailContentProps) {
   return (
     <div className="space-y-8">
-      {/* Overview Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-        <div>
-          <p className="text-sm text-base-content/70">Yield</p>
-          <p className="text-2xl font-bold">
-            {recipe.yieldQty} {recipe.yieldUnit}
-          </p>
-        </div>
-
-        <div>
-          <p className="text-sm text-base-content/70">Total Cost</p>
-          <p className="text-2xl font-bold text-success">
-            {formatCurrency(totalCost)}
-          </p>
-        </div>
-
-        <div>
-          <p className="text-sm text-base-content/70">Cost per Unit</p>
-          <p className="text-2xl font-bold">{formatCurrency(costPerUnit)}</p>
-        </div>
-
-        <div>
-          <p className="text-sm text-base-content/70">Sections</p>
-          <p className="text-2xl font-bold">{recipe._count.sections}</p>
-        </div>
-
-        <div>
-          <p className="text-sm text-base-content/70">Ingredients</p>
-          <p className="text-2xl font-bold">{totalIngredients}</p>
-        </div>
-
-        <div>
-          <p className="text-sm text-base-content/70">Production Sheets</p>
-          <p className="text-2xl font-bold">{recipe._count.productionSheetRecipes}</p>
-        </div>
-      </div>
-
       {/* Description */}
       {recipe.description && (
         <div>
-          <h2 className="font-semibold mb-2 text-base-content/70">Description</h2>
           <p className="text-lg">{recipe.description}</p>
         </div>
       )}
@@ -113,7 +61,6 @@ export function RecipeDetailContent({
                   <thead>
                     <tr>
                       <th>Ingredient</th>
-                      <th className="w-[18%]">Preparation</th>
                       <th className="w-[12%] whitespace-nowrap">Quantity</th>
                       <th className="w-[12%] whitespace-nowrap">Unit Cost</th>
                       <th className="w-[10%] whitespace-nowrap">Total Cost</th>
@@ -146,9 +93,11 @@ export function RecipeDetailContent({
                             >
                               {ing.ingredient.name}
                             </Link>
-                          </td>
-                          <td className="text-base-content/70 italic">
-                            {ing.preparation || '—'}
+                            {ing.preparation && (
+                              <span className="text-base-content/70 italic">
+                                , {ing.preparation}
+                              </span>
+                            )}
                           </td>
                           <td className="whitespace-nowrap">
                             {formatQuantity(quantity)} {formatUnit(recipeUnit)}
@@ -182,12 +131,6 @@ export function RecipeDetailContent({
           )}
         </section>
       ))}
-
-      {/* Last Updated */}
-      <p className="text-sm text-base-content/60">
-        Last updated{' '}
-        {formatDistanceToNow(new Date(recipe.updatedAt), { addSuffix: true })}
-      </p>
     </div>
   );
 }

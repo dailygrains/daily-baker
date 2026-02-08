@@ -4,8 +4,8 @@ import { SetPageHeader } from '@/components/layout/SetPageHeader';
 import { getRecipeById } from '@/app/actions/recipe';
 import Link from 'next/link';
 import { calculateIngredientCost } from '@/lib/unitConvert';
-import { RecipeDetailTabs } from '@/components/recipes/RecipeDetailTabs';
 import { RecipeDetailContent } from '@/components/recipes/RecipeDetailContent';
+import { RecipeDetailSidebar } from '@/components/recipes/RecipeDetailSidebar';
 
 export default async function RecipeDetailPage({
   params,
@@ -72,18 +72,22 @@ export default async function RecipeDetailPage({
         }
       />
 
-      <RecipeDetailTabs
-        recipeId={recipe.id}
-        bakeryId={recipe.bakeryId}
-        detailsContent={
-          <RecipeDetailContent
+      <div className="flex flex-col lg:flex-row gap-8">
+        {/* Main Content */}
+        <div className="flex-1 min-w-0">
+          <RecipeDetailContent recipe={recipe} />
+        </div>
+
+        {/* Sidebar */}
+        <div className="w-full lg:w-80 flex-shrink-0">
+          <RecipeDetailSidebar
             recipe={recipe}
             totalCost={totalCost}
             costPerUnit={costPerUnit}
             totalIngredients={totalIngredients}
           />
-        }
-      />
+        </div>
+      </div>
     </>
   );
 }
