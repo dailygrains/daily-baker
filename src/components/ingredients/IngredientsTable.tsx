@@ -3,7 +3,14 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Pagination, usePageSize } from '@/components/ui/Pagination';
+import { TagBadges } from '@/components/tags';
 import { formatQuantity, formatCurrency } from '@/lib/format';
+
+interface Tag {
+  id: string;
+  name: string;
+  color?: string | null;
+}
 
 interface Ingredient {
   id: string;
@@ -18,6 +25,7 @@ interface Ingredient {
       name: string;
     };
   }>;
+  tags?: Tag[];
 }
 
 interface IngredientsTableProps {
@@ -47,6 +55,7 @@ export function IngredientsTable({ ingredients }: IngredientsTableProps) {
               <th>Name</th>
               <th>Current Qty</th>
               <th>Cost per Unit</th>
+              <th>Tags</th>
               <th>Vendors</th>
             </tr>
           </thead>
@@ -78,6 +87,13 @@ export function IngredientsTable({ ingredients }: IngredientsTableProps) {
                     </span>
                   </td>
                   <td className="align-top">{formatCurrency(costPerUnit)}</td>
+                  <td className="align-top">
+                    {ingredient.tags && ingredient.tags.length > 0 ? (
+                      <TagBadges tags={ingredient.tags} size="sm" />
+                    ) : (
+                      <span className="text-base-content/40 italic">No tags</span>
+                    )}
+                  </td>
                   <td className="align-top">
                     {ingredient.vendors.length > 0 ? (
                       <div className="flex flex-wrap gap-1">

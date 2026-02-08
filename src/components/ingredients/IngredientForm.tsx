@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { createIngredient, updateIngredient, assignVendorToIngredient, unassignVendorFromIngredient } from '@/app/actions/ingredient';
 import { createVendor } from '@/app/actions/vendor';
 import { VendorAutocomplete } from '@/components/vendor/VendorAutocomplete';
+import { TagManager } from '@/components/tags';
 import { X } from 'lucide-react';
 import type { Decimal } from '@prisma/client/runtime/library';
 import { useFormSubmit } from '@/hooks/useFormSubmit';
@@ -14,6 +15,16 @@ import { useToastStore } from '@/store/toast-store';
 interface Vendor {
   id: string;
   name: string;
+}
+
+interface Tag {
+  id: string;
+  name: string;
+  color?: string | null;
+  tagType?: {
+    id: string;
+    name: string;
+  };
 }
 
 interface IngredientFormProps {
@@ -28,7 +39,9 @@ interface IngredientFormProps {
     vendors: Array<{
       vendor: Vendor;
     }>;
+    tags?: Tag[];
   };
+  defaultTagTypeId?: string;
   onFormRefChange?: (ref: HTMLFormElement | null) => void;
   onSavingChange?: (isSaving: boolean) => void;
   onUnsavedChangesChange?: (hasChanges: boolean) => void;
@@ -38,6 +51,7 @@ interface IngredientFormProps {
 export function IngredientForm({
   bakeryId,
   ingredient,
+  defaultTagTypeId,
   onFormRefChange,
   onSavingChange,
   onUnsavedChangesChange,
@@ -342,6 +356,29 @@ export function IngredientForm({
               </div>
             </fieldset>
           )}
+        </div>
+      )}
+
+      {ingredient && (
+        <div className="space-y-0">
+          <h2 className="text-xl font-semibold">Tags</h2>
+
+          <fieldset className="fieldset">
+            <legend className="fieldset-legend">Assign Tags</legend>
+            <TagManager
+              bakeryId={bakeryId}
+              entityType="ingredient"
+              entityId={ingredient.id}
+              initialTags={ingredient.tags || []}
+              allowCreate={Boolean(defaultTagTypeId)}
+              defaultTagTypeId={defaultTagTypeId}
+            />
+            <label className="label">
+              <span className="label-text-alt">
+                Add tags to categorize this ingredient (e.g., Organic, Vegan, Local)
+              </span>
+            </label>
+          </fieldset>
         </div>
       )}
 

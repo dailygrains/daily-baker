@@ -41,6 +41,8 @@ model Bakery {
   productionSheets   ProductionSheet[]
   invitations  Invitation[]
   activityLogs ActivityLog[]
+  tagTypes     TagType[]
+  tags         Tag[]
 
   @@index([isActive])
   @@map("bakeries")
@@ -477,4 +479,58 @@ enum ActivityType {
   REVOKE
   LOGIN
   LOGOUT
+}
+
+// ============================================================================
+// TAGGING SYSTEM (Polymorphic)
+// ============================================================================
+
+model TagType {
+  id          String   @id @default(cuid())
+  bakeryId    String
+  bakery      Bakery   @relation(fields: [bakeryId], references: [id], onDelete: Cascade)
+  name        String   // "Dietary", "Source", "Storage", "Allergen"
+  description String?
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tags Tag[]
+
+  @@unique([bakeryId, name])
+  @@index([bakeryId])
+  @@map("tag_types")
+}
+
+model Tag {
+  id        String   @id @default(cuid())
+  bakeryId  String
+  bakery    Bakery   @relation(fields: [bakeryId], references: [id], onDelete: Cascade)
+  tagTypeId String
+  tagType   TagType  @relation(fields: [tagTypeId], references: [id], onDelete: Cascade)
+  name      String   // "Vegan", "Gluten-Free", "Local"
+  color     String?  // "primary", "secondary", "accent", "success", "warning", "error"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  entityTags EntityTag[]
+
+  @@unique([bakeryId, tagTypeId, name])
+  @@index([bakeryId])
+  @@index([tagTypeId])
+  @@map("tags")
+}
+
+model EntityTag {
+  id         String   @id @default(cuid())
+  tagId      String
+  tag        Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  entityType String   // "ingredient", "recipe", "vendor"
+  entityId   String
+  createdAt  DateTime @default(now())
+
+  @@unique([tagId, entityType, entityId])
+  @@index([tagId])
+  @@index([entityType, entityId])
+  @@map("entity_tags")
 }

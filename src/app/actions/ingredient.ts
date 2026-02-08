@@ -388,6 +388,33 @@ export async function getIngredientsByBakery(bakeryId: string) {
       },
     });
 
+    // Fetch tags for all ingredients in one query
+    const ingredientIds = ingredients.map(i => i.id);
+    const entityTags = await db.entityTag.findMany({
+      where: {
+        entityType: 'ingredient',
+        entityId: { in: ingredientIds },
+      },
+      include: {
+        tag: {
+          select: {
+            id: true,
+            name: true,
+            color: true,
+          },
+        },
+      },
+    });
+
+    // Group tags by ingredient ID
+    const tagsByIngredient = entityTags.reduce((acc, et) => {
+      if (!acc[et.entityId]) {
+        acc[et.entityId] = [];
+      }
+      acc[et.entityId].push(et.tag);
+      return acc;
+    }, {} as Record<string, Array<{ id: string; name: string; color: string | null }>>);
+
     // Calculate aggregates from inventory for each ingredient
     return {
       success: true,
@@ -398,6 +425,7 @@ export async function getIngredientsByBakery(bakeryId: string) {
           currentQty: aggregates.currentQty,
           costPerUnit: aggregates.costPerUnit,
           lowStockThreshold: aggregates.lowStockThreshold,
+          tags: tagsByIngredient[ingredient.id] || [],
           _count: {
             lots: ingredient.inventory?._count?.lots ?? 0,
           },
@@ -474,6 +502,26 @@ export async function getIngredientById(id: string) {
       };
     }
 
+    // Fetch tags for this ingredient
+    const entityTags = await db.entityTag.findMany({
+      where: {
+        entityType: 'ingredient',
+        entityId: ingredient.id,
+      },
+      include: {
+        tag: {
+          include: {
+            tagType: true,
+          },
+        },
+      },
+      orderBy: {
+        tag: { name: 'asc' },
+      },
+    });
+
+    const tags = entityTags.map(et => et.tag);
+
     // Calculate aggregates from inventory
     const aggregates = calculateInventoryAggregates(ingredient.inventory);
 
@@ -485,6 +533,7 @@ export async function getIngredientById(id: string) {
         currentQty: aggregates.currentQty,
         costPerUnit: aggregates.costPerUnit,
         lowStockThreshold: aggregates.lowStockThreshold,
+        tags,
         inventory: ingredient.inventory ? {
           ...ingredient.inventory,
           lowStockThreshold: ingredient.inventory.lowStockThreshold ? Number(ingredient.inventory.lowStockThreshold) : null,

@@ -16,6 +16,9 @@ async function main() {
     await prisma.recipeSectionIngredient.deleteMany();
     await prisma.recipeSection.deleteMany();
     await prisma.recipe.deleteMany();
+    await prisma.entityTag.deleteMany();
+    await prisma.tag.deleteMany();
+    await prisma.tagType.deleteMany();
     await prisma.ingredientVendor.deleteMany();
     await prisma.ingredient.deleteMany();
     await prisma.unitConversion.deleteMany();
@@ -23,7 +26,10 @@ async function main() {
     await prisma.vendor.deleteMany();
     await prisma.equipment.deleteMany();
     await prisma.userBakery.deleteMany();
-    await prisma.user.deleteMany();
+    // Only delete demo users (those with clerkId starting with "demo_"), preserve real Clerk users
+    await prisma.user.deleteMany({
+      where: { clerkId: { startsWith: 'demo_' } },
+    });
     await prisma.role.deleteMany();
     await prisma.bakery.deleteMany();
     console.log('✅ Cleanup complete\n');
@@ -129,21 +135,10 @@ async function main() {
   // ==========================================================================
   console.log('👥 Creating users...');
 
-  // Platform Admin (no bakery association)
-  const _platformAdmin = await prisma.user.create({
-    data: {
-      clerkId: 'user_platform_admin',
-      email: process.env.PLATFORM_ADMIN_EMAIL || 'admin@dailybaker.com',
-      name: 'Platform Admin',
-      isPlatformAdmin: true,
-      lastLoginAt: new Date(),
-    },
-  });
-
   // Daily Grains Users
   const _dailyGrainsOwner = await prisma.user.create({
     data: {
-      clerkId: 'user_dailygrains_owner',
+      clerkId: 'demo_dailygrains_owner',
       email: 'owner@dailygrains.co',
       name: 'Paul Bonneville',
       roleId: ownerRole.id,
@@ -159,7 +154,7 @@ async function main() {
 
   const dailyGrainsManager = await prisma.user.create({
     data: {
-      clerkId: 'user_dailygrains_manager',
+      clerkId: 'demo_dailygrains_manager',
       email: 'manager@dailygrains.co',
       name: 'Michael Chen',
       roleId: managerRole.id,
@@ -175,7 +170,7 @@ async function main() {
 
   const dailyGrainsBaker = await prisma.user.create({
     data: {
-      clerkId: 'user_dailygrains_baker',
+      clerkId: 'demo_dailygrains_baker',
       email: 'baker@dailygrains.co',
       name: 'Emma Rodriguez',
       roleId: bakerRole.id,
@@ -192,7 +187,7 @@ async function main() {
   // Sweet Treats Users
   const _sweetTreatsOwner = await prisma.user.create({
     data: {
-      clerkId: 'user_sweetreats_owner',
+      clerkId: 'demo_sweetreats_owner',
       email: 'owner@sweettreats.com',
       name: 'David Martinez',
       roleId: ownerRole.id,
@@ -206,7 +201,38 @@ async function main() {
     },
   });
 
-  console.log(`✅ Created 5 users\n`);
+  console.log(`✅ Created 4 demo users`);
+
+  // Update real platform admin user (paul@dailygrains.co) to be admin and connect to Daily Grains
+  const existingAdmin = await prisma.user.findFirst({
+    where: { email: 'paul@dailygrains.co' },
+    include: { bakeries: true },
+  });
+
+  if (existingAdmin) {
+    // Update to be platform admin with owner role
+    await prisma.user.update({
+      where: { id: existingAdmin.id },
+      data: {
+        isPlatformAdmin: true,
+        roleId: ownerRole.id,
+      },
+    });
+
+    // Connect to Daily Grains if not already connected
+    const hasConnection = existingAdmin.bakeries.some(b => b.bakeryId === dailyGrains.id);
+    if (!hasConnection) {
+      await prisma.userBakery.create({
+        data: {
+          userId: existingAdmin.id,
+          bakeryId: dailyGrains.id,
+        },
+      });
+    }
+    console.log(`✅ Updated paul@dailygrains.co as platform admin connected to Daily Grains\n`);
+  } else {
+    console.log(`\n`);
+  }
 
   // ==========================================================================
   // Create Unit Conversions
@@ -779,6 +805,154 @@ async function main() {
   console.log(`✅ Assigned vendors to ${ingredientVendorAssignments.length} ingredients\n`);
 
   // ==========================================================================
+  // Create Tag Types and Tags (for Daily Grains)
+  // ==========================================================================
+  console.log('🏷️  Creating tag types and tags...');
+
+  // Create tag types
+  const dietaryTagType = await prisma.tagType.create({
+    data: {
+      bakeryId: dailyGrains.id,
+      name: 'Dietary',
+      description: 'Dietary restrictions and preferences',
+      order: 0,
+    },
+  });
+
+  const sourceTagType = await prisma.tagType.create({
+    data: {
+      bakeryId: dailyGrains.id,
+      name: 'Source',
+      description: 'Where the ingredient comes from',
+      order: 1,
+    },
+  });
+
+  const allergenTagType = await prisma.tagType.create({
+    data: {
+      bakeryId: dailyGrains.id,
+      name: 'Allergen',
+      description: 'Common allergens',
+      order: 2,
+    },
+  });
+
+  const storageTagType = await prisma.tagType.create({
+    data: {
+      bakeryId: dailyGrains.id,
+      name: 'Storage',
+      description: 'Storage requirements',
+      order: 3,
+    },
+  });
+
+  // Create tags under each type
+  const organicTag = await prisma.tag.create({
+    data: { bakeryId: dailyGrains.id, tagTypeId: sourceTagType.id, name: 'Organic', color: 'success' },
+  });
+
+  const localTag = await prisma.tag.create({
+    data: { bakeryId: dailyGrains.id, tagTypeId: sourceTagType.id, name: 'Local', color: 'primary' },
+  });
+
+  const heritageTag = await prisma.tag.create({
+    data: { bakeryId: dailyGrains.id, tagTypeId: sourceTagType.id, name: 'Heritage', color: 'accent' },
+  });
+
+  const veganTag = await prisma.tag.create({
+    data: { bakeryId: dailyGrains.id, tagTypeId: dietaryTagType.id, name: 'Vegan', color: 'success' },
+  });
+
+  const glutenFreeTag = await prisma.tag.create({
+    data: { bakeryId: dailyGrains.id, tagTypeId: dietaryTagType.id, name: 'Gluten-Free', color: 'warning' },
+  });
+
+  const dairyFreeTag = await prisma.tag.create({
+    data: { bakeryId: dailyGrains.id, tagTypeId: dietaryTagType.id, name: 'Dairy-Free', color: 'secondary' },
+  });
+
+  const containsGlutenTag = await prisma.tag.create({
+    data: { bakeryId: dailyGrains.id, tagTypeId: allergenTagType.id, name: 'Contains Gluten', color: 'error' },
+  });
+
+  const containsDairyTag = await prisma.tag.create({
+    data: { bakeryId: dailyGrains.id, tagTypeId: allergenTagType.id, name: 'Contains Dairy', color: 'error' },
+  });
+
+  const containsNutsTag = await prisma.tag.create({
+    data: { bakeryId: dailyGrains.id, tagTypeId: allergenTagType.id, name: 'Contains Nuts', color: 'error' },
+  });
+
+  const refrigeratedTag = await prisma.tag.create({
+    data: { bakeryId: dailyGrains.id, tagTypeId: storageTagType.id, name: 'Refrigerated', color: 'primary' },
+  });
+
+  const frozenTag = await prisma.tag.create({
+    data: { bakeryId: dailyGrains.id, tagTypeId: storageTagType.id, name: 'Frozen', color: 'secondary' },
+  });
+
+  const dryStorageTag = await prisma.tag.create({
+    data: { bakeryId: dailyGrains.id, tagTypeId: storageTagType.id, name: 'Dry Storage', color: 'accent' },
+  });
+
+  // Assign some tags to ingredients
+  const ingredientTagAssignments = [
+    // Heritage grains - local and heritage
+    { tagId: heritageTag.id, entityType: 'ingredient', entityId: whiteSonoraFlour.id },
+    { tagId: localTag.id, entityType: 'ingredient', entityId: whiteSonoraFlour.id },
+    { tagId: containsGlutenTag.id, entityType: 'ingredient', entityId: whiteSonoraFlour.id },
+
+    { tagId: heritageTag.id, entityType: 'ingredient', entityId: turkeyRedFlour.id },
+    { tagId: localTag.id, entityType: 'ingredient', entityId: turkeyRedFlour.id },
+    { tagId: containsGlutenTag.id, entityType: 'ingredient', entityId: turkeyRedFlour.id },
+
+    { tagId: heritageTag.id, entityType: 'ingredient', entityId: einkornFlour.id },
+    { tagId: organicTag.id, entityType: 'ingredient', entityId: einkornFlour.id },
+    { tagId: containsGlutenTag.id, entityType: 'ingredient', entityId: einkornFlour.id },
+
+    // Organic flours
+    { tagId: organicTag.id, entityType: 'ingredient', entityId: breadFlour.id },
+    { tagId: containsGlutenTag.id, entityType: 'ingredient', entityId: breadFlour.id },
+    { tagId: dryStorageTag.id, entityType: 'ingredient', entityId: breadFlour.id },
+
+    // Dairy - refrigerated and contains dairy
+    { tagId: organicTag.id, entityType: 'ingredient', entityId: butter.id },
+    { tagId: containsDairyTag.id, entityType: 'ingredient', entityId: butter.id },
+    { tagId: refrigeratedTag.id, entityType: 'ingredient', entityId: butter.id },
+
+    { tagId: organicTag.id, entityType: 'ingredient', entityId: eggs.id },
+    { tagId: refrigeratedTag.id, entityType: 'ingredient', entityId: eggs.id },
+
+    { tagId: organicTag.id, entityType: 'ingredient', entityId: milk.id },
+    { tagId: containsDairyTag.id, entityType: 'ingredient', entityId: milk.id },
+    { tagId: refrigeratedTag.id, entityType: 'ingredient', entityId: milk.id },
+
+    // Nuts
+    { tagId: containsNutsTag.id, entityType: 'ingredient', entityId: pecans.id },
+    { tagId: organicTag.id, entityType: 'ingredient', entityId: pecans.id },
+    { tagId: dryStorageTag.id, entityType: 'ingredient', entityId: pecans.id },
+
+    { tagId: containsNutsTag.id, entityType: 'ingredient', entityId: walnuts.id },
+    { tagId: dryStorageTag.id, entityType: 'ingredient', entityId: walnuts.id },
+
+    // Chocolate
+    { tagId: veganTag.id, entityType: 'ingredient', entityId: darkChocolateChips.id },
+    { tagId: dairyFreeTag.id, entityType: 'ingredient', entityId: darkChocolateChips.id },
+    { tagId: dryStorageTag.id, entityType: 'ingredient', entityId: darkChocolateChips.id },
+
+    // Oats - gluten free (certified)
+    { tagId: organicTag.id, entityType: 'ingredient', entityId: thickRolledOats.id },
+    { tagId: veganTag.id, entityType: 'ingredient', entityId: thickRolledOats.id },
+    { tagId: dryStorageTag.id, entityType: 'ingredient', entityId: thickRolledOats.id },
+  ];
+
+  await prisma.entityTag.createMany({
+    data: ingredientTagAssignments,
+  });
+
+  console.log(`✅ Created 4 tag types, 12 tags, and ${ingredientTagAssignments.length} tag assignments\n`);
+
+  // ==========================================================================
   // Create Equipment (for Daily Grains)
   // ==========================================================================
   console.log('🔧 Creating equipment...');
@@ -1173,9 +1347,12 @@ async function main() {
   console.log('--------');
   console.log(`✅ Bakeries: 3`);
   console.log(`✅ Roles: 3`);
-  console.log(`✅ Users: 5 (including 1 platform admin)`);
+  console.log(`✅ Users: 4 demo + your account as platform admin`);
   console.log(`✅ Vendors: 5`);
-  console.log(`✅ Ingredients: 75`);
+  console.log(`✅ Ingredients: 85`);
+  console.log(`✅ Tag Types: 4`);
+  console.log(`✅ Tags: 12`);
+  console.log(`✅ Tag Assignments: ${ingredientTagAssignments.length}`);
   console.log(`✅ Equipment: 6`);
   console.log(`✅ Recipes: 5`);
   console.log(`✅ Unit Conversions: 16`);
@@ -1183,13 +1360,12 @@ async function main() {
   console.log(`✅ Production Sheets: 3`);
   console.log('\n📧 Login Credentials (Development Only):');
   console.log('----------------------------------------');
-  console.log('Platform Admin: ' + (process.env.PLATFORM_ADMIN_EMAIL || 'admin@dailybaker.com'));
+  console.log('Platform Admin: paul@dailygrains.co (auto-configured)');
   console.log('Daily Grains Owner: owner@dailygrains.co');
   console.log('Daily Grains Manager: manager@dailygrains.co');
   console.log('Daily Grains Baker: baker@dailygrains.co');
   console.log('Sweet Treats Owner: owner@sweettreats.com');
-  console.log('\n💡 Note: These are demo accounts for development/testing only.');
-  console.log('In production, users will sign up via Clerk authentication.\n');
+  console.log('\n💡 Note: Demo accounts are for development/testing only.\n');
 }
 
 main()

@@ -2,6 +2,7 @@ import { getCurrentUser } from '@/lib/clerk';
 import { redirect } from 'next/navigation';
 import { SetPageHeader } from '@/components/layout/SetPageHeader';
 import { getIngredientById } from '@/app/actions/ingredient';
+import { TagBadges } from '@/components/tags';
 import Link from 'next/link';
 import { Edit, Boxes, AlertTriangle, TrendingDown, Plus, AlertCircle } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
@@ -142,6 +143,14 @@ export default async function IngredientDetailPage({
             )}
           </div>
         </div>
+
+        {/* Tags */}
+        {ingredient.tags && ingredient.tags.length > 0 && (
+          <div>
+            <p className="text-sm text-base-content/70 mb-2">Tags</p>
+            <TagBadges tags={ingredient.tags} size="md" />
+          </div>
+        )}
 
         {/* Inventory Lots */}
         <section className="space-y-4">
