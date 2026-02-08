@@ -6,6 +6,7 @@ import { createRecipe, updateRecipe } from '@/app/actions/recipe';
 import { useFormSubmit } from '@/hooks/useFormSubmit';
 import { Plus, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
 import { MDXEditor } from '@/components/ui/MDXEditor';
+import { IngredientAutocomplete } from '@/components/ingredients/IngredientAutocomplete';
 import type { Recipe, RecipeSection, RecipeSectionIngredient, Ingredient } from '@/generated/prisma';
 
 type RecipeWithSections = Omit<Recipe, 'totalCost'> & {
@@ -355,26 +356,27 @@ export function RecipeForm({
                 <fieldset className="fieldset">
                   <legend className="fieldset-legend">Ingredients</legend>
                   <div className="space-y-3">
-                    {section.ingredients.map((ingredient, ingredientIndex) => (
+                    {section.ingredients.map((ingredient, ingredientIndex) => {
+                      const selectedIngredient = availableIngredients.find(
+                        (ing) => ing.id === ingredient.ingredientId
+                      );
+                      return (
                       <div key={ingredientIndex} className="flex flex-wrap gap-2 items-center">
-                        <select
-                          className="select select-bordered flex-1 min-w-[200px] text-base"
-                          value={ingredient.ingredientId}
-                          onChange={(e) =>
-                            updateIngredient(
-                              sectionIndex,
-                              ingredientIndex,
-                              'ingredientId',
-                              e.target.value
-                            )
-                          }
-                        >
-                          {availableIngredients.map((ing) => (
-                            <option key={ing.id} value={ing.id}>
-                              {ing.name}
-                            </option>
-                          ))}
-                        </select>
+                        <div className="flex-1 min-w-[200px]">
+                          <IngredientAutocomplete
+                            ingredients={availableIngredients}
+                            value={selectedIngredient?.name || ''}
+                            onSelect={(ing) => {
+                              updateIngredient(
+                                sectionIndex,
+                                ingredientIndex,
+                                'ingredientId',
+                                ing.id
+                              );
+                            }}
+                            placeholder="Search ingredients..."
+                          />
+                        </div>
                         <input
                           type="number"
                           step="0.001"
@@ -415,7 +417,8 @@ export function RecipeForm({
                           <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
-                    ))}
+                      );
+                    })}
 
                     {section.ingredients.length === 0 && (
                       <p className="text-sm text-base-content/50">No ingredients added yet</p>
