@@ -97,13 +97,13 @@ export function RecipeDetailContent({
             <div>
               <h3 className="font-semibold mb-2 text-base-content/70">Ingredients</h3>
               <div className="overflow-x-auto">
-                <table className="table table-lg">
+                <table className="table table-lg table-fixed">
                   <thead>
                     <tr>
                       <th>Ingredient</th>
-                      <th>Quantity</th>
-                      <th>Unit Cost</th>
-                      <th>Total Cost</th>
+                      <th className="w-[15%] whitespace-nowrap">Quantity</th>
+                      <th className="w-[15%] whitespace-nowrap">Unit Cost</th>
+                      <th className="w-[12%] whitespace-nowrap">Total Cost</th>
                     </tr>
                   </thead>
                   <tbody className="text-base">
@@ -134,13 +134,13 @@ export function RecipeDetailContent({
                               {ing.ingredient.name}
                             </Link>
                           </td>
-                          <td>
+                          <td className="whitespace-nowrap">
                             {formatQuantity(quantity)} {formatUnit(recipeUnit)}
                           </td>
-                          <td>
+                          <td className="whitespace-nowrap">
                             {formatCurrency(unitCost)}/{formatUnit(ingredientUnit)}
                           </td>
-                          <td className="font-semibold">
+                          <td className="font-semibold whitespace-nowrap">
                             {totalIngredientCost !== null
                               ? formatCurrency(totalIngredientCost)
                               : 'N/A'}

@@ -28,6 +28,7 @@
     "@prisma/client": "^6.19.0",
     "@sentry/nextjs": "^10.25.0",
     "@tanstack/react-query": "^5.90.10",
+    "cheerio": "^1.2.0",
     "convert-units": "^2.3.4",
     "daisyui": "^5.5.5",
     "date-fns": "^4.1.0",
@@ -42,6 +43,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/cheerio": "^1.0.0",
     "@types/convert-units": "^2.3.12",
     "@types/node": "^20",
     "@types/react": "^19",
