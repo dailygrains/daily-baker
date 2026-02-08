@@ -3,6 +3,8 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createRecipe, updateRecipe } from '@/app/actions/recipe';
+import { createIngredient } from '@/app/actions/ingredient';
+import { useToastStore } from '@/store/toast-store';
 import { useFormSubmit } from '@/hooks/useFormSubmit';
 import { Plus, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
 import { MDXEditor } from '@/components/ui/MDXEditor';
@@ -55,6 +57,8 @@ export function RecipeForm({
   showBottomActions = true,
 }: RecipeFormProps) {
   const router = useRouter();
+  const showToast = useToastStore((state) => state.addToast);
+  const [localIngredients, setLocalIngredients] = useState(availableIngredients);
   const { submit, isSubmitting, error } = useFormSubmit({
     mode: recipe ? 'edit' : 'create',
     entityName: 'Recipe',
@@ -176,14 +180,14 @@ export function RecipeForm({
     setSections((prevSections) => {
       const newSections = [...prevSections];
       newSections[sectionIndex].ingredients.push({
-        ingredientId: availableIngredients[0]?.id || '',
+        ingredientId: localIngredients[0]?.id || '',
         quantity: 0,
-        unit: availableIngredients[0]?.unit || 'g',
+        unit: localIngredients[0]?.unit || 'g',
         preparation: null,
       });
       return newSections;
     });
-  }, [availableIngredients]);
+  }, [localIngredients]);
 
   const removeIngredient = useCallback((sectionIndex: number, ingredientIndex: number) => {
     setSections((prevSections) => {
@@ -211,7 +215,7 @@ export function RecipeForm({
 
       // Update unit when ingredient changes
       if (field === 'ingredientId') {
-        const ingredient = availableIngredients.find((ing) => ing.id === value);
+        const ingredient = localIngredients.find((ing) => ing.id === value);
         if (ingredient) {
           newSections[sectionIndex].ingredients[ingredientIndex].unit = ingredient.unit;
         }
@@ -219,7 +223,33 @@ export function RecipeForm({
 
       return newSections;
     });
-  }, [availableIngredients]);
+  }, [localIngredients]);
+
+  const handleCreateIngredient = useCallback(async (
+    name: string,
+    unit: string
+  ): Promise<{ id: string; name: string; unit: string } | null> => {
+    try {
+      const result = await createIngredient({ bakeryId, name, unit });
+      if (result.success && result.data) {
+        const newIngredient = {
+          id: result.data.id,
+          name: result.data.name,
+          unit: result.data.unit,
+        };
+        setLocalIngredients((prev) => [...prev, newIngredient].sort((a, b) => a.name.localeCompare(b.name)));
+        showToast(`Ingredient "${name}" created`, 'success');
+        router.refresh();
+        return newIngredient;
+      } else {
+        showToast(result.error || 'Failed to create ingredient', 'error');
+        return null;
+      }
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Failed to create ingredient', 'error');
+      return null;
+    }
+  }, [bakeryId, showToast, router]);
 
   useEffect(() => {
     isMounted.current = true;
@@ -310,12 +340,12 @@ export function RecipeForm({
 
         <div className="space-y-4 fieldset">
           {sections.map((section, sectionIndex) => (
-            <div key={sectionIndex} className="border border-base-300 rounded-lg p-4 bg-base-200">
+            <div key={sectionIndex} className="rounded-lg p-4 bg-base-200">
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
                   <input
                     type="text"
-                    className="input input-bordered flex-1"
+                    className="input input-bordered input-lg flex-1"
                     value={section.name}
                     onChange={(e) => updateSection(sectionIndex, 'name', e.target.value)}
                     placeholder="Section name - optional (e.g., Poolish, Dough)"
@@ -357,14 +387,14 @@ export function RecipeForm({
                   <legend className="fieldset-legend">Ingredients</legend>
                   <div className="space-y-3">
                     {section.ingredients.map((ingredient, ingredientIndex) => {
-                      const selectedIngredient = availableIngredients.find(
+                      const selectedIngredient = localIngredients.find(
                         (ing) => ing.id === ingredient.ingredientId
                       );
                       return (
                       <div key={ingredientIndex} className="flex flex-wrap gap-2 items-center">
                         <div className="flex-1 min-w-[200px]">
                           <IngredientAutocomplete
-                            ingredients={availableIngredients}
+                            ingredients={localIngredients}
                             value={selectedIngredient?.name || ''}
                             onSelect={(ing) => {
                               updateIngredient(
@@ -375,6 +405,8 @@ export function RecipeForm({
                               );
                             }}
                             placeholder="Search ingredients..."
+                            allowCreate
+                            onCreate={handleCreateIngredient}
                           />
                         </div>
                         <input
@@ -426,11 +458,11 @@ export function RecipeForm({
                   </div>
                   <button
                     type="button"
-                    className="btn btn-primary btn-sm mt-2"
+                    className="btn btn-outline w-full mt-4"
                     onClick={() => addIngredient(sectionIndex)}
-                    disabled={availableIngredients.length === 0}
+                    disabled={localIngredients.length === 0}
                   >
-                    <Plus className="h-4 w-4 mr-1" />
+                    <Plus className="h-5 w-5 mr-2" />
                     Add Ingredient
                   </button>
                 </fieldset>

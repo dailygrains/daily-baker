@@ -46,10 +46,7 @@ export function RecipeDetailContent({
       {recipe.sections.map((section, index) => (
         <section key={section.id} className="space-y-4">
           {section.name && (
-            <div className="flex items-center gap-2">
-              <span className="badge badge-primary">{index + 1}</span>
-              <h2 className="text-xl font-semibold">{section.name}</h2>
-            </div>
+            <h2 className="text-xl font-semibold">{section.name}</h2>
           )}
 
           {/* Ingredients */}
@@ -125,7 +122,7 @@ export function RecipeDetailContent({
               <h3 className="font-semibold mb-2 text-base-content/70">Instructions</h3>
               <MarkdownViewer
                 content={section.instructions}
-                className="prose prose-sm max-w-none"
+                className="prose max-w-none text-xl"
               />
             </div>
           )}
