@@ -31,7 +31,7 @@ export default async function NewRecipePage() {
 
   if (ingredients.length === 0) {
     return (
-      <div className="max-w-3xl mx-auto">
+      <div>
         <div className="card bg-base-100 shadow-xl">
           <div className="card-body text-center py-8">
             <h3 className="text-xl font-bold mb-2">No ingredients available</h3>

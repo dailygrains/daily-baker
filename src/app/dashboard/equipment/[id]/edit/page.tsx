@@ -42,7 +42,7 @@ export default async function EditEquipmentPage({
   });
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="space-y-6">
         <SetPageHeader
           title="Edit Equipment"
           description={`Update details for ${equipment.name}`}

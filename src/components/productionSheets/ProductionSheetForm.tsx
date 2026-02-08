@@ -249,7 +249,7 @@ export function ProductionSheetForm({
   };
 
   return (
-    <form ref={formRef} onSubmit={handleSubmit} className="max-w-3xl mx-auto space-y-8">
+    <form ref={formRef} onSubmit={handleSubmit} className="space-y-8">
       {error && (
         <div className="alert alert-error">
           <span>{error}</span>

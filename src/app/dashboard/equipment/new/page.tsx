@@ -28,7 +28,7 @@ export default async function NewEquipmentPage() {
   });
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="space-y-6">
         <SetPageHeader
           title="Add New Equipment"
           description="Track a new piece of bakery equipment"

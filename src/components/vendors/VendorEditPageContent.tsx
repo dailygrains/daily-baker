@@ -120,7 +120,7 @@ export function VendorEditPageContent({
       />
 
       {/* Danger Zone */}
-      <div className="max-w-3xl mx-auto mt-8">
+      <div className="mt-8">
         <div className="card bg-base-100 shadow-sm">
           <div className="card-body">
             <h2 className="card-title text-error">Danger Zone</h2>

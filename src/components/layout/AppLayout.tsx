@@ -32,7 +32,7 @@ export function AppLayout({
         <UnifiedHeader />
 
         {/* Page Content */}
-        <main className="flex-1 p-6 lg:p-8 bg-base-200">
+        <main className="flex-1 p-8 lg:p-12 bg-base-200">
           {children}
         </main>
       </div>

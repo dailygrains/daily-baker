@@ -106,7 +106,7 @@ export function AddLotForm({
   };
 
   return (
-    <form ref={formRef} onSubmit={handleSubmit} className="max-w-2xl mx-auto space-y-6">
+    <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
       {error && (
         <div className="alert alert-error">
           <span>{error}</span>

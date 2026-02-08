@@ -191,7 +191,7 @@ export function BakeryForm({
   };
 
   return (
-    <form ref={formRef} onSubmit={handleSubmit} onChange={handleInputChange} className="max-w-3xl mx-auto space-y-8">
+    <form ref={formRef} onSubmit={handleSubmit} onChange={handleInputChange} className="space-y-8">
       {error && (
         <div className="alert alert-error">
           <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
