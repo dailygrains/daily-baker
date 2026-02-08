@@ -181,6 +181,7 @@ model RecipeSectionIngredient {
   ingredient   Ingredient    @relation(fields: [ingredientId], references: [id], onDelete: Restrict)
   quantity     Decimal       @db.Decimal(10, 3)
   unit         String // "g", "ml", "kg", "lbs"
+  preparation  String?       @db.VarChar(200) // Optional preparation notes (e.g., "finely diced", "room temperature")
 
   @@index([sectionId])
   @@index([ingredientId])

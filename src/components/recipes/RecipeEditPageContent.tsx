@@ -27,6 +27,7 @@ interface RecipeEditPageContentProps {
         ingredientId: string;
         quantity: string;
         unit: string;
+        preparation: string | null;
         sectionId: string;
         ingredient: {
           id: string;

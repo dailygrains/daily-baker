@@ -590,6 +590,7 @@ async function importRecipe(
           ingredientId,
           quantity: ing.quantity,
           unit: ing.unit,
+          preparation: null,
         });
       }
     }

@@ -40,6 +40,7 @@ interface SectionFormData {
     ingredientId: string;
     quantity: number;
     unit: string;
+    preparation?: string | null;
   }>;
 }
 
@@ -79,6 +80,7 @@ export function RecipeForm({
         ingredientId: ing.ingredientId,
         quantity: Number(ing.quantity),
         unit: ing.unit,
+        preparation: (ing as { preparation?: string | null }).preparation ?? null,
       })),
     })) || [
       {
@@ -183,6 +185,7 @@ export function RecipeForm({
         ingredientId: availableIngredients[0]?.id || '',
         quantity: 0,
         unit: availableIngredients[0]?.unit || 'g',
+        preparation: null,
       });
       return newSections;
     });
@@ -360,9 +363,9 @@ export function RecipeForm({
                   <legend className="fieldset-legend">Ingredients</legend>
                   <div className="space-y-3">
                     {section.ingredients.map((ingredient, ingredientIndex) => (
-                      <div key={ingredientIndex} className="flex gap-2 items-center">
+                      <div key={ingredientIndex} className="flex flex-wrap gap-2 items-center">
                         <select
-                          className="select select-bordered flex-1 text-base"
+                          className="select select-bordered flex-1 min-w-[200px] text-base"
                           value={ingredient.ingredientId}
                           onChange={(e) =>
                             updateIngredient(
@@ -395,6 +398,21 @@ export function RecipeForm({
                           }
                         />
                         <span className="text-base self-center w-16">{ingredient.unit}</span>
+                        <input
+                          type="text"
+                          className="input input-bordered flex-1 min-w-[150px] text-base"
+                          value={ingredient.preparation || ''}
+                          onChange={(e) =>
+                            updateIngredient(
+                              sectionIndex,
+                              ingredientIndex,
+                              'preparation',
+                              e.target.value || null
+                            )
+                          }
+                          placeholder="Preparation (e.g., finely diced)"
+                          maxLength={200}
+                        />
                         <button
                           type="button"
                           className="btn btn-error btn-sm"
