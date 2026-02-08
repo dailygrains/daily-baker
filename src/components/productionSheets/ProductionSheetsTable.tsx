@@ -35,8 +35,7 @@ export function ProductionSheetsTable({ productionSheets, variant }: ProductionS
 
   const getRecipeNames = (recipes: ProductionSheetRecipe[]): string => {
     if (recipes.length === 0) return 'No recipes';
-    if (recipes.length === 1) return recipes[0].recipe.name;
-    return `${recipes[0].recipe.name} +${recipes.length - 1} more`;
+    return recipes.map((r) => r.recipe.name).join(', ');
   };
 
   const getTotalCost = (recipes: ProductionSheetRecipe[]): number => {

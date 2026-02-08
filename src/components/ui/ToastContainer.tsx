@@ -24,7 +24,7 @@ export function ToastContainer() {
 
   return (
     <div
-      className="toast toast-top toast-end z-50"
+      className="toast toast-top toast-center z-50"
       aria-live="polite"
       aria-atomic="false"
     >

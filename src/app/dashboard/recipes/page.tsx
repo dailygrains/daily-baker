@@ -42,10 +42,6 @@ export default async function RecipesPage() {
     totalCost: recipe.totalCost.toString(),
   }));
 
-  const totalRecipes = recipes.length;
-  const totalCost = recipes.reduce((sum, r) => sum + Number(r.totalCost), 0).toFixed(2);
-  const avgCost = totalRecipes > 0 ? (Number(totalCost) / totalRecipes).toFixed(2) : '0.00';
-
   return (
     <>
       <SetPageHeader
@@ -73,27 +69,7 @@ export default async function RecipesPage() {
           }
         />
       ) : (
-        <div className="space-y-6">
-          {/* Stats */}
-          <div className="card bg-base-100 p-4">
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-              <div>
-                <p className="text-sm text-base-content/70">Total Recipes</p>
-                <p className="text-2xl font-bold text-primary">{totalRecipes}</p>
-              </div>
-              <div>
-                <p className="text-sm text-base-content/70">Total Cost</p>
-                <p className="text-2xl font-bold text-success">${totalCost}</p>
-              </div>
-              <div>
-                <p className="text-sm text-base-content/70">Average Cost</p>
-                <p className="text-2xl font-bold">${avgCost}</p>
-              </div>
-            </div>
-          </div>
-
-          <RecipesTable recipes={serializedRecipes} />
-        </div>
+        <RecipesTable recipes={serializedRecipes} />
       )}
     </>
   );

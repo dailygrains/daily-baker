@@ -63,24 +63,6 @@ export default async function ProductionSheetsPage() {
         }
       />
 
-      {/* Stats */}
-      <div className="card bg-base-100 p-4">
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-          <div>
-            <p className="text-sm text-base-content/70">Pending</p>
-            <p className="text-2xl font-bold text-warning">{pendingProductionSheets.length}</p>
-          </div>
-          <div>
-            <p className="text-sm text-base-content/70">Completed</p>
-            <p className="text-2xl font-bold text-success">{completedProductionSheets.length}</p>
-          </div>
-          <div>
-            <p className="text-sm text-base-content/70">Total</p>
-            <p className="text-2xl font-bold text-primary">{productionSheets.length}</p>
-          </div>
-        </div>
-      </div>
-
       {/* Pending Production Sheets */}
       {pendingProductionSheets.length > 0 && (
         <section className="space-y-4">

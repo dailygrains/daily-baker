@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createVendor, updateVendor } from '@/app/actions/vendor';
-import { useToast } from '@/contexts/ToastContext';
+import { useFormSubmit } from '@/hooks/useFormSubmit';
 import type { Vendor } from '@/generated/prisma';
 
 interface VendorFormProps {
@@ -24,11 +24,15 @@ export function VendorForm({
   showBottomActions = true,
 }: VendorFormProps) {
   const router = useRouter();
-  const { showToast } = useToast();
   const formRef = useRef<HTMLFormElement>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+  const { submit, isSubmitting, error } = useFormSubmit({
+    mode: vendor ? 'edit' : 'create',
+    entityName: 'Vendor',
+    listPath: '/dashboard/vendors',
+    onSuccess: () => setHasUnsavedChanges(false),
+  });
 
   const [formData, setFormData] = useState({
     name: vendor?.name ?? '',
@@ -61,53 +65,28 @@ export function VendorForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
-    setError(null);
 
-    try {
-      const result = vendor
-        ? await updateVendor({
-            id: vendor.id,
-            ...formData,
-            email: formData.email || null,
-            phone: formData.phone || null,
-            website: formData.website || null,
-            notes: formData.notes || null,
-          })
-        : await createVendor({
-            bakeryId,
-            ...formData,
-            email: formData.email || null,
-            phone: formData.phone || null,
-            website: formData.website || null,
-            notes: formData.notes || null,
-          });
-
-      if (result.success) {
-        const message = vendor
-          ? `Vendor "${formData.name}" updated successfully`
-          : `Vendor "${formData.name}" created successfully`;
-
-        showToast(message, 'success');
-        setHasUnsavedChanges(false);
-
-        // Only redirect to list after creating, stay on page after editing
-        if (!vendor) {
-          router.push('/dashboard/vendors');
-        }
-        router.refresh();
-      } else {
-        const errorMessage = result.error || 'Failed to save vendor';
-        setError(errorMessage);
-        showToast(errorMessage, 'error');
-      }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'An error occurred';
-      setError(errorMessage);
-      showToast(errorMessage, 'error');
-    } finally {
-      setIsSubmitting(false);
-    }
+    await submit(
+      () =>
+        vendor
+          ? updateVendor({
+              id: vendor.id,
+              ...formData,
+              email: formData.email || null,
+              phone: formData.phone || null,
+              website: formData.website || null,
+              notes: formData.notes || null,
+            })
+          : createVendor({
+              bakeryId,
+              ...formData,
+              email: formData.email || null,
+              phone: formData.phone || null,
+              website: formData.website || null,
+              notes: formData.notes || null,
+            }),
+      formData.name
+    );
   };
 
   const updateField = (field: string, value: string) => {
@@ -116,7 +95,7 @@ export function VendorForm({
   };
 
   return (
-    <form ref={formRef} onSubmit={handleSubmit} className="max-w-3xl mx-auto space-y-8">
+    <form ref={formRef} onSubmit={handleSubmit} className="space-y-8">
       {error && (
         <div className="alert alert-error">
           <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">

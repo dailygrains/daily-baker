@@ -1,9 +1,8 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { updateInventoryLot } from '@/app/actions/inventory';
-import { useToast } from '@/contexts/ToastContext';
+import { useFormSubmit } from '@/hooks/useFormSubmit';
 import { formatDistanceToNow } from 'date-fns';
 import { formatQuantity, formatCurrency } from '@/lib/format';
 
@@ -42,11 +41,12 @@ export function EditLotForm({
   onFormRefChange,
   onSavingChange,
 }: EditLotFormProps) {
-  const router = useRouter();
-  const { showToast } = useToast();
   const formRef = useRef<HTMLFormElement>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { submit, isSubmitting, error } = useFormSubmit({
+    mode: 'edit',
+    entityName: 'Lot',
+    listPath: `/dashboard/ingredients/${lot.ingredient.id}`,
+  });
 
   const [formData, setFormData] = useState({
     expiresAt: lot.expiresAt
@@ -70,36 +70,19 @@ export function EditLotForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
-    setError(null);
 
-    try {
-      const result = await updateInventoryLot({
+    await submit(() =>
+      updateInventoryLot({
         id: lot.id,
         expiresAt: formData.expiresAt ? new Date(formData.expiresAt) : null,
         vendorId: formData.vendorId || null,
         notes: formData.notes || null,
-      });
-
-      if (result.success) {
-        showToast('Lot updated successfully', 'success');
-        router.push(`/dashboard/ingredients/${lot.ingredient.id}`);
-        router.refresh();
-      } else {
-        setError(result.error || 'Failed to update lot');
-        showToast(result.error || 'Failed to update lot', 'error');
-      }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'An error occurred';
-      setError(errorMessage);
-      showToast(errorMessage, 'error');
-    } finally {
-      setIsSubmitting(false);
-    }
+      })
+    );
   };
 
   return (
-    <form ref={formRef} onSubmit={handleSubmit} className="max-w-2xl mx-auto space-y-6">
+    <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
       {error && (
         <div className="alert alert-error">
           <span>{error}</span>

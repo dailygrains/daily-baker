@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createEquipment, updateEquipment } from '@/app/actions/equipment';
+import { useFormSubmit } from '@/hooks/useFormSubmit';
 import type { Equipment, EquipmentStatus } from '@/generated/prisma';
 
 interface EquipmentFormProps {
@@ -13,8 +14,11 @@ interface EquipmentFormProps {
 
 export function EquipmentForm({ bakeryId, equipment, vendors = [] }: EquipmentFormProps) {
   const router = useRouter();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { submit, isSubmitting, error } = useFormSubmit({
+    mode: equipment ? 'edit' : 'create',
+    entityName: 'Equipment',
+    listPath: '/dashboard/equipment',
+  });
 
   const [formData, setFormData] = useState<{
     name: string;
@@ -40,41 +44,30 @@ export function EquipmentForm({ bakeryId, equipment, vendors = [] }: EquipmentFo
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
-    setError(null);
 
-    try {
-      const result = equipment
-        ? await updateEquipment({
-            id: equipment.id,
-            ...formData,
-            vendorId: formData.vendorId || null,
-            purchaseDate: formData.purchaseDate ? new Date(formData.purchaseDate) : null,
-            cost: formData.cost || null,
-            serialNumber: formData.serialNumber || null,
-            notes: formData.notes || null,
-          })
-        : await createEquipment({
-            bakeryId,
-            ...formData,
-            vendorId: formData.vendorId || null,
-            purchaseDate: formData.purchaseDate ? new Date(formData.purchaseDate) : null,
-            cost: formData.cost || null,
-            serialNumber: formData.serialNumber || null,
-            notes: formData.notes || null,
-          });
-
-      if (result.success) {
-        router.push('/dashboard/equipment');
-        router.refresh();
-      } else {
-        setError(result.error || 'Failed to save equipment');
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
-    } finally {
-      setIsSubmitting(false);
-    }
+    await submit(
+      () =>
+        equipment
+          ? updateEquipment({
+              id: equipment.id,
+              ...formData,
+              vendorId: formData.vendorId || null,
+              purchaseDate: formData.purchaseDate ? new Date(formData.purchaseDate) : null,
+              cost: formData.cost || null,
+              serialNumber: formData.serialNumber || null,
+              notes: formData.notes || null,
+            })
+          : createEquipment({
+              bakeryId,
+              ...formData,
+              vendorId: formData.vendorId || null,
+              purchaseDate: formData.purchaseDate ? new Date(formData.purchaseDate) : null,
+              cost: formData.cost || null,
+              serialNumber: formData.serialNumber || null,
+              notes: formData.notes || null,
+            }),
+      formData.name
+    );
   };
 
   return (

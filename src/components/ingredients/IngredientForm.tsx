@@ -8,7 +8,8 @@ import { createVendor } from '@/app/actions/vendor';
 import { VendorAutocomplete } from '@/components/vendor/VendorAutocomplete';
 import { X } from 'lucide-react';
 import type { Decimal } from '@prisma/client/runtime/library';
-import { useToast } from '@/contexts/ToastContext';
+import { useFormSubmit } from '@/hooks/useFormSubmit';
+import { useToastStore } from '@/store/toast-store';
 
 interface Vendor {
   id: string;
@@ -43,15 +44,20 @@ export function IngredientForm({
   showBottomActions = true,
 }: IngredientFormProps) {
   const router = useRouter();
-  const { showToast } = useToast();
+  const showToast = useToastStore((state) => state.addToast);
   const formRef = useRef<HTMLFormElement>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [assignedVendors, setAssignedVendors] = useState<Vendor[]>(
     ingredient?.vendors?.map((iv) => iv.vendor) ?? []
   );
   const [isAssigningVendor, setIsAssigningVendor] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+  const { submit, isSubmitting, error } = useFormSubmit({
+    mode: ingredient ? 'edit' : 'create',
+    entityName: 'Ingredient',
+    listPath: '/dashboard/ingredients',
+    onSuccess: () => setHasUnsavedChanges(false),
+  });
 
   const [formData, setFormData] = useState({
     name: ingredient?.name ?? '',
@@ -84,45 +90,20 @@ export function IngredientForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
-    setError(null);
 
-    try {
-      const result = ingredient
-        ? await updateIngredient({
-            id: ingredient.id,
-            ...formData,
-          })
-        : await createIngredient({
-            bakeryId,
-            ...formData,
-          });
-
-      if (result.success) {
-        const message = ingredient
-          ? `Ingredient "${formData.name}" updated successfully`
-          : `Ingredient "${formData.name}" created successfully`;
-
-        showToast(message, 'success');
-        setHasUnsavedChanges(false);
-
-        // Only redirect to list after creating, stay on page after editing
-        if (!ingredient) {
-          router.push('/dashboard/ingredients');
-        }
-        router.refresh();
-      } else {
-        const errorMessage = result.error || 'Failed to save ingredient';
-        setError(errorMessage);
-        showToast(errorMessage, 'error');
-      }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'An error occurred';
-      setError(errorMessage);
-      showToast(errorMessage, 'error');
-    } finally {
-      setIsSubmitting(false);
-    }
+    await submit(
+      () =>
+        ingredient
+          ? updateIngredient({
+              id: ingredient.id,
+              ...formData,
+            })
+          : createIngredient({
+              bakeryId,
+              ...formData,
+            }),
+      formData.name
+    );
   };
 
   const handleAssignVendor = async (vendor: Vendor) => {
@@ -136,14 +117,10 @@ export function IngredientForm({
         showToast(`Vendor "${vendor.name}" assigned successfully`, 'success');
         router.refresh();
       } else {
-        const errorMessage = result.error || 'Failed to assign vendor';
-        setError(errorMessage);
-        showToast(errorMessage, 'error');
+        showToast(result.error || 'Failed to assign vendor', 'error');
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'An error occurred';
-      setError(errorMessage);
-      showToast(errorMessage, 'error');
+      showToast(err instanceof Error ? err.message : 'An error occurred', 'error');
     } finally {
       setIsAssigningVendor(false);
     }
@@ -160,14 +137,10 @@ export function IngredientForm({
         showToast(`${vendorName} unassigned successfully`, 'success');
         router.refresh();
       } else {
-        const errorMessage = result.error || 'Failed to remove vendor';
-        setError(errorMessage);
-        showToast(errorMessage, 'error');
+        showToast(result.error || 'Failed to remove vendor', 'error');
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'An error occurred';
-      setError(errorMessage);
-      showToast(errorMessage, 'error');
+      showToast(err instanceof Error ? err.message : 'An error occurred', 'error');
     }
   };
 
@@ -191,7 +164,7 @@ export function IngredientForm({
   };
 
   return (
-    <form ref={formRef} onSubmit={handleSubmit} className="max-w-3xl mx-auto space-y-8">
+    <form ref={formRef} onSubmit={handleSubmit} className="space-y-8">
       {error && (
         <div className="alert alert-error">
           <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">

@@ -3,6 +3,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createRecipe, updateRecipe } from '@/app/actions/recipe';
+import { useFormSubmit } from '@/hooks/useFormSubmit';
 import { Plus, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
 import { MDXEditor } from '@/components/ui/MDXEditor';
 import type { Recipe, RecipeSection, RecipeSectionIngredient, Ingredient } from '@/generated/prisma';
@@ -53,14 +54,17 @@ export function RecipeForm({
   showBottomActions = true,
 }: RecipeFormProps) {
   const router = useRouter();
+  const { submit, isSubmitting, error } = useFormSubmit({
+    mode: recipe ? 'edit' : 'create',
+    entityName: 'Recipe',
+    listPath: '/dashboard/recipes',
+  });
   const formRef = useRef<HTMLFormElement>(null);
   // Track mounted state to prevent MDXEditor onChange callbacks from triggering
   // state updates before the component is fully mounted or after unmount.
   // MDXEditor can fire onChange during its initial render, which would cause
   // React warnings about state updates on unmounted components.
   const isMounted = useRef(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     name: recipe?.name ?? '',
@@ -84,7 +88,7 @@ export function RecipeForm({
       })),
     })) || [
       {
-        name: 'Main',
+        name: '',
         order: 0,
         instructions: '',
         ingredients: [],
@@ -94,47 +98,36 @@ export function RecipeForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
-    setError(null);
 
-    try {
-      const yieldQty = parseInt(formData.yieldQty) || 1;
-      const result = recipe
-        ? await updateRecipe({
-            id: recipe.id,
-            name: formData.name,
-            description: formData.description || null,
-            yieldQty,
-            yieldUnit: formData.yieldUnit,
-            sections,
-          })
-        : await createRecipe({
-            bakeryId,
-            name: formData.name,
-            description: formData.description || null,
-            yieldQty,
-            yieldUnit: formData.yieldUnit,
-            sections,
-          });
-
-      if (result.success) {
-        router.push('/dashboard/recipes');
-        router.refresh();
-      } else {
-        setError(result.error || 'Failed to save recipe');
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
-    } finally {
-      setIsSubmitting(false);
-    }
+    const yieldQty = parseInt(formData.yieldQty) || 1;
+    await submit(
+      () =>
+        recipe
+          ? updateRecipe({
+              id: recipe.id,
+              name: formData.name,
+              description: formData.description || null,
+              yieldQty,
+              yieldUnit: formData.yieldUnit,
+              sections,
+            })
+          : createRecipe({
+              bakeryId,
+              name: formData.name,
+              description: formData.description || null,
+              yieldQty,
+              yieldUnit: formData.yieldUnit,
+              sections,
+            }),
+      formData.name
+    );
   };
 
   const addSection = () => {
     setSections([
       ...sections,
       {
-        name: `Section ${sections.length + 1}`,
+        name: '',
         order: sections.length,
         instructions: '',
         ingredients: [],
@@ -247,7 +240,7 @@ export function RecipeForm({
   }, [isSubmitting, onSavingChange]);
 
   return (
-    <form ref={formRef} onSubmit={handleSubmit} className="max-w-3xl mx-auto space-y-8">
+    <form ref={formRef} onSubmit={handleSubmit} className="space-y-8">
       {error && (
         <div className="alert alert-error">
           <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
@@ -324,7 +317,7 @@ export function RecipeForm({
                     className="input input-bordered flex-1"
                     value={section.name}
                     onChange={(e) => updateSection(sectionIndex, 'name', e.target.value)}
-                    placeholder="Section name (e.g., Poolish, Dough)"
+                    placeholder="Section name - optional (e.g., Poolish, Dough)"
                     maxLength={100}
                   />
                   <div className="btn-group">

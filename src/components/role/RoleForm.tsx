@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { createRole, updateRole } from '@/app/actions/role';
+import { useFormSubmit } from '@/hooks/useFormSubmit';
 import type { Role, Bakery } from '@/generated/prisma';
 
 interface RoleFormProps {
@@ -68,8 +69,12 @@ export function RoleForm({
   showBottomActions = true
 }: RoleFormProps) {
   const router = useRouter();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const listPath = bakery ? `/admin/bakeries/${bakery.id}/roles` : '/admin/roles';
+  const { submit, isSubmitting, error } = useFormSubmit({
+    mode,
+    entityName: 'Role',
+    listPath,
+  });
 
   const initialPermissions = role ? (role.permissions as Record<string, boolean>) : DEFAULT_PERMISSIONS;
   const [permissions, setPermissions] = useState<Record<string, boolean>>(initialPermissions);
@@ -103,40 +108,31 @@ export function RoleForm({
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setIsSubmitting(true);
-    setError(null);
 
     const formData = new FormData(e.currentTarget);
     const name = formData.get('name') as string;
     const description = formData.get('description') as string;
 
-    const result = mode === 'create'
-      ? await createRole({
-          name,
-          description,
-          permissions,
-        })
-      : await updateRole({
-          id: role!.id,
-          name,
-          description,
-          permissions,
-        });
-
-    if (result.success) {
-      const redirectPath = bakery
-        ? `/admin/bakeries/${bakery.id}/roles`
-        : '/admin/roles';
-      router.push(redirectPath);
-      router.refresh();
-    } else {
-      setError(result.error || 'An error occurred');
-      setIsSubmitting(false);
-    }
+    await submit(
+      () =>
+        mode === 'create'
+          ? createRole({
+              name,
+              description,
+              permissions,
+            })
+          : updateRole({
+              id: role!.id,
+              name,
+              description,
+              permissions,
+            }),
+      name
+    );
   }
 
   return (
-    <form ref={formRef} onSubmit={handleSubmit} className="max-w-3xl mx-auto space-y-8">
+    <form ref={formRef} onSubmit={handleSubmit} className="space-y-8">
       {error && (
         <div className="alert alert-error">
           <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">

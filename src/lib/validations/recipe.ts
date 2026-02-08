@@ -16,7 +16,7 @@ export const recipeSectionIngredientSchema = z.object({
  */
 export const recipeSectionSchema = z.object({
   id: z.string().cuid().optional(), // For updates
-  name: z.string().min(1, 'Section name is required').max(100),
+  name: z.string().max(100),
   order: z.number().int().nonnegative('Order must be a non-negative integer'),
   instructions: z.string().max(10000, 'Instructions too long'),
   ingredients: z.array(recipeSectionIngredientSchema).default([]),

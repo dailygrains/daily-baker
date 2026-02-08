@@ -26,6 +26,7 @@ interface RecipeDetailContentProps {
   recipe: {
     id: string;
     name: string;
+    description?: string | null;
     yieldQty: number;
     yieldUnit: string;
     updatedAt: Date;
@@ -85,13 +86,23 @@ export function RecipeDetailContent({
         </div>
       </div>
 
+      {/* Description */}
+      {recipe.description && (
+        <div>
+          <h2 className="font-semibold mb-2 text-base-content/70">Description</h2>
+          <p className="text-lg">{recipe.description}</p>
+        </div>
+      )}
+
       {/* Recipe Sections */}
       {recipe.sections.map((section, index) => (
         <section key={section.id} className="space-y-4">
-          <div className="flex items-center gap-2">
-            <span className="badge badge-primary">{index + 1}</span>
-            <h2 className="text-xl font-semibold">{section.name}</h2>
-          </div>
+          {section.name && (
+            <div className="flex items-center gap-2">
+              <span className="badge badge-primary">{index + 1}</span>
+              <h2 className="text-xl font-semibold">{section.name}</h2>
+            </div>
+          )}
 
           {/* Ingredients */}
           {section.ingredients.length > 0 && (

@@ -114,8 +114,8 @@ export function UserAssignmentForm({
 
     if (result.success) {
       showToast('User updated successfully', 'success');
-      router.push('/admin/users');
       router.refresh();
+      setIsSubmitting(false);
     } else {
       showToast(result.error || 'Failed to update user', 'error');
       setIsSubmitting(false);
@@ -123,7 +123,7 @@ export function UserAssignmentForm({
   }
 
   return (
-    <form ref={formRef} onSubmit={handleSubmit} className="max-w-3xl mx-auto space-y-8">
+    <form ref={formRef} onSubmit={handleSubmit} className="space-y-8">
       <div className="space-y-0">
         <h2 className="text-xl font-semibold">User Information</h2>
 
