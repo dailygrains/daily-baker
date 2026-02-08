@@ -358,88 +358,92 @@ async function main() {
 
   // ----- FLOURS & GRAINS -----
   const breadFlour = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Organic Bread Flour', unit: 'lb' },
+    data: { bakeryId: dailyGrains.id, name: 'Bread flour', unit: 'lb' },
   });
 
   const allPurposeFlour = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Organic All-Purpose Flour', unit: 'lb' },
+    data: { bakeryId: dailyGrains.id, name: 'All-purpose flour', unit: 'lb' },
   });
 
   const whiteSonoraFlour = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'White Sonora Whole Wheat Flour', unit: 'lb' },
+    data: { bakeryId: dailyGrains.id, name: 'White Sonora wheat berries', unit: 'lb' },
   });
 
   const turkeyRedFlour = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Turkey Red Whole Wheat Flour', unit: 'lb' },
+    data: { bakeryId: dailyGrains.id, name: 'Turkey Red wheat berries', unit: 'lb' },
   });
 
   const rougeFlour = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Rouge de Bordeaux Whole Wheat Flour', unit: 'lb' },
+    data: { bakeryId: dailyGrains.id, name: 'Rouge de Bordeaux wheat berries', unit: 'lb' },
   });
 
   const einkornFlour = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Einkorn Whole Grain Flour', unit: 'lb' },
+    data: { bakeryId: dailyGrains.id, name: 'Einkorn berries', unit: 'lb' },
   });
 
   const speltFlour = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Organic Spelt Whole Grain Flour', unit: 'lb' },
+    data: { bakeryId: dailyGrains.id, name: 'Spelt berries', unit: 'lb' },
   });
 
   const kamutFlour = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Organic Kamut Whole Grain Flour', unit: 'lb' },
+    data: { bakeryId: dailyGrains.id, name: 'Kamut berries', unit: 'lb' },
   });
 
   const kernzaFlour = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Kernza Whole Grain Flour', unit: 'lb' },
+    data: { bakeryId: dailyGrains.id, name: 'Kernza grain', unit: 'lb' },
   });
 
   const yecoraRojoFlour = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Yecora Rojo Whole Wheat Flour', unit: 'lb' },
+    data: { bakeryId: dailyGrains.id, name: 'Yecora Rojo wheat berries', unit: 'lb' },
   });
 
   const emmerFlour = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Emmer Whole Grain Flour', unit: 'lb' },
+    data: { bakeryId: dailyGrains.id, name: 'Emmer berries', unit: 'lb' },
   });
 
   const darkRyeFlour = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Organic Dark Rye Flour', unit: 'lb' },
+    data: { bakeryId: dailyGrains.id, name: 'Dark rye flour', unit: 'lb' },
   });
 
   const oatFlour = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Whole Grain Oat Flour', unit: 'lb' },
+    data: { bakeryId: dailyGrains.id, name: 'Whole grain oat flour', unit: 'lb' },
   });
 
   const riceFlour = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Rice Flour (for prep)', unit: 'lb' },
+    data: { bakeryId: dailyGrains.id, name: 'Rice flour (for prep)', unit: 'lb' },
   });
 
   const thickRolledOats = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Thick Rolled Oats', unit: 'lb' },
+    data: { bakeryId: dailyGrains.id, name: 'Thick rolled oats', unit: 'lb' },
   });
 
   const wholeOatGroats = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Organic Whole Oat Groats', unit: 'lb' },
+    data: { bakeryId: dailyGrains.id, name: 'Whole oat groats', unit: 'lb' },
   });
 
   const ryeFlakes = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Organic Rye Flakes', unit: 'lb' },
+    data: { bakeryId: dailyGrains.id, name: 'Rye flakes', unit: 'lb' },
   });
 
   const wheatFlakes = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Organic Wheat Flakes', unit: 'lb' },
+    data: { bakeryId: dailyGrains.id, name: 'Wheat flakes', unit: 'lb' },
   });
 
   // ----- DAIRY & EGGS -----
   const butter = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Organic Unsalted Butter', unit: 'lb' },
+    data: { bakeryId: dailyGrains.id, name: 'Unsalted butter', unit: 'lb' },
+  });
+
+  const saltedButter = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Salted butter', unit: 'lb' },
   });
 
   const eggs = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Organic Eggs', unit: 'dozen' },
+    data: { bakeryId: dailyGrains.id, name: 'Eggs', unit: 'dozen' },
   });
 
   const milk = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Organic Whole Milk', unit: 'gal' },
+    data: { bakeryId: dailyGrains.id, name: 'Whole milk', unit: 'gal' },
   });
 
   const buttermilk = await prisma.ingredient.create({
@@ -447,32 +451,36 @@ async function main() {
   });
 
   const nonfatDryMilk = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Nonfat Dry Milk', unit: 'lb' },
+    data: { bakeryId: dailyGrains.id, name: 'Nonfat dry milk', unit: 'lb' },
   });
 
   const parmesanCheese = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Parmesan Cheese', unit: 'lb' },
+    data: { bakeryId: dailyGrains.id, name: 'Parmesan cheese', unit: 'lb' },
   });
 
   const cheddarCheese = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Extra Sharp Cheddar Cheese', unit: 'lb' },
+    data: { bakeryId: dailyGrains.id, name: 'Extra sharp cheddar cheese', unit: 'lb' },
   });
 
   // ----- SUGARS & SWEETENERS -----
   const caneS = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Organic Cane Sugar', unit: 'lb' },
+    data: { bakeryId: dailyGrains.id, name: 'Cane sugar', unit: 'lb' },
   });
 
   const brownSugar = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Organic Brown Sugar', unit: 'lb' },
+    data: { bakeryId: dailyGrains.id, name: 'Dark brown sugar', unit: 'lb' },
+  });
+
+  const lightBrownSugar = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Light brown sugar', unit: 'lb' },
   });
 
   const powderedSugar = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Powdered Sugar', unit: 'lb' },
+    data: { bakeryId: dailyGrains.id, name: 'Powdered sugar', unit: 'lb' },
   });
 
   const honey = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Organic Honey', unit: 'lb' },
+    data: { bakeryId: dailyGrains.id, name: 'Honey', unit: 'lb' },
   });
 
   const molasses = await prisma.ingredient.create({
@@ -481,28 +489,40 @@ async function main() {
 
   // ----- CHOCOLATE -----
   const darkChocolateChips = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Bittersweet Dark Chocolate Chips', unit: 'lb' },
+    data: { bakeryId: dailyGrains.id, name: 'Dark chocolate chips (70%)', unit: 'lb' },
+  });
+
+  const darkChocolateChips55 = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Dark chocolate chips (55%)', unit: 'lb' },
+  });
+
+  const darkChocolateChips85 = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Dark chocolate chips (85%)', unit: 'lb' },
   });
 
   const milkChocolateChips = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Milk Chocolate Chips', unit: 'lb' },
+    data: { bakeryId: dailyGrains.id, name: 'Milk chocolate chips (38%)', unit: 'lb' },
   });
 
   const whiteChocolateChips = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'White Chocolate Chips', unit: 'lb' },
+    data: { bakeryId: dailyGrains.id, name: 'White chocolate chips', unit: 'lb' },
   });
 
   const darkChocolateChunks = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Dark Chocolate Chunks', unit: 'lb' },
+    data: { bakeryId: dailyGrains.id, name: 'Dark chocolate chunks (70%)', unit: 'lb' },
   });
 
   const cocoaPowder = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Organic Cocoa Powder', unit: 'lb' },
+    data: { bakeryId: dailyGrains.id, name: 'Cocoa powder', unit: 'lb' },
   });
 
   // ----- NUTS & SEEDS -----
   const pecans = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Organic Pecans', unit: 'lb' },
+    data: { bakeryId: dailyGrains.id, name: 'Pecans', unit: 'lb' },
+  });
+
+  const walnuts = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Walnuts', unit: 'lb' },
   });
 
   const pistachios = await prisma.ingredient.create({
@@ -510,162 +530,178 @@ async function main() {
   });
 
   const sunflowerSeeds = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Organic Sunflower Seeds', unit: 'lb' },
+    data: { bakeryId: dailyGrains.id, name: 'Sunflower seeds', unit: 'lb' },
   });
 
   const sesameSeeds = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Sesame Seeds', unit: 'lb' },
+    data: { bakeryId: dailyGrains.id, name: 'Sesame seeds', unit: 'lb' },
   });
 
   const flaxseed = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Organic Brown Flaxseed', unit: 'lb' },
+    data: { bakeryId: dailyGrains.id, name: 'Brown flaxseed', unit: 'lb' },
   });
 
   const poppySeeds = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Poppy Seeds', unit: 'lb' },
+    data: { bakeryId: dailyGrains.id, name: 'Poppy seeds', unit: 'lb' },
   });
 
   const hulledMillet = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Organic Hulled Millet', unit: 'lb' },
+    data: { bakeryId: dailyGrains.id, name: 'Hulled millet', unit: 'lb' },
   });
 
   // ----- DRIED FRUITS -----
   const driedApples = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Organic Dried Apples', unit: 'lb' },
+    data: { bakeryId: dailyGrains.id, name: 'Dried apples', unit: 'lb' },
   });
 
   const driedApricots = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Organic Unsulfured Dried Apricots', unit: 'lb' },
+    data: { bakeryId: dailyGrains.id, name: 'Unsulfured dried apricots', unit: 'lb' },
   });
 
   const driedCherries = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Organic Unsulfured Dried Cherries', unit: 'lb' },
+    data: { bakeryId: dailyGrains.id, name: 'Unsulfured dried cherries', unit: 'lb' },
   });
 
   const raisins = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Organic Raisins', unit: 'lb' },
+    data: { bakeryId: dailyGrains.id, name: 'Raisins', unit: 'lb' },
   });
 
   const driedCranberries = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Organic Dried Cranberries', unit: 'lb' },
+    data: { bakeryId: dailyGrains.id, name: 'Dried cranberries', unit: 'lb' },
   });
 
   // ----- SPICES & FLAVORINGS -----
   const seaSalt = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Sea Salt', unit: 'lb' },
+    data: { bakeryId: dailyGrains.id, name: 'Sea salt', unit: 'lb' },
+  });
+
+  const pinkSeaSalt = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Pink sea salt', unit: 'lb' },
   });
 
   const cinnamon = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Organic Cinnamon', unit: 'oz' },
+    data: { bakeryId: dailyGrains.id, name: 'Cinnamon', unit: 'oz' },
   });
 
   const nutmeg = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Organic Nutmeg', unit: 'oz' },
+    data: { bakeryId: dailyGrains.id, name: 'Nutmeg', unit: 'oz' },
   });
 
   const cardamom = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Organic Cardamom', unit: 'oz' },
+    data: { bakeryId: dailyGrains.id, name: 'Cardamom', unit: 'oz' },
   });
 
   const ginger = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Organic Ground Ginger', unit: 'oz' },
+    data: { bakeryId: dailyGrains.id, name: 'Ground ginger', unit: 'oz' },
   });
 
   const allspice = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Organic Allspice', unit: 'oz' },
+    data: { bakeryId: dailyGrains.id, name: 'Allspice', unit: 'oz' },
   });
 
   const vanilla = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Organic Vanilla Extract', unit: 'oz' },
+    data: { bakeryId: dailyGrains.id, name: 'Vanilla extract', unit: 'oz' },
   });
 
   const cloves = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Ground Cloves', unit: 'oz' },
+    data: { bakeryId: dailyGrains.id, name: 'Ground cloves', unit: 'oz' },
   });
 
   const blackPepper = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Black Peppercorns', unit: 'oz' },
+    data: { bakeryId: dailyGrains.id, name: 'Black peppercorns', unit: 'oz' },
   });
 
   const turmeric = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Organic Ground Turmeric', unit: 'oz' },
+    data: { bakeryId: dailyGrains.id, name: 'Ground turmeric', unit: 'oz' },
   });
 
   const creamOfTartar = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Cream of Tartar', unit: 'oz' },
+    data: { bakeryId: dailyGrains.id, name: 'Cream of tartar', unit: 'oz' },
   });
 
   // ----- HERBS -----
   const freshRosemary = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Organic Fresh Rosemary', unit: 'oz' },
+    data: { bakeryId: dailyGrains.id, name: 'Fresh rosemary', unit: 'oz' },
+  });
+
+  const driedRosemary = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Dried rosemary', unit: 'oz' },
   });
 
   const sage = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Organic Sage', unit: 'oz' },
+    data: { bakeryId: dailyGrains.id, name: 'Sage', unit: 'oz' },
   });
 
   const driedBasil = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Dried Basil', unit: 'oz' },
+    data: { bakeryId: dailyGrains.id, name: 'Dried basil', unit: 'oz' },
   });
 
   const driedOregano = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Dried Oregano', unit: 'oz' },
+    data: { bakeryId: dailyGrains.id, name: 'Dried oregano', unit: 'oz' },
   });
 
   const redPepperFlakes = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Red Pepper Flakes', unit: 'oz' },
+    data: { bakeryId: dailyGrains.id, name: 'Red pepper flakes', unit: 'oz' },
   });
 
   const garlicPowder = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Garlic Powder', unit: 'oz' },
+    data: { bakeryId: dailyGrains.id, name: 'Garlic powder', unit: 'oz' },
   });
 
   const onionPowder = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Onion Powder', unit: 'oz' },
+    data: { bakeryId: dailyGrains.id, name: 'Onion powder', unit: 'oz' },
   });
 
   // ----- OTHER -----
   const sourdoughCulture = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Sourdough Culture (Starter)', unit: 'lb' },
+    data: { bakeryId: dailyGrains.id, name: 'Sourdough starter', unit: 'lb' },
+  });
+
+  const levain = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Levain', unit: 'lb' },
+  });
+
+  const poolish = await prisma.ingredient.create({
+    data: { bakeryId: dailyGrains.id, name: 'Poolish', unit: 'lb' },
   });
 
   const oliveOil = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Organic Extra Virgin Olive Oil', unit: 'L' },
+    data: { bakeryId: dailyGrains.id, name: 'Extra virgin olive oil', unit: 'L' },
   });
 
   const instantYeast = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Instant Yeast', unit: 'lb' },
+    data: { bakeryId: dailyGrains.id, name: 'Instant yeast', unit: 'lb' },
   });
 
   const bakingSoda = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Baking Soda', unit: 'lb' },
+    data: { bakeryId: dailyGrains.id, name: 'Baking soda', unit: 'lb' },
   });
 
   const bakingPowder = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Baking Powder', unit: 'lb' },
+    data: { bakeryId: dailyGrains.id, name: 'Baking powder', unit: 'lb' },
   });
 
   const lemonZest = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Organic Lemon Zest', unit: 'oz' },
+    data: { bakeryId: dailyGrains.id, name: 'Lemon zest', unit: 'oz' },
   });
 
   const lemonJuice = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Organic Lemon Juice', unit: 'oz' },
+    data: { bakeryId: dailyGrains.id, name: 'Lemon juice', unit: 'oz' },
   });
 
   const orangeZest = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Orange Zest', unit: 'oz' },
+    data: { bakeryId: dailyGrains.id, name: 'Orange zest', unit: 'oz' },
   });
 
   const butterflyPeaFlowers = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Dried Butterfly Pea Flowers', unit: 'oz' },
+    data: { bakeryId: dailyGrains.id, name: 'Dried butterfly pea flowers', unit: 'oz' },
   });
 
   const water = await prisma.ingredient.create({
-    data: { bakeryId: dailyGrains.id, name: 'Filtered Water', unit: 'gal' },
+    data: { bakeryId: dailyGrains.id, name: 'Filtered water', unit: 'gal' },
   });
 
-  console.log(`✅ Created 75 ingredients`);
+  console.log(`✅ Created 85 ingredients`);
 
   // Assign vendors to ingredients
   const ingredientVendorAssignments = [
