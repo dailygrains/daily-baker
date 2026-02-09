@@ -244,7 +244,6 @@ const CONSOLIDATIONS: Record<string, string> = {
   'durum high extraction flour': 'Durum flour',
   'fresh thyme, minced': 'Fresh thyme',
   'large egg': 'Eggs',
-  'large eggs': 'Eggs',
   'salt water': 'Filtered water',
   'sorghum flour': 'Sorghum flour',
   'toasted walnut pieces': 'Walnuts',
