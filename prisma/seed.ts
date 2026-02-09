@@ -1,7 +1,62 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { PrismaClient, EquipmentStatus, UsageReason } from '../src/generated/prisma';
+import convert from 'convert-units';
 
 const prisma = new PrismaClient();
+
+// ---------------------------------------------------------------------------
+// Inline unit conversion helpers for recipe cost calculation during seeding.
+// These mirror src/lib/unitConvert.ts and src/lib/inventory.ts but avoid
+// import-path issues with the @ alias.
+// ---------------------------------------------------------------------------
+
+const seedUnitMap: Record<string, string | null> = {
+  g: 'g', kg: 'kg', lb: 'lb', lbs: 'lb', oz: 'oz', mg: 'mg',
+  ml: 'ml', mL: 'ml', l: 'l', L: 'l',
+  cup: 'cup', tbsp: 'Tbs', Tbsp: 'Tbs', Tbs: 'Tbs', tsp: 'tsp',
+  'fl-oz': 'fl-oz', 'fl oz': 'fl-oz', gal: 'gal', qt: 'qt', pnt: 'pnt',
+  unit: 'unit', each: 'unit', dozen: 'dozen', doz: 'dozen',
+};
+
+const countConversions: Record<string, Record<string, number>> = {
+  unit: { unit: 1, dozen: 1 / 12 },
+  dozen: { dozen: 1, unit: 12 },
+};
+
+function seedNormalizeUnit(unit: string): string | null {
+  if (unit in seedUnitMap) return seedUnitMap[unit];
+  const lower = unit.toLowerCase().trim();
+  if (lower in seedUnitMap) return seedUnitMap[lower];
+  return null;
+}
+
+function seedIsCountUnit(unit: string): boolean {
+  const n = seedNormalizeUnit(unit);
+  return n === 'unit' || n === 'dozen';
+}
+
+function seedConvertQuantity(quantity: number, fromUnit: string, toUnit: string): number | null {
+  if (fromUnit === toUnit) return quantity;
+  const fromN = seedNormalizeUnit(fromUnit);
+  const toN = seedNormalizeUnit(toUnit);
+  if (fromN && toN && seedIsCountUnit(fromUnit) && seedIsCountUnit(toUnit)) {
+    const f = countConversions[fromN]?.[toN];
+    return f != null ? quantity * f : null;
+  }
+  if (!fromN || !toN) return fromUnit.toLowerCase() === toUnit.toLowerCase() ? quantity : null;
+  try {
+    return convert(quantity)
+      .from(fromN as Parameters<ReturnType<typeof convert>['from']>[0])
+      .to(toN as Parameters<ReturnType<typeof convert>['to']>[0]);
+  } catch {
+    return null;
+  }
+}
+
+function seedGetConversionFactor(fromUnit: string, toUnit: string): number | null {
+  if (fromUnit === toUnit) return 1;
+  return seedConvertQuantity(1, fromUnit, toUnit);
+}
 
 async function main() {
   console.log('🌱 Starting database seed...\n');
@@ -809,63 +864,94 @@ async function main() {
   // ==========================================================================
   console.log('🏷️  Creating tag types and tags...');
 
-  // Create single tag type for ingredient categories (like grocery store sections)
-  const categoryTagType = await prisma.tagType.create({
+  // Create tag type for ingredient categories (like grocery store sections)
+  const ingredientCategoryTagType = await prisma.tagType.create({
     data: {
       bakeryId: dailyGrains.id,
-      name: 'Category',
+      name: 'Ingredient Categories',
       description: 'Ingredient categories (like grocery store sections)',
       order: 0,
     },
   });
 
+  // Create tag type for recipe categories
+  const recipeCategoryTagType = await prisma.tagType.create({
+    data: {
+      bakeryId: dailyGrains.id,
+      name: 'Recipe Categories',
+      description: 'Recipe categories for organizing products',
+      order: 1,
+    },
+  });
+
   // Create category tags with distinct colors
   const floursGrainsTag = await prisma.tag.create({
-    data: { bakeryId: dailyGrains.id, tagTypeId: categoryTagType.id, name: 'Flours & Grains', color: '#D4A574' }, // Wheat/tan
+    data: { bakeryId: dailyGrains.id, tagTypeId: ingredientCategoryTagType.id, name: 'Flours & Grains', color: '#D4A574' }, // Wheat/tan
   });
 
   const dairyEggsTag = await prisma.tag.create({
-    data: { bakeryId: dailyGrains.id, tagTypeId: categoryTagType.id, name: 'Dairy & Eggs', color: '#87CEEB' }, // Light blue
+    data: { bakeryId: dailyGrains.id, tagTypeId: ingredientCategoryTagType.id, name: 'Dairy & Eggs', color: '#87CEEB' }, // Light blue
   });
 
   const sweetenersTag = await prisma.tag.create({
-    data: { bakeryId: dailyGrains.id, tagTypeId: categoryTagType.id, name: 'Sweeteners', color: '#FFD700' }, // Golden
+    data: { bakeryId: dailyGrains.id, tagTypeId: ingredientCategoryTagType.id, name: 'Sweeteners', color: '#FFD700' }, // Golden
   });
 
   const chocolateTag = await prisma.tag.create({
-    data: { bakeryId: dailyGrains.id, tagTypeId: categoryTagType.id, name: 'Chocolate', color: '#5D3A1A' }, // Dark brown
+    data: { bakeryId: dailyGrains.id, tagTypeId: ingredientCategoryTagType.id, name: 'Chocolate', color: '#5D3A1A' }, // Dark brown
   });
 
   const nutsSeedsTag = await prisma.tag.create({
-    data: { bakeryId: dailyGrains.id, tagTypeId: categoryTagType.id, name: 'Nuts & Seeds', color: '#8B7355' }, // Nutty brown
+    data: { bakeryId: dailyGrains.id, tagTypeId: ingredientCategoryTagType.id, name: 'Nuts & Seeds', color: '#8B7355' }, // Nutty brown
   });
 
   const driedFruitsTag = await prisma.tag.create({
-    data: { bakeryId: dailyGrains.id, tagTypeId: categoryTagType.id, name: 'Dried Fruits', color: '#FF6B6B' }, // Reddish
+    data: { bakeryId: dailyGrains.id, tagTypeId: ingredientCategoryTagType.id, name: 'Dried Fruits', color: '#FF6B6B' }, // Reddish
   });
 
   const spicesTag = await prisma.tag.create({
-    data: { bakeryId: dailyGrains.id, tagTypeId: categoryTagType.id, name: 'Spices', color: '#C4721A' }, // Spice orange
+    data: { bakeryId: dailyGrains.id, tagTypeId: ingredientCategoryTagType.id, name: 'Spices', color: '#C4721A' }, // Spice orange
   });
 
   const herbsSeasoningsTag = await prisma.tag.create({
-    data: { bakeryId: dailyGrains.id, tagTypeId: categoryTagType.id, name: 'Herbs & Seasonings', color: '#228B22' }, // Forest green
+    data: { bakeryId: dailyGrains.id, tagTypeId: ingredientCategoryTagType.id, name: 'Herbs & Seasonings', color: '#228B22' }, // Forest green
   });
 
   const leaveningTag = await prisma.tag.create({
-    data: { bakeryId: dailyGrains.id, tagTypeId: categoryTagType.id, name: 'Leavening', color: '#E8E8E8' }, // Light gray (bubbly)
+    data: { bakeryId: dailyGrains.id, tagTypeId: ingredientCategoryTagType.id, name: 'Leavening', color: '#E8E8E8' }, // Light gray (bubbly)
   });
 
   const oilsTag = await prisma.tag.create({
-    data: { bakeryId: dailyGrains.id, tagTypeId: categoryTagType.id, name: 'Oils', color: '#9ACD32' }, // Yellow-green (olive)
+    data: { bakeryId: dailyGrains.id, tagTypeId: ingredientCategoryTagType.id, name: 'Oils', color: '#9ACD32' }, // Yellow-green (olive)
   });
 
   const citrusTag = await prisma.tag.create({
-    data: { bakeryId: dailyGrains.id, tagTypeId: categoryTagType.id, name: 'Citrus', color: '#FFA500' }, // Orange
+    data: { bakeryId: dailyGrains.id, tagTypeId: ingredientCategoryTagType.id, name: 'Citrus', color: '#FFA500' }, // Orange
   });
 
   const specialtyTag = await prisma.tag.create({
-    data: { bakeryId: dailyGrains.id, tagTypeId: categoryTagType.id, name: 'Specialty', color: '#9370DB' }, // Purple
+    data: { bakeryId: dailyGrains.id, tagTypeId: ingredientCategoryTagType.id, name: 'Specialty', color: '#9370DB' }, // Purple
+  });
+
+  // Create recipe category tags
+  const sourdoughBreadTag = await prisma.tag.create({
+    data: { bakeryId: dailyGrains.id, tagTypeId: recipeCategoryTagType.id, name: 'Sourdough Breads', color: '#8B4513' }, // Saddle brown
+  });
+
+  const cookiesTag = await prisma.tag.create({
+    data: { bakeryId: dailyGrains.id, tagTypeId: recipeCategoryTagType.id, name: 'Cookies', color: '#D2691E' }, // Chocolate
+  });
+
+  const enrichedBreadTag = await prisma.tag.create({
+    data: { bakeryId: dailyGrains.id, tagTypeId: recipeCategoryTagType.id, name: 'Enriched Breads', color: '#DAA520' }, // Goldenrod
+  });
+
+  const pancakeMixTag = await prisma.tag.create({
+    data: { bakeryId: dailyGrains.id, tagTypeId: recipeCategoryTagType.id, name: 'Pancake Mixes', color: '#F5DEB3' }, // Wheat
+  });
+
+  const breakfastItemsTag = await prisma.tag.create({
+    data: { bakeryId: dailyGrains.id, tagTypeId: recipeCategoryTagType.id, name: 'Breakfast Items', color: '#FFDAB9' }, // Peach puff
   });
 
   // Assign category tags to all ingredients
@@ -983,7 +1069,7 @@ async function main() {
     data: ingredientTagAssignments,
   });
 
-  console.log(`✅ Created 1 tag type, 12 category tags, and ${ingredientTagAssignments.length} tag assignments\n`);
+  console.log(`✅ Created 2 tag types, 17 tags, and ${ingredientTagAssignments.length} ingredient tag assignments`);
 
   // ==========================================================================
   // Create Equipment (for Daily Grains)
@@ -1246,15 +1332,1269 @@ async function main() {
     },
   });
 
-  console.log(`✅ Created 5 recipes with sections\n`);
+  // ----- ADDITIONAL SOURDOUGH BREADS -----
+
+  // Baguette
+  const baguette = await prisma.recipe.create({
+    data: {
+      bakeryId: dailyGrains.id,
+      name: 'Baguette',
+      description: 'Classic French-style baguette with whole-grain wheat flour blend and naturally leavened sourdough culture.',
+      yieldQty: 4,
+      yieldUnit: 'baguettes',
+      totalCost: 0,
+    },
+  });
+
+  await prisma.recipeSection.create({
+    data: {
+      recipeId: baguette.id,
+      name: 'Ingredients',
+      order: 0,
+      instructions: '# Baguette\n\n## Autolyse\nMix bread flour, whole wheat flour blend, and water. Rest for 30-60 minutes.\n\n## Mix\nAdd sourdough culture and salt. Mix until well incorporated.\n\n## Bulk Fermentation\n4-5 hours at room temperature with folds every 45 minutes.\n\n## Shape\nDivide into 4 portions, pre-shape, rest 20 minutes, then shape into baguettes.\n\n## Proof\nProof seam-side up in couche for 1-2 hours.\n\n## Bake\nScore and bake at 475°F with steam for 22-25 minutes.\n\n*Trace amounts of olive oil and rice flour for prep.*',
+      ingredients: {
+        create: [
+          { ingredientId: breadFlour.id, quantity: 800, unit: 'g' },
+          { ingredientId: turkeyRedFlour.id, quantity: 200, unit: 'g' },
+          { ingredientId: water.id, quantity: 720, unit: 'mL' },
+          { ingredientId: sourdoughCulture.id, quantity: 200, unit: 'g' },
+          { ingredientId: seaSalt.id, quantity: 22, unit: 'g' },
+        ],
+      },
+    },
+  });
+
+  // Butterfly Sourdough Bread
+  const butterflySourdough = await prisma.recipe.create({
+    data: {
+      bakeryId: dailyGrains.id,
+      name: 'Butterfly Sourdough Bread',
+      description: 'Beautiful blue-hued sourdough made with butterfly pea flower tea and White Sonora wheat.',
+      yieldQty: 2,
+      yieldUnit: 'loaves',
+      totalCost: 0,
+    },
+  });
+
+  await prisma.recipeSection.create({
+    data: {
+      recipeId: butterflySourdough.id,
+      name: 'Ingredients',
+      order: 0,
+      instructions: '# Butterfly Sourdough\n\n## Prepare Tea\nSteep butterfly pea flowers in hot water for 10 minutes. Cool to room temperature.\n\n## Autolyse\nMix flours with butterfly pea tea. Rest for 45 minutes.\n\n## Mix & Ferment\nAdd starter and salt. Bulk ferment 4-5 hours with folds.\n\n## Shape & Bake\nShape into boules, cold proof overnight, bake at 475°F.\n\n*Trace amounts of olive oil and rice flour for prep.*',
+      ingredients: {
+        create: [
+          { ingredientId: whiteSonoraFlour.id, quantity: 300, unit: 'g' },
+          { ingredientId: breadFlour.id, quantity: 700, unit: 'g' },
+          { ingredientId: butterflyPeaFlowers.id, quantity: 15, unit: 'g' },
+          { ingredientId: water.id, quantity: 750, unit: 'mL' },
+          { ingredientId: sourdoughCulture.id, quantity: 200, unit: 'g' },
+          { ingredientId: seaSalt.id, quantity: 22, unit: 'g' },
+        ],
+      },
+    },
+  });
+
+  // Chocolate Cherry Bread
+  const chocolateCherryBread = await prisma.recipe.create({
+    data: {
+      bakeryId: dailyGrains.id,
+      name: 'Chocolate Cherry Bread',
+      description: 'Rich sourdough studded with dark chocolate chips and dried tart Montmorency cherries.',
+      yieldQty: 2,
+      yieldUnit: 'loaves',
+      totalCost: 0,
+    },
+  });
+
+  await prisma.recipeSection.create({
+    data: {
+      recipeId: chocolateCherryBread.id,
+      name: 'Ingredients',
+      order: 0,
+      instructions: '# Chocolate Cherry Bread\n\n## Mix\nCombine flours, water, starter, and salt. Fold in chocolate and cherries during final stretch and fold.\n\n## Ferment\nBulk ferment 4-5 hours. Shape and cold proof overnight.\n\n## Bake\nBake at 450°F for 40-45 minutes.\n\n*Trace amounts of olive oil and rice flour for prep.*',
+      ingredients: {
+        create: [
+          { ingredientId: rougeFlour.id, quantity: 300, unit: 'g' },
+          { ingredientId: breadFlour.id, quantity: 700, unit: 'g' },
+          { ingredientId: water.id, quantity: 700, unit: 'mL' },
+          { ingredientId: sourdoughCulture.id, quantity: 200, unit: 'g' },
+          { ingredientId: darkChocolateChips.id, quantity: 150, unit: 'g' },
+          { ingredientId: driedCherries.id, quantity: 150, unit: 'g' },
+          { ingredientId: seaSalt.id, quantity: 20, unit: 'g' },
+        ],
+      },
+    },
+  });
+
+  // Cinnamon Pecan Sourdough Bread
+  const cinnamonPecanSourdough = await prisma.recipe.create({
+    data: {
+      bakeryId: dailyGrains.id,
+      name: 'Cinnamon Pecan Sourdough Bread',
+      description: 'Spelt-based sourdough with organic pecans, honey, and warming cinnamon.',
+      yieldQty: 2,
+      yieldUnit: 'loaves',
+      totalCost: 0,
+    },
+  });
+
+  await prisma.recipeSection.create({
+    data: {
+      recipeId: cinnamonPecanSourdough.id,
+      name: 'Ingredients',
+      order: 0,
+      instructions: '# Cinnamon Pecan Sourdough\n\n## Mix\nCombine flours, water, honey, and starter. Add salt and cinnamon.\n\n## Add-ins\nFold in toasted pecans during final stretch.\n\n## Ferment & Bake\nBulk ferment 4-5 hours, shape, cold proof, bake at 450°F.\n\n*Trace amounts of olive oil and rice flour for prep.*',
+      ingredients: {
+        create: [
+          { ingredientId: speltFlour.id, quantity: 300, unit: 'g' },
+          { ingredientId: breadFlour.id, quantity: 700, unit: 'g' },
+          { ingredientId: water.id, quantity: 720, unit: 'mL' },
+          { ingredientId: sourdoughCulture.id, quantity: 200, unit: 'g' },
+          { ingredientId: pecans.id, quantity: 150, unit: 'g' },
+          { ingredientId: honey.id, quantity: 50, unit: 'g' },
+          { ingredientId: seaSalt.id, quantity: 20, unit: 'g' },
+          { ingredientId: cinnamon.id, quantity: 8, unit: 'g' },
+        ],
+      },
+    },
+  });
+
+  // Cinnamon Raisin Bread
+  const cinnamonRaisinBread = await prisma.recipe.create({
+    data: {
+      bakeryId: dailyGrains.id,
+      name: 'Cinnamon Raisin Bread',
+      description: 'Classic sourdough with plump organic raisins and aromatic cinnamon.',
+      yieldQty: 2,
+      yieldUnit: 'loaves',
+      totalCost: 0,
+    },
+  });
+
+  await prisma.recipeSection.create({
+    data: {
+      recipeId: cinnamonRaisinBread.id,
+      name: 'Ingredients',
+      order: 0,
+      instructions: '# Cinnamon Raisin Bread\n\n## Soak Raisins\nSoak raisins in warm water for 30 minutes, drain well.\n\n## Mix & Ferment\nCombine flours, water, starter, salt, and cinnamon. Fold in drained raisins.\n\n## Bake\nShape, proof, and bake at 450°F for 40-45 minutes.\n\n*Trace amounts of olive oil and rice flour for prep.*',
+      ingredients: {
+        create: [
+          { ingredientId: rougeFlour.id, quantity: 300, unit: 'g' },
+          { ingredientId: breadFlour.id, quantity: 700, unit: 'g' },
+          { ingredientId: water.id, quantity: 700, unit: 'mL' },
+          { ingredientId: sourdoughCulture.id, quantity: 200, unit: 'g' },
+          { ingredientId: raisins.id, quantity: 200, unit: 'g' },
+          { ingredientId: seaSalt.id, quantity: 20, unit: 'g' },
+          { ingredientId: cinnamon.id, quantity: 10, unit: 'g' },
+        ],
+      },
+    },
+  });
+
+  // Cranberry Pecan Bread
+  const cranberryPecanBread = await prisma.recipe.create({
+    data: {
+      bakeryId: dailyGrains.id,
+      name: 'Cranberry Pecan Bread',
+      description: 'Rouge de Bordeaux sourdough with dried cranberries and toasted pecans.',
+      yieldQty: 2,
+      yieldUnit: 'loaves',
+      totalCost: 0,
+    },
+  });
+
+  await prisma.recipeSection.create({
+    data: {
+      recipeId: cranberryPecanBread.id,
+      name: 'Ingredients',
+      order: 0,
+      instructions: '# Cranberry Pecan Bread\n\n## Mix\nCombine flours, water, starter, and salt.\n\n## Add-ins\nFold in cranberries and toasted pecans during final stretch.\n\n## Ferment & Bake\nBulk ferment 4-5 hours, shape, cold proof overnight, bake at 450°F.\n\n*Trace amounts of olive oil and rice flour for prep.*',
+      ingredients: {
+        create: [
+          { ingredientId: rougeFlour.id, quantity: 300, unit: 'g' },
+          { ingredientId: breadFlour.id, quantity: 700, unit: 'g' },
+          { ingredientId: water.id, quantity: 700, unit: 'mL' },
+          { ingredientId: sourdoughCulture.id, quantity: 200, unit: 'g' },
+          { ingredientId: pecans.id, quantity: 100, unit: 'g' },
+          { ingredientId: driedCranberries.id, quantity: 150, unit: 'g' },
+          { ingredientId: seaSalt.id, quantity: 20, unit: 'g' },
+        ],
+      },
+    },
+  });
+
+  // Einkorn Sourdough Bread
+  const einkornSourdough = await prisma.recipe.create({
+    data: {
+      bakeryId: dailyGrains.id,
+      name: 'Einkorn Sourdough Bread',
+      description: 'Ancient grain sourdough featuring whole-grain Einkorn flour for a nutty, delicate flavor.',
+      yieldQty: 2,
+      yieldUnit: 'loaves',
+      totalCost: 0,
+    },
+  });
+
+  await prisma.recipeSection.create({
+    data: {
+      recipeId: einkornSourdough.id,
+      name: 'Ingredients',
+      order: 0,
+      instructions: '# Einkorn Sourdough\n\n## Note on Einkorn\nEinkorn has a weaker gluten structure - handle gently and use lower hydration.\n\n## Mix & Ferment\nCombine flours, water, starter, and salt. Bulk ferment 3-4 hours with gentle folds.\n\n## Bake\nShape carefully, proof, and bake at 450°F.\n\n*Trace amounts of olive oil and rice flour for prep.*',
+      ingredients: {
+        create: [
+          { ingredientId: einkornFlour.id, quantity: 400, unit: 'g' },
+          { ingredientId: breadFlour.id, quantity: 600, unit: 'g' },
+          { ingredientId: water.id, quantity: 680, unit: 'mL' },
+          { ingredientId: sourdoughCulture.id, quantity: 200, unit: 'g' },
+          { ingredientId: seaSalt.id, quantity: 20, unit: 'g' },
+        ],
+      },
+    },
+  });
+
+  // Flaxseed Sourdough Bread
+  const flaxseedSourdough = await prisma.recipe.create({
+    data: {
+      bakeryId: dailyGrains.id,
+      name: 'Flaxseed Sourdough Bread',
+      description: 'Hearty Yecora Rojo sourdough enriched with organic brown flaxseed.',
+      yieldQty: 2,
+      yieldUnit: 'loaves',
+      totalCost: 0,
+    },
+  });
+
+  await prisma.recipeSection.create({
+    data: {
+      recipeId: flaxseedSourdough.id,
+      name: 'Ingredients',
+      order: 0,
+      instructions: '# Flaxseed Sourdough\n\n## Soak Flaxseed\nSoak flaxseed in 100g water for 30 minutes to form a gel.\n\n## Mix\nCombine flours, remaining water, starter, salt, and flax gel.\n\n## Ferment & Bake\nBulk ferment 4-5 hours, shape, proof, bake at 450°F.\n\n*Trace amounts of olive oil and rice flour for prep.*',
+      ingredients: {
+        create: [
+          { ingredientId: yecoraRojoFlour.id, quantity: 300, unit: 'g' },
+          { ingredientId: breadFlour.id, quantity: 700, unit: 'g' },
+          { ingredientId: water.id, quantity: 720, unit: 'mL' },
+          { ingredientId: sourdoughCulture.id, quantity: 200, unit: 'g' },
+          { ingredientId: flaxseed.id, quantity: 80, unit: 'g' },
+          { ingredientId: seaSalt.id, quantity: 20, unit: 'g' },
+        ],
+      },
+    },
+  });
+
+  // Herbed Cheddar Sourdough Bread
+  const herbedCheddarSourdough = await prisma.recipe.create({
+    data: {
+      bakeryId: dailyGrains.id,
+      name: 'Herbed Cheddar Sourdough Bread',
+      description: 'Savory sourdough with extra sharp cheddar and Italian herb blend.',
+      yieldQty: 2,
+      yieldUnit: 'loaves',
+      totalCost: 0,
+    },
+  });
+
+  await prisma.recipeSection.create({
+    data: {
+      recipeId: herbedCheddarSourdough.id,
+      name: 'Ingredients',
+      order: 0,
+      instructions: '# Herbed Cheddar Sourdough\n\n## Mix\nCombine flours, water, starter, and salt.\n\n## Add-ins\nFold in cubed cheddar and herb blend during final stretch.\n\n## Bake\nBake at 450°F. The cheese creates delicious crispy pockets.\n\n*Trace amounts of olive oil and rice flour for prep.*',
+      ingredients: {
+        create: [
+          { ingredientId: turkeyRedFlour.id, quantity: 300, unit: 'g' },
+          { ingredientId: breadFlour.id, quantity: 700, unit: 'g' },
+          { ingredientId: water.id, quantity: 700, unit: 'mL' },
+          { ingredientId: sourdoughCulture.id, quantity: 200, unit: 'g' },
+          { ingredientId: cheddarCheese.id, quantity: 200, unit: 'g' },
+          { ingredientId: driedBasil.id, quantity: 5, unit: 'g' },
+          { ingredientId: driedOregano.id, quantity: 5, unit: 'g' },
+          { ingredientId: redPepperFlakes.id, quantity: 2, unit: 'g' },
+          { ingredientId: garlicPowder.id, quantity: 5, unit: 'g' },
+          { ingredientId: onionPowder.id, quantity: 5, unit: 'g' },
+          { ingredientId: seaSalt.id, quantity: 18, unit: 'g' },
+        ],
+      },
+    },
+  });
+
+  // Honey Oat Sourdough Bread
+  const honeyOatSourdough = await prisma.recipe.create({
+    data: {
+      bakeryId: dailyGrains.id,
+      name: 'Honey Oat Sourdough Bread',
+      description: 'Soft, slightly sweet sourdough with oat flour, rolled oats, and local honey.',
+      yieldQty: 2,
+      yieldUnit: 'loaves',
+      totalCost: 0,
+    },
+  });
+
+  await prisma.recipeSection.create({
+    data: {
+      recipeId: honeyOatSourdough.id,
+      name: 'Ingredients',
+      order: 0,
+      instructions: '# Honey Oat Sourdough\n\n## Soak Oats\nPour boiling water over rolled oats, let stand 30 minutes.\n\n## Mix\nCombine flours, water, honey, starter, and salt. Add soaked oats.\n\n## Bake\nTop with additional oats before baking at 450°F.\n\n*Trace amounts of olive oil and rice flour for prep.*',
+      ingredients: {
+        create: [
+          { ingredientId: turkeyRedFlour.id, quantity: 250, unit: 'g' },
+          { ingredientId: breadFlour.id, quantity: 650, unit: 'g' },
+          { ingredientId: oatFlour.id, quantity: 100, unit: 'g' },
+          { ingredientId: thickRolledOats.id, quantity: 100, unit: 'g' },
+          { ingredientId: water.id, quantity: 700, unit: 'mL' },
+          { ingredientId: sourdoughCulture.id, quantity: 200, unit: 'g' },
+          { ingredientId: honey.id, quantity: 60, unit: 'g' },
+          { ingredientId: seaSalt.id, quantity: 20, unit: 'g' },
+        ],
+      },
+    },
+  });
+
+  // Kamut Sesame Sourdough Bread
+  const kamutSesameSourdough = await prisma.recipe.create({
+    data: {
+      bakeryId: dailyGrains.id,
+      name: 'Kamut Sesame Sourdough Bread',
+      description: 'Buttery Kamut sourdough with toasted sesame seeds and olive oil.',
+      yieldQty: 2,
+      yieldUnit: 'loaves',
+      totalCost: 0,
+    },
+  });
+
+  await prisma.recipeSection.create({
+    data: {
+      recipeId: kamutSesameSourdough.id,
+      name: 'Ingredients',
+      order: 0,
+      instructions: '# Kamut Sesame Sourdough\n\n## Toast Sesame\nToast sesame seeds in dry pan until golden.\n\n## Mix\nCombine flours, water, olive oil, starter, and salt. Fold in sesame seeds.\n\n## Bake\nTop with additional sesame before baking at 450°F.\n\n*Trace amounts of olive oil and rice flour for prep.*',
+      ingredients: {
+        create: [
+          { ingredientId: kamutFlour.id, quantity: 400, unit: 'g' },
+          { ingredientId: breadFlour.id, quantity: 600, unit: 'g' },
+          { ingredientId: water.id, quantity: 700, unit: 'mL' },
+          { ingredientId: sourdoughCulture.id, quantity: 200, unit: 'g' },
+          { ingredientId: oliveOil.id, quantity: 30, unit: 'mL' },
+          { ingredientId: sesameSeeds.id, quantity: 60, unit: 'g' },
+          { ingredientId: seaSalt.id, quantity: 20, unit: 'g' },
+        ],
+      },
+    },
+  });
+
+  // Kamut Sourdough Bread
+  const kamutSourdough = await prisma.recipe.create({
+    data: {
+      bakeryId: dailyGrains.id,
+      name: 'Kamut Sourdough Bread',
+      description: 'Golden-hued sourdough featuring organic Kamut wheat for a rich, buttery flavor.',
+      yieldQty: 2,
+      yieldUnit: 'loaves',
+      totalCost: 0,
+    },
+  });
+
+  await prisma.recipeSection.create({
+    data: {
+      recipeId: kamutSourdough.id,
+      name: 'Ingredients',
+      order: 0,
+      instructions: '# Kamut Sourdough\n\n## Mix & Ferment\nCombine flours, water, starter, and salt. Bulk ferment 4-5 hours.\n\n## Shape & Bake\nShape into boules, cold proof overnight, bake at 450°F.\n\n*Trace amounts of olive oil and rice flour for prep.*',
+      ingredients: {
+        create: [
+          { ingredientId: kamutFlour.id, quantity: 400, unit: 'g' },
+          { ingredientId: breadFlour.id, quantity: 600, unit: 'g' },
+          { ingredientId: water.id, quantity: 700, unit: 'mL' },
+          { ingredientId: sourdoughCulture.id, quantity: 200, unit: 'g' },
+          { ingredientId: seaSalt.id, quantity: 20, unit: 'g' },
+        ],
+      },
+    },
+  });
+
+  // Kernza Sourdough Bread
+  const kernzaSourdough = await prisma.recipe.create({
+    data: {
+      bakeryId: dailyGrains.id,
+      name: 'Kernza Sourdough Bread',
+      description: 'Innovative sourdough featuring Kernza perennial grain for a unique, complex flavor.',
+      yieldQty: 2,
+      yieldUnit: 'loaves',
+      totalCost: 0,
+    },
+  });
+
+  await prisma.recipeSection.create({
+    data: {
+      recipeId: kernzaSourdough.id,
+      name: 'Ingredients',
+      order: 0,
+      instructions: '# Kernza Sourdough\n\n## Note on Kernza\nKernza has a distinct, slightly sweet flavor. Use higher proportion of bread flour for structure.\n\n## Mix & Bake\nStandard sourdough method. Bake at 450°F.\n\n*Trace amounts of olive oil and rice flour for prep.*',
+      ingredients: {
+        create: [
+          { ingredientId: kernzaFlour.id, quantity: 300, unit: 'g' },
+          { ingredientId: breadFlour.id, quantity: 700, unit: 'g' },
+          { ingredientId: water.id, quantity: 720, unit: 'mL' },
+          { ingredientId: sourdoughCulture.id, quantity: 200, unit: 'g' },
+          { ingredientId: seaSalt.id, quantity: 20, unit: 'g' },
+        ],
+      },
+    },
+  });
+
+  // Multigrain Sourdough Bread
+  const multigrainSourdough = await prisma.recipe.create({
+    data: {
+      bakeryId: dailyGrains.id,
+      name: 'Multigrain Sourdough Bread',
+      description: 'Hearty sourdough packed with oat groats, rye flakes, wheat flakes, and an assortment of seeds.',
+      yieldQty: 2,
+      yieldUnit: 'loaves',
+      totalCost: 0,
+    },
+  });
+
+  await prisma.recipeSection.create({
+    data: {
+      recipeId: multigrainSourdough.id,
+      name: 'Ingredients',
+      order: 0,
+      instructions: '# Multigrain Sourdough\n\n## Soaker\nCombine grains and seeds with hot water. Let soak overnight.\n\n## Mix\nCombine flours, water, starter, and salt. Add soaked grain mixture.\n\n## Bake\nTop with additional seeds before baking at 450°F.\n\n*Trace amounts of olive oil and rice flour for prep.*',
+      ingredients: {
+        create: [
+          { ingredientId: rougeFlour.id, quantity: 300, unit: 'g' },
+          { ingredientId: breadFlour.id, quantity: 700, unit: 'g' },
+          { ingredientId: water.id, quantity: 700, unit: 'mL' },
+          { ingredientId: sourdoughCulture.id, quantity: 200, unit: 'g' },
+          { ingredientId: wholeOatGroats.id, quantity: 40, unit: 'g' },
+          { ingredientId: ryeFlakes.id, quantity: 40, unit: 'g' },
+          { ingredientId: wheatFlakes.id, quantity: 40, unit: 'g' },
+          { ingredientId: sunflowerSeeds.id, quantity: 30, unit: 'g' },
+          { ingredientId: sesameSeeds.id, quantity: 20, unit: 'g' },
+          { ingredientId: flaxseed.id, quantity: 20, unit: 'g' },
+          { ingredientId: poppySeeds.id, quantity: 15, unit: 'g' },
+          { ingredientId: hulledMillet.id, quantity: 20, unit: 'g' },
+          { ingredientId: seaSalt.id, quantity: 22, unit: 'g' },
+        ],
+      },
+    },
+  });
+
+  // Parmesan Peppercorn Sourdough Bread
+  const parmesanPeppercornSourdough = await prisma.recipe.create({
+    data: {
+      bakeryId: dailyGrains.id,
+      name: 'Parmesan Peppercorn Sourdough Bread',
+      description: 'Savory Einkorn sourdough with aged parmesan and freshly cracked black pepper.',
+      yieldQty: 2,
+      yieldUnit: 'loaves',
+      totalCost: 0,
+    },
+  });
+
+  await prisma.recipeSection.create({
+    data: {
+      recipeId: parmesanPeppercornSourdough.id,
+      name: 'Ingredients',
+      order: 0,
+      instructions: '# Parmesan Peppercorn Sourdough\n\n## Mix\nCombine flours, water, starter, and salt.\n\n## Add-ins\nFold in grated parmesan and cracked pepper during final stretch.\n\n## Bake\nBake at 450°F until deeply golden.\n\n*Trace amounts of olive oil and rice flour for prep.*',
+      ingredients: {
+        create: [
+          { ingredientId: einkornFlour.id, quantity: 300, unit: 'g' },
+          { ingredientId: breadFlour.id, quantity: 700, unit: 'g' },
+          { ingredientId: water.id, quantity: 700, unit: 'mL' },
+          { ingredientId: sourdoughCulture.id, quantity: 200, unit: 'g' },
+          { ingredientId: parmesanCheese.id, quantity: 150, unit: 'g' },
+          { ingredientId: blackPepper.id, quantity: 8, unit: 'g' },
+          { ingredientId: seaSalt.id, quantity: 18, unit: 'g' },
+        ],
+      },
+    },
+  });
+
+  // Rosemary Olive Oil Sourdough Bread
+  const rosemaryOliveOilSourdough = await prisma.recipe.create({
+    data: {
+      bakeryId: dailyGrains.id,
+      name: 'Rosemary Olive Oil Sourdough Bread',
+      description: 'Aromatic Kamut sourdough with fresh rosemary and extra virgin olive oil.',
+      yieldQty: 2,
+      yieldUnit: 'loaves',
+      totalCost: 0,
+    },
+  });
+
+  await prisma.recipeSection.create({
+    data: {
+      recipeId: rosemaryOliveOilSourdough.id,
+      name: 'Ingredients',
+      order: 0,
+      instructions: '# Rosemary Olive Oil Sourdough\n\n## Mix\nCombine flours, water, olive oil, starter, and salt.\n\n## Add Rosemary\nFold in chopped fresh rosemary during bulk fermentation.\n\n## Bake\nTop with rosemary sprigs before baking at 450°F.\n\n*Trace amounts of olive oil and rice flour for prep.*',
+      ingredients: {
+        create: [
+          { ingredientId: kamutFlour.id, quantity: 300, unit: 'g' },
+          { ingredientId: breadFlour.id, quantity: 700, unit: 'g' },
+          { ingredientId: water.id, quantity: 680, unit: 'mL' },
+          { ingredientId: sourdoughCulture.id, quantity: 200, unit: 'g' },
+          { ingredientId: oliveOil.id, quantity: 50, unit: 'mL' },
+          { ingredientId: freshRosemary.id, quantity: 15, unit: 'g' },
+          { ingredientId: seaSalt.id, quantity: 20, unit: 'g' },
+        ],
+      },
+    },
+  });
+
+  // Sage Einkorn Sourdough Bread
+  const sageEinkornSourdough = await prisma.recipe.create({
+    data: {
+      bakeryId: dailyGrains.id,
+      name: 'Sage Einkorn Sourdough Bread',
+      description: 'Earthy Einkorn sourdough with fragrant organic sage.',
+      yieldQty: 2,
+      yieldUnit: 'loaves',
+      totalCost: 0,
+    },
+  });
+
+  await prisma.recipeSection.create({
+    data: {
+      recipeId: sageEinkornSourdough.id,
+      name: 'Ingredients',
+      order: 0,
+      instructions: '# Sage Einkorn Sourdough\n\n## Mix\nCombine flours, water, starter, and salt. Add chopped sage.\n\n## Ferment & Bake\nBulk ferment with gentle handling. Bake at 450°F.\n\n*Trace amounts of olive oil and rice flour for prep.*',
+      ingredients: {
+        create: [
+          { ingredientId: einkornFlour.id, quantity: 400, unit: 'g' },
+          { ingredientId: breadFlour.id, quantity: 600, unit: 'g' },
+          { ingredientId: water.id, quantity: 680, unit: 'mL' },
+          { ingredientId: sourdoughCulture.id, quantity: 200, unit: 'g' },
+          { ingredientId: sage.id, quantity: 10, unit: 'g' },
+          { ingredientId: seaSalt.id, quantity: 20, unit: 'g' },
+        ],
+      },
+    },
+  });
+
+  // Spelt Sourdough Bread
+  const speltSourdough = await prisma.recipe.create({
+    data: {
+      bakeryId: dailyGrains.id,
+      name: 'Spelt Sourdough Bread',
+      description: 'Nutty, slightly sweet sourdough made with whole-grain spelt.',
+      yieldQty: 2,
+      yieldUnit: 'loaves',
+      totalCost: 0,
+    },
+  });
+
+  await prisma.recipeSection.create({
+    data: {
+      recipeId: speltSourdough.id,
+      name: 'Ingredients',
+      order: 0,
+      instructions: '# Spelt Sourdough\n\n## Note on Spelt\nSpelt has a delicate gluten - use gentle handling and slightly lower hydration.\n\n## Mix & Bake\nStandard sourdough method. Bake at 450°F.\n\n*Trace amounts of olive oil and rice flour for prep.*',
+      ingredients: {
+        create: [
+          { ingredientId: speltFlour.id, quantity: 400, unit: 'g' },
+          { ingredientId: breadFlour.id, quantity: 600, unit: 'g' },
+          { ingredientId: water.id, quantity: 680, unit: 'mL' },
+          { ingredientId: sourdoughCulture.id, quantity: 200, unit: 'g' },
+          { ingredientId: seaSalt.id, quantity: 20, unit: 'g' },
+        ],
+      },
+    },
+  });
+
+  // Sunflower Seed Sourdough Bread
+  const sunflowerSeedSourdough = await prisma.recipe.create({
+    data: {
+      bakeryId: dailyGrains.id,
+      name: 'Sunflower Seed Sourdough Bread',
+      description: 'Turkey Red sourdough generously studded with organic sunflower seeds.',
+      yieldQty: 2,
+      yieldUnit: 'loaves',
+      totalCost: 0,
+    },
+  });
+
+  await prisma.recipeSection.create({
+    data: {
+      recipeId: sunflowerSeedSourdough.id,
+      name: 'Ingredients',
+      order: 0,
+      instructions: '# Sunflower Seed Sourdough\n\n## Toast Seeds\nLightly toast sunflower seeds for enhanced flavor.\n\n## Mix\nCombine flours, water, starter, and salt. Fold in seeds.\n\n## Bake\nTop with additional seeds before baking at 450°F.\n\n*Trace amounts of olive oil and rice flour for prep.*',
+      ingredients: {
+        create: [
+          { ingredientId: turkeyRedFlour.id, quantity: 300, unit: 'g' },
+          { ingredientId: breadFlour.id, quantity: 700, unit: 'g' },
+          { ingredientId: water.id, quantity: 720, unit: 'mL' },
+          { ingredientId: sourdoughCulture.id, quantity: 200, unit: 'g' },
+          { ingredientId: sunflowerSeeds.id, quantity: 120, unit: 'g' },
+          { ingredientId: seaSalt.id, quantity: 20, unit: 'g' },
+        ],
+      },
+    },
+  });
+
+  // Turkey Red Sourdough Bread
+  const turkeyRedSourdough = await prisma.recipe.create({
+    data: {
+      bakeryId: dailyGrains.id,
+      name: 'Turkey Red Sourdough Bread',
+      description: 'Heritage grain sourdough featuring whole-grain Turkey Red wheat for a robust, complex flavor.',
+      yieldQty: 2,
+      yieldUnit: 'loaves',
+      totalCost: 0,
+    },
+  });
+
+  await prisma.recipeSection.create({
+    data: {
+      recipeId: turkeyRedSourdough.id,
+      name: 'Ingredients',
+      order: 0,
+      instructions: '# Turkey Red Sourdough\n\n## Mix & Ferment\nCombine flours, water, starter, and salt. Bulk ferment 4-5 hours.\n\n## Shape & Bake\nShape into boules, cold proof overnight, bake at 450°F.\n\n*Trace amounts of olive oil and rice flour for prep.*',
+      ingredients: {
+        create: [
+          { ingredientId: turkeyRedFlour.id, quantity: 400, unit: 'g' },
+          { ingredientId: breadFlour.id, quantity: 600, unit: 'g' },
+          { ingredientId: water.id, quantity: 720, unit: 'mL' },
+          { ingredientId: sourdoughCulture.id, quantity: 200, unit: 'g' },
+          { ingredientId: seaSalt.id, quantity: 20, unit: 'g' },
+        ],
+      },
+    },
+  });
+
+  // Yecora Rojo Sourdough Bread
+  const yecoraRojoSourdough = await prisma.recipe.create({
+    data: {
+      bakeryId: dailyGrains.id,
+      name: 'Yecora Rojo Sourdough Bread',
+      description: 'Distinctive sourdough featuring whole-grain Yecora Rojo wheat.',
+      yieldQty: 2,
+      yieldUnit: 'loaves',
+      totalCost: 0,
+    },
+  });
+
+  await prisma.recipeSection.create({
+    data: {
+      recipeId: yecoraRojoSourdough.id,
+      name: 'Ingredients',
+      order: 0,
+      instructions: '# Yecora Rojo Sourdough\n\n## Mix & Ferment\nCombine flours, water, starter, and salt. Standard sourdough method.\n\n## Bake\nBake at 450°F until deeply caramelized.\n\n*Trace amounts of olive oil and rice flour for prep.*',
+      ingredients: {
+        create: [
+          { ingredientId: yecoraRojoFlour.id, quantity: 400, unit: 'g' },
+          { ingredientId: breadFlour.id, quantity: 600, unit: 'g' },
+          { ingredientId: water.id, quantity: 720, unit: 'mL' },
+          { ingredientId: sourdoughCulture.id, quantity: 200, unit: 'g' },
+          { ingredientId: seaSalt.id, quantity: 20, unit: 'g' },
+        ],
+      },
+    },
+  });
+
+  // Emmer Sourdough Bread
+  const emmerSourdough = await prisma.recipe.create({
+    data: {
+      bakeryId: dailyGrains.id,
+      name: 'Emmer Sourdough Bread',
+      description: 'Ancient grain sourdough featuring whole-grain Emmer (farro) for a rich, nutty flavor.',
+      yieldQty: 2,
+      yieldUnit: 'loaves',
+      totalCost: 0,
+    },
+  });
+
+  await prisma.recipeSection.create({
+    data: {
+      recipeId: emmerSourdough.id,
+      name: 'Ingredients',
+      order: 0,
+      instructions: '# Emmer Sourdough\n\n## Mix & Ferment\nCombine flours, water, starter, and salt. Bulk ferment 4-5 hours with gentle folds.\n\n## Shape & Bake\nShape carefully, cold proof, bake at 450°F.',
+      ingredients: {
+        create: [
+          { ingredientId: emmerFlour.id, quantity: 400, unit: 'g' },
+          { ingredientId: breadFlour.id, quantity: 600, unit: 'g' },
+          { ingredientId: water.id, quantity: 700, unit: 'mL' },
+          { ingredientId: sourdoughCulture.id, quantity: 200, unit: 'g' },
+          { ingredientId: seaSalt.id, quantity: 20, unit: 'g' },
+        ],
+      },
+    },
+  });
+
+  // ----- ADDITIONAL COOKIES -----
+
+  // Apple Pie Cookie
+  const applePieCookie = await prisma.recipe.create({
+    data: {
+      bakeryId: dailyGrains.id,
+      name: 'Apple Pie Cookie',
+      description: 'Chewy oatmeal cookies loaded with dried apples and warm apple pie spices.',
+      yieldQty: 24,
+      yieldUnit: 'cookies',
+      totalCost: 0,
+    },
+  });
+
+  await prisma.recipeSection.create({
+    data: {
+      recipeId: applePieCookie.id,
+      name: 'Ingredients',
+      order: 0,
+      instructions: '# Apple Pie Cookies\n\n## Cream\nBeat butter and sugars until fluffy. Add eggs.\n\n## Mix Dry\nCombine flour, oats, baking soda, salt, and spices.\n\n## Combine\nFold dry into wet. Add chopped dried apples.\n\n## Bake\nScoop onto sheets. Bake at 350°F for 11-13 minutes.',
+      ingredients: {
+        create: [
+          { ingredientId: thickRolledOats.id, quantity: 200, unit: 'g' },
+          { ingredientId: butter.id, quantity: 170, unit: 'g' },
+          { ingredientId: driedApples.id, quantity: 120, unit: 'g', preparation: 'chopped' },
+          { ingredientId: brownSugar.id, quantity: 150, unit: 'g' },
+          { ingredientId: whiteSonoraFlour.id, quantity: 190, unit: 'g' },
+          { ingredientId: eggs.id, quantity: 2, unit: 'unit' },
+          { ingredientId: caneS.id, quantity: 75, unit: 'g' },
+          { ingredientId: bakingSoda.id, quantity: 5, unit: 'g' },
+          { ingredientId: seaSalt.id, quantity: 4, unit: 'g' },
+          { ingredientId: cinnamon.id, quantity: 6, unit: 'g' },
+          { ingredientId: nutmeg.id, quantity: 2, unit: 'g' },
+          { ingredientId: cardamom.id, quantity: 1, unit: 'g' },
+          { ingredientId: ginger.id, quantity: 2, unit: 'g' },
+          { ingredientId: allspice.id, quantity: 1, unit: 'g' },
+        ],
+      },
+    },
+  });
+
+  // Brown Butter Milk Chocolate Chip Pecan Cookie
+  const milkChocPecanCookie = await prisma.recipe.create({
+    data: {
+      bakeryId: dailyGrains.id,
+      name: 'Brown Butter Milk Chocolate Chip Pecan Cookie',
+      description: 'Chewy brown butter cookies with milk chocolate chips and toasted pecans.',
+      yieldQty: 24,
+      yieldUnit: 'cookies',
+      totalCost: 0,
+    },
+  });
+
+  await prisma.recipeSection.create({
+    data: {
+      recipeId: milkChocPecanCookie.id,
+      name: 'Ingredients',
+      order: 0,
+      instructions: '# Brown Butter Milk Chocolate Chip Pecan Cookies\n\n## Brown the Butter\nMelt butter until golden brown with nutty aroma. Cool slightly.\n\n## Mix\nWhisk brown butter with sugars. Add eggs and vanilla.\n\n## Combine\nFold in flour blend, chocolate chips, and toasted pecans. Chill 24 hours.\n\n## Bake\nBake at 350°F for 12-14 minutes.',
+      ingredients: {
+        create: [
+          { ingredientId: turkeyRedFlour.id, quantity: 150, unit: 'g' },
+          { ingredientId: whiteSonoraFlour.id, quantity: 150, unit: 'g' },
+          { ingredientId: butter.id, quantity: 230, unit: 'g' },
+          { ingredientId: milkChocolateChips.id, quantity: 280, unit: 'g' },
+          { ingredientId: pecans.id, quantity: 120, unit: 'g', preparation: 'toasted' },
+          { ingredientId: brownSugar.id, quantity: 200, unit: 'g' },
+          { ingredientId: caneS.id, quantity: 100, unit: 'g' },
+          { ingredientId: eggs.id, quantity: 2, unit: 'unit' },
+          { ingredientId: vanilla.id, quantity: 10, unit: 'mL' },
+          { ingredientId: seaSalt.id, quantity: 8, unit: 'g' },
+          { ingredientId: bakingSoda.id, quantity: 5, unit: 'g' },
+        ],
+      },
+    },
+  });
+
+  // Brownie Cookie
+  const brownieCookie = await prisma.recipe.create({
+    data: {
+      bakeryId: dailyGrains.id,
+      name: 'Brownie Cookie',
+      description: 'Rich, fudgy brownie cookies with bittersweet and white chocolate chips.',
+      yieldQty: 24,
+      yieldUnit: 'cookies',
+      totalCost: 0,
+    },
+  });
+
+  await prisma.recipeSection.create({
+    data: {
+      recipeId: brownieCookie.id,
+      name: 'Ingredients',
+      order: 0,
+      instructions: '# Brownie Cookies\n\n## Melt Chocolate\nMelt bittersweet chocolate with butter. Cool slightly.\n\n## Mix\nWhisk eggs and sugar until thick. Fold in chocolate mixture.\n\n## Combine\nAdd flour, cocoa, salt, and baking powder. Fold in both chocolate chips.\n\n## Bake\nBake at 350°F for 10-12 minutes. Centers should be soft.',
+      ingredients: {
+        create: [
+          { ingredientId: darkRyeFlour.id, quantity: 100, unit: 'g' },
+          { ingredientId: caneS.id, quantity: 250, unit: 'g' },
+          { ingredientId: darkChocolateChips85.id, quantity: 170, unit: 'g' },
+          { ingredientId: whiteChocolateChips.id, quantity: 120, unit: 'g' },
+          { ingredientId: eggs.id, quantity: 3, unit: 'unit' },
+          { ingredientId: butter.id, quantity: 85, unit: 'g' },
+          { ingredientId: cocoaPowder.id, quantity: 40, unit: 'g' },
+          { ingredientId: seaSalt.id, quantity: 4, unit: 'g' },
+          { ingredientId: bakingPowder.id, quantity: 4, unit: 'g' },
+          { ingredientId: vanilla.id, quantity: 8, unit: 'mL' },
+        ],
+      },
+    },
+  });
+
+  // Lemon Spelt Cookie
+  const lemonSpeltCookie = await prisma.recipe.create({
+    data: {
+      bakeryId: dailyGrains.id,
+      name: 'Lemon Spelt Cookie',
+      description: 'Bright, citrusy cookies with spelt flour, sourdough starter, and a hint of turmeric.',
+      yieldQty: 24,
+      yieldUnit: 'cookies',
+      totalCost: 0,
+    },
+  });
+
+  await prisma.recipeSection.create({
+    data: {
+      recipeId: lemonSpeltCookie.id,
+      name: 'Ingredients',
+      order: 0,
+      instructions: '# Lemon Spelt Cookies\n\n## Cream\nBeat butter and sugar until fluffy. Add sourdough starter, eggs, lemon juice, and zest.\n\n## Mix Dry\nCombine flour, baking powder, baking soda, salt, and turmeric.\n\n## Combine & Chill\nFold dry into wet. Chill 1 hour.\n\n## Bake\nRoll in sugar, bake at 350°F for 10-12 minutes.',
+      ingredients: {
+        create: [
+          { ingredientId: speltFlour.id, quantity: 300, unit: 'g' },
+          { ingredientId: caneS.id, quantity: 200, unit: 'g' },
+          { ingredientId: butter.id, quantity: 170, unit: 'g' },
+          { ingredientId: sourdoughCulture.id, quantity: 60, unit: 'g' },
+          { ingredientId: lemonJuice.id, quantity: 30, unit: 'mL' },
+          { ingredientId: eggs.id, quantity: 2, unit: 'unit' },
+          { ingredientId: lemonZest.id, quantity: 10, unit: 'g' },
+          { ingredientId: vanilla.id, quantity: 5, unit: 'mL' },
+          { ingredientId: bakingPowder.id, quantity: 6, unit: 'g' },
+          { ingredientId: bakingSoda.id, quantity: 3, unit: 'g' },
+          { ingredientId: seaSalt.id, quantity: 4, unit: 'g' },
+          { ingredientId: turmeric.id, quantity: 2, unit: 'g' },
+        ],
+      },
+    },
+  });
+
+  // Oatmeal Raisin Cookie
+  const oatmealRaisinCookie = await prisma.recipe.create({
+    data: {
+      bakeryId: dailyGrains.id,
+      name: 'Oatmeal Raisin Cookie',
+      description: 'Classic oatmeal cookies with plump organic raisins.',
+      yieldQty: 36,
+      yieldUnit: 'cookies',
+      totalCost: 0,
+    },
+  });
+
+  await prisma.recipeSection.create({
+    data: {
+      recipeId: oatmealRaisinCookie.id,
+      name: 'Ingredients',
+      order: 0,
+      instructions: '# Oatmeal Raisin Cookies\n\n## Cream\nBeat butter and sugars until fluffy. Add egg.\n\n## Mix Dry\nCombine flour, oats, baking soda, salt, and cinnamon.\n\n## Combine\nFold dry into wet. Add raisins.\n\n## Bake\nScoop onto sheets. Bake at 350°F for 10-12 minutes.',
+      ingredients: {
+        create: [
+          { ingredientId: thickRolledOats.id, quantity: 300, unit: 'g' },
+          { ingredientId: butter.id, quantity: 230, unit: 'g' },
+          { ingredientId: raisins.id, quantity: 200, unit: 'g' },
+          { ingredientId: brownSugar.id, quantity: 150, unit: 'g' },
+          { ingredientId: whiteSonoraFlour.id, quantity: 190, unit: 'g' },
+          { ingredientId: eggs.id, quantity: 1, unit: 'unit' },
+          { ingredientId: caneS.id, quantity: 100, unit: 'g' },
+          { ingredientId: bakingSoda.id, quantity: 5, unit: 'g' },
+          { ingredientId: seaSalt.id, quantity: 3, unit: 'g' },
+          { ingredientId: cinnamon.id, quantity: 5, unit: 'g' },
+        ],
+      },
+    },
+  });
+
+  // Spiced Molasses Cookie
+  const spicedMolassesCookie = await prisma.recipe.create({
+    data: {
+      bakeryId: dailyGrains.id,
+      name: 'Spiced Molasses Cookie',
+      description: 'Soft, chewy molasses cookies with warming spices and a sugar coating.',
+      yieldQty: 30,
+      yieldUnit: 'cookies',
+      totalCost: 0,
+    },
+  });
+
+  await prisma.recipeSection.create({
+    data: {
+      recipeId: spicedMolassesCookie.id,
+      name: 'Ingredients',
+      order: 0,
+      instructions: '# Spiced Molasses Cookies\n\n## Cream\nBeat butter and brown sugar until fluffy. Add eggs, olive oil, and molasses.\n\n## Mix Dry\nCombine flour, baking soda, cream of tartar, salt, and spices.\n\n## Combine & Chill\nFold dry into wet. Chill 2 hours minimum.\n\n## Bake\nRoll in cane sugar, bake at 350°F for 10-11 minutes.',
+      ingredients: {
+        create: [
+          { ingredientId: whiteSonoraFlour.id, quantity: 300, unit: 'g' },
+          { ingredientId: butter.id, quantity: 170, unit: 'g' },
+          { ingredientId: brownSugar.id, quantity: 220, unit: 'g' },
+          { ingredientId: eggs.id, quantity: 2, unit: 'unit' },
+          { ingredientId: oliveOil.id, quantity: 30, unit: 'mL' },
+          { ingredientId: molasses.id, quantity: 80, unit: 'mL' },
+          { ingredientId: seaSalt.id, quantity: 5, unit: 'g' },
+          { ingredientId: bakingSoda.id, quantity: 8, unit: 'g' },
+          { ingredientId: creamOfTartar.id, quantity: 4, unit: 'g' },
+          { ingredientId: cloves.id, quantity: 3, unit: 'g' },
+          { ingredientId: ginger.id, quantity: 6, unit: 'g' },
+          { ingredientId: cinnamon.id, quantity: 6, unit: 'g' },
+          { ingredientId: caneS.id, quantity: 50, unit: 'g', preparation: 'for rolling' },
+        ],
+      },
+    },
+  });
+
+  // White Chocolate Cherry Pistachio Cookie
+  const whiteChocCherryPistachioCookie = await prisma.recipe.create({
+    data: {
+      bakeryId: dailyGrains.id,
+      name: 'White Chocolate Cherry Pistachio Cookie',
+      description: 'Festive cookies with white chocolate chips, dried cherries, and pistachios.',
+      yieldQty: 24,
+      yieldUnit: 'cookies',
+      totalCost: 0,
+    },
+  });
+
+  await prisma.recipeSection.create({
+    data: {
+      recipeId: whiteChocCherryPistachioCookie.id,
+      name: 'Ingredients',
+      order: 0,
+      instructions: '# White Chocolate Cherry Pistachio Cookies\n\n## Brown the Butter\nMelt butter until golden brown. Cool slightly.\n\n## Mix\nWhisk brown butter with sugars. Add eggs and vanilla.\n\n## Combine\nFold in flour blend, white chocolate, cherries, and pistachios. Chill 24 hours.\n\n## Bake\nBake at 350°F for 12-14 minutes.',
+      ingredients: {
+        create: [
+          { ingredientId: turkeyRedFlour.id, quantity: 150, unit: 'g' },
+          { ingredientId: whiteSonoraFlour.id, quantity: 150, unit: 'g' },
+          { ingredientId: butter.id, quantity: 230, unit: 'g' },
+          { ingredientId: whiteChocolateChips.id, quantity: 200, unit: 'g' },
+          { ingredientId: pistachios.id, quantity: 100, unit: 'g' },
+          { ingredientId: driedCherries.id, quantity: 120, unit: 'g' },
+          { ingredientId: brownSugar.id, quantity: 200, unit: 'g' },
+          { ingredientId: caneS.id, quantity: 100, unit: 'g' },
+          { ingredientId: eggs.id, quantity: 2, unit: 'unit' },
+          { ingredientId: vanilla.id, quantity: 10, unit: 'mL' },
+          { ingredientId: seaSalt.id, quantity: 8, unit: 'g' },
+          { ingredientId: bakingSoda.id, quantity: 5, unit: 'g' },
+        ],
+      },
+    },
+  });
+
+  // ----- OTHER RECIPES -----
+
+  // Thaw-and-Bake Cinnamon Rolls
+  const thawAndBakeCinnamonRolls = await prisma.recipe.create({
+    data: {
+      bakeryId: dailyGrains.id,
+      name: 'Thaw-and-Bake Cinnamon Rolls',
+      description: 'Freezer-ready cinnamon rolls for convenient fresh-baked goodness.',
+      yieldQty: 12,
+      yieldUnit: 'rolls',
+      totalCost: 0,
+    },
+  });
+
+  await prisma.recipeSection.create({
+    data: {
+      recipeId: thawAndBakeCinnamonRolls.id,
+      name: 'Brioche Dough',
+      order: 0,
+      instructions: '# Brioche Dough\n\nCombine Turkey Red flour, bread flour, milk, yeast, and sugar. Mix until smooth. Add eggs one at a time. Add softened butter gradually. Knead until smooth. Refrigerate overnight.',
+      ingredients: {
+        create: [
+          { ingredientId: turkeyRedFlour.id, quantity: 200, unit: 'g' },
+          { ingredientId: breadFlour.id, quantity: 300, unit: 'g' },
+          { ingredientId: milk.id, quantity: 120, unit: 'mL' },
+          { ingredientId: butter.id, quantity: 170, unit: 'g' },
+          { ingredientId: eggs.id, quantity: 4, unit: 'unit' },
+          { ingredientId: caneS.id, quantity: 60, unit: 'g' },
+          { ingredientId: instantYeast.id, quantity: 10, unit: 'g' },
+          { ingredientId: seaSalt.id, quantity: 8, unit: 'g' },
+        ],
+      },
+    },
+  });
+
+  await prisma.recipeSection.create({
+    data: {
+      recipeId: thawAndBakeCinnamonRolls.id,
+      name: 'Filling & Glaze',
+      order: 1,
+      instructions: '# Filling\nMix softened butter with brown sugar and cinnamon. Spread on rolled dough. Roll tightly and cut into 12 pieces.\n\n# Freeze\nPlace rolls on parchment-lined sheet, freeze until solid, then transfer to freezer bags.\n\n# Glaze\nWhisk powdered sugar with vanilla and milk.\n\n## Bake\nThaw overnight in refrigerator. Proof 2-3 hours. Bake at 350°F for 28-32 minutes. Glaze while warm.',
+      ingredients: {
+        create: [
+          { ingredientId: butter.id, quantity: 115, unit: 'g' },
+          { ingredientId: brownSugar.id, quantity: 200, unit: 'g' },
+          { ingredientId: cinnamon.id, quantity: 15, unit: 'g' },
+          { ingredientId: powderedSugar.id, quantity: 200, unit: 'g' },
+          { ingredientId: vanilla.id, quantity: 5, unit: 'mL' },
+          { ingredientId: milk.id, quantity: 45, unit: 'mL' },
+        ],
+      },
+    },
+  });
+
+  // Chocolate-Pistachio Babka
+  const chocolatePistachioBabka = await prisma.recipe.create({
+    data: {
+      bakeryId: dailyGrains.id,
+      name: 'Chocolate-Pistachio Babka',
+      description: 'Rich brioche babka swirled with dark chocolate and pistachios.',
+      yieldQty: 2,
+      yieldUnit: 'loaves',
+      totalCost: 0,
+    },
+  });
+
+  await prisma.recipeSection.create({
+    data: {
+      recipeId: chocolatePistachioBabka.id,
+      name: 'Brioche Dough',
+      order: 0,
+      instructions: '# Brioche Dough\n\nCombine White Sonora flour, bread flour, milk, yeast, and sugar. Mix until smooth. Add eggs one at a time. Add softened butter gradually. Knead until smooth. Refrigerate overnight.',
+      ingredients: {
+        create: [
+          { ingredientId: whiteSonoraFlour.id, quantity: 150, unit: 'g' },
+          { ingredientId: breadFlour.id, quantity: 350, unit: 'g' },
+          { ingredientId: milk.id, quantity: 120, unit: 'mL' },
+          { ingredientId: butter.id, quantity: 115, unit: 'g' },
+          { ingredientId: eggs.id, quantity: 3, unit: 'unit' },
+          { ingredientId: caneS.id, quantity: 75, unit: 'g' },
+          { ingredientId: instantYeast.id, quantity: 8, unit: 'g' },
+          { ingredientId: seaSalt.id, quantity: 6, unit: 'g' },
+          { ingredientId: lemonZest.id, quantity: 5, unit: 'g' },
+          { ingredientId: orangeZest.id, quantity: 5, unit: 'g' },
+          { ingredientId: vanilla.id, quantity: 5, unit: 'mL' },
+        ],
+      },
+    },
+  });
+
+  await prisma.recipeSection.create({
+    data: {
+      recipeId: chocolatePistachioBabka.id,
+      name: 'Filling & Assembly',
+      order: 1,
+      instructions: '# Chocolate Filling\nMelt chocolate chunks with butter. Mix in powdered sugar and cocoa.\n\n# Assembly\nRoll dough, spread filling, sprinkle pistachios. Roll up, slice lengthwise, twist into babka shape.\n\n# Bake\nProof 1-2 hours. Bake at 350°F for 35-40 minutes. Brush with simple syrup while warm.',
+      ingredients: {
+        create: [
+          { ingredientId: darkChocolateChunks.id, quantity: 200, unit: 'g' },
+          { ingredientId: butter.id, quantity: 60, unit: 'g' },
+          { ingredientId: powderedSugar.id, quantity: 70, unit: 'g' },
+          { ingredientId: cocoaPowder.id, quantity: 30, unit: 'g' },
+          { ingredientId: pistachios.id, quantity: 100, unit: 'g', preparation: 'chopped' },
+        ],
+      },
+    },
+  });
+
+  // Cinnamon & Oat Pancake Mix
+  const cinnamonOatPancakeMix = await prisma.recipe.create({
+    data: {
+      bakeryId: dailyGrains.id,
+      name: 'Cinnamon & Oat Pancake Mix',
+      description: 'Dry pancake mix with White Sonora wheat, oats, and cinnamon. Just add wet ingredients.',
+      yieldQty: 12,
+      yieldUnit: 'servings',
+      totalCost: 0,
+    },
+  });
+
+  await prisma.recipeSection.create({
+    data: {
+      recipeId: cinnamonOatPancakeMix.id,
+      name: 'Dry Mix',
+      order: 0,
+      instructions: '# Cinnamon & Oat Pancake Mix\n\n## Combine\nWhisk together all dry ingredients until evenly mixed.\n\n## Package\nStore in airtight container or bag.\n\n## To Make Pancakes\nAdd 1 egg, 1 cup milk, and 2 tbsp melted butter per 1 cup of mix. Cook on griddle until bubbles form, flip once.',
+      ingredients: {
+        create: [
+          { ingredientId: whiteSonoraFlour.id, quantity: 400, unit: 'g' },
+          { ingredientId: thickRolledOats.id, quantity: 200, unit: 'g' },
+          { ingredientId: caneS.id, quantity: 60, unit: 'g' },
+          { ingredientId: bakingPowder.id, quantity: 20, unit: 'g' },
+          { ingredientId: cinnamon.id, quantity: 8, unit: 'g' },
+          { ingredientId: seaSalt.id, quantity: 8, unit: 'g' },
+        ],
+      },
+    },
+  });
+
+  // Einkorn Pancake Mix
+  const einkornPancakeMix = await prisma.recipe.create({
+    data: {
+      bakeryId: dailyGrains.id,
+      name: 'Einkorn Pancake Mix',
+      description: 'Simple dry pancake mix featuring ancient Einkorn wheat. Just add wet ingredients.',
+      yieldQty: 12,
+      yieldUnit: 'servings',
+      totalCost: 0,
+    },
+  });
+
+  await prisma.recipeSection.create({
+    data: {
+      recipeId: einkornPancakeMix.id,
+      name: 'Dry Mix',
+      order: 0,
+      instructions: '# Einkorn Pancake Mix\n\n## Combine\nWhisk together all dry ingredients until evenly mixed.\n\n## Package\nStore in airtight container or bag.\n\n## To Make Pancakes\nAdd 1 egg, 1 cup milk, and 2 tbsp melted butter per 1 cup of mix. Cook on griddle until bubbles form, flip once.',
+      ingredients: {
+        create: [
+          { ingredientId: einkornFlour.id, quantity: 500, unit: 'g' },
+          { ingredientId: bakingPowder.id, quantity: 20, unit: 'g' },
+          { ingredientId: caneS.id, quantity: 40, unit: 'g' },
+          { ingredientId: seaSalt.id, quantity: 8, unit: 'g' },
+        ],
+      },
+    },
+  });
+
+  // Spelt English Muffins
+  const speltEnglishMuffins = await prisma.recipe.create({
+    data: {
+      bakeryId: dailyGrains.id,
+      name: 'Spelt English Muffins',
+      description: 'Tangy sourdough English muffins with whole-grain spelt flour.',
+      yieldQty: 12,
+      yieldUnit: 'muffins',
+      totalCost: 0,
+    },
+  });
+
+  await prisma.recipeSection.create({
+    data: {
+      recipeId: speltEnglishMuffins.id,
+      name: 'Ingredients',
+      order: 0,
+      instructions: '# Spelt English Muffins\n\n## Mix\nCombine flours, buttermilk, water, starter, salt, and yeast.\n\n## Ferment\nBulk ferment 3-4 hours until doubled.\n\n## Shape\nRoll to 1/2 inch thick, cut with 3-inch cutter, dust with rice flour.\n\n## Cook\nProof 30 minutes. Cook on buttered griddle over medium-low heat, 7-8 minutes per side.',
+      ingredients: {
+        create: [
+          { ingredientId: speltFlour.id, quantity: 250, unit: 'g' },
+          { ingredientId: allPurposeFlour.id, quantity: 250, unit: 'g' },
+          { ingredientId: sourdoughCulture.id, quantity: 100, unit: 'g' },
+          { ingredientId: buttermilk.id, quantity: 200, unit: 'mL' },
+          { ingredientId: water.id, quantity: 100, unit: 'mL' },
+          { ingredientId: seaSalt.id, quantity: 8, unit: 'g' },
+          { ingredientId: instantYeast.id, quantity: 3, unit: 'g' },
+          { ingredientId: butter.id, quantity: 30, unit: 'g', preparation: 'for griddle' },
+        ],
+      },
+    },
+  });
+
+  // Thaw-and-Bake Hot Rolls
+  const thawAndBakeHotRolls = await prisma.recipe.create({
+    data: {
+      bakeryId: dailyGrains.id,
+      name: 'Thaw-and-Bake Hot Rolls',
+      description: 'Freezer-ready dinner rolls for convenient fresh-baked bread.',
+      yieldQty: 24,
+      yieldUnit: 'rolls',
+      totalCost: 0,
+    },
+  });
+
+  await prisma.recipeSection.create({
+    data: {
+      recipeId: thawAndBakeHotRolls.id,
+      name: 'Ingredients',
+      order: 0,
+      instructions: '# Thaw-and-Bake Hot Rolls\n\n## Mix\nCombine flours, milk, egg, butter, sugar, dry milk, yeast, and salt. Knead until smooth.\n\n## Shape\nDivide into 24 portions (about 50g each). Shape into rounds.\n\n## Freeze\nPlace on parchment-lined sheet, freeze until solid, transfer to freezer bags.\n\n## Bake\nThaw overnight in refrigerator. Proof 2-3 hours until doubled. Bake at 375°F for 15-18 minutes until golden. Brush with melted butter.',
+      ingredients: {
+        create: [
+          { ingredientId: whiteSonoraFlour.id, quantity: 250, unit: 'g' },
+          { ingredientId: breadFlour.id, quantity: 350, unit: 'g' },
+          { ingredientId: milk.id, quantity: 240, unit: 'mL' },
+          { ingredientId: eggs.id, quantity: 1, unit: 'unit' },
+          { ingredientId: butter.id, quantity: 85, unit: 'g' },
+          { ingredientId: caneS.id, quantity: 50, unit: 'g' },
+          { ingredientId: nonfatDryMilk.id, quantity: 30, unit: 'g' },
+          { ingredientId: instantYeast.id, quantity: 10, unit: 'g' },
+          { ingredientId: seaSalt.id, quantity: 8, unit: 'g' },
+        ],
+      },
+    },
+  });
+
+  console.log(`✅ Created 40 recipes with sections`);
+
+  // Assign recipe category tags to all recipes
+  const recipeTagAssignments = [
+    // Sourdough Breads
+    { tagId: sourdoughBreadTag.id, entityType: 'recipe', entityId: countrySourdough.id },
+    { tagId: sourdoughBreadTag.id, entityType: 'recipe', entityId: apricotCherrySourdough.id },
+    { tagId: sourdoughBreadTag.id, entityType: 'recipe', entityId: baguette.id },
+    { tagId: sourdoughBreadTag.id, entityType: 'recipe', entityId: butterflySourdough.id },
+    { tagId: sourdoughBreadTag.id, entityType: 'recipe', entityId: chocolateCherryBread.id },
+    { tagId: sourdoughBreadTag.id, entityType: 'recipe', entityId: cinnamonPecanSourdough.id },
+    { tagId: sourdoughBreadTag.id, entityType: 'recipe', entityId: cinnamonRaisinBread.id },
+    { tagId: sourdoughBreadTag.id, entityType: 'recipe', entityId: cranberryPecanBread.id },
+    { tagId: sourdoughBreadTag.id, entityType: 'recipe', entityId: einkornSourdough.id },
+    { tagId: sourdoughBreadTag.id, entityType: 'recipe', entityId: flaxseedSourdough.id },
+    { tagId: sourdoughBreadTag.id, entityType: 'recipe', entityId: herbedCheddarSourdough.id },
+    { tagId: sourdoughBreadTag.id, entityType: 'recipe', entityId: honeyOatSourdough.id },
+    { tagId: sourdoughBreadTag.id, entityType: 'recipe', entityId: kamutSesameSourdough.id },
+    { tagId: sourdoughBreadTag.id, entityType: 'recipe', entityId: kamutSourdough.id },
+    { tagId: sourdoughBreadTag.id, entityType: 'recipe', entityId: kernzaSourdough.id },
+    { tagId: sourdoughBreadTag.id, entityType: 'recipe', entityId: multigrainSourdough.id },
+    { tagId: sourdoughBreadTag.id, entityType: 'recipe', entityId: parmesanPeppercornSourdough.id },
+    { tagId: sourdoughBreadTag.id, entityType: 'recipe', entityId: rosemaryOliveOilSourdough.id },
+    { tagId: sourdoughBreadTag.id, entityType: 'recipe', entityId: sageEinkornSourdough.id },
+    { tagId: sourdoughBreadTag.id, entityType: 'recipe', entityId: speltSourdough.id },
+    { tagId: sourdoughBreadTag.id, entityType: 'recipe', entityId: sunflowerSeedSourdough.id },
+    { tagId: sourdoughBreadTag.id, entityType: 'recipe', entityId: turkeyRedSourdough.id },
+    { tagId: sourdoughBreadTag.id, entityType: 'recipe', entityId: yecoraRojoSourdough.id },
+    { tagId: sourdoughBreadTag.id, entityType: 'recipe', entityId: emmerSourdough.id },
+
+    // Cookies
+    { tagId: cookiesTag.id, entityType: 'recipe', entityId: chocolateChipCookie.id },
+    { tagId: cookiesTag.id, entityType: 'recipe', entityId: oatmealCookie.id },
+    { tagId: cookiesTag.id, entityType: 'recipe', entityId: applePieCookie.id },
+    { tagId: cookiesTag.id, entityType: 'recipe', entityId: milkChocPecanCookie.id },
+    { tagId: cookiesTag.id, entityType: 'recipe', entityId: brownieCookie.id },
+    { tagId: cookiesTag.id, entityType: 'recipe', entityId: lemonSpeltCookie.id },
+    { tagId: cookiesTag.id, entityType: 'recipe', entityId: oatmealRaisinCookie.id },
+    { tagId: cookiesTag.id, entityType: 'recipe', entityId: spicedMolassesCookie.id },
+    { tagId: cookiesTag.id, entityType: 'recipe', entityId: whiteChocCherryPistachioCookie.id },
+
+    // Enriched Breads (Brioche, Babka, Rolls)
+    { tagId: enrichedBreadTag.id, entityType: 'recipe', entityId: cinnamonRoll.id },
+    { tagId: enrichedBreadTag.id, entityType: 'recipe', entityId: thawAndBakeCinnamonRolls.id },
+    { tagId: enrichedBreadTag.id, entityType: 'recipe', entityId: chocolatePistachioBabka.id },
+    { tagId: enrichedBreadTag.id, entityType: 'recipe', entityId: thawAndBakeHotRolls.id },
+
+    // Pancake Mixes
+    { tagId: pancakeMixTag.id, entityType: 'recipe', entityId: cinnamonOatPancakeMix.id },
+    { tagId: pancakeMixTag.id, entityType: 'recipe', entityId: einkornPancakeMix.id },
+
+    // Breakfast Items
+    { tagId: breakfastItemsTag.id, entityType: 'recipe', entityId: speltEnglishMuffins.id },
+    { tagId: breakfastItemsTag.id, entityType: 'recipe', entityId: cinnamonOatPancakeMix.id },
+    { tagId: breakfastItemsTag.id, entityType: 'recipe', entityId: einkornPancakeMix.id },
+  ];
+
+  await prisma.entityTag.createMany({
+    data: recipeTagAssignments,
+  });
+
+  console.log(`✅ Assigned ${recipeTagAssignments.length} recipe tags\n`);
 
   // ==========================================================================
   // Create Inventory with Lots (FIFO system)
   // ==========================================================================
   console.log('📦 Creating inventory with lots...');
 
-  // Create inventory for key ingredients
+  // Create inventory for all ingredients
   const inventoryItems = [
+    // --- Existing key ingredients ---
     { ingredient: breadFlour, qty: 200, unit: 'lb', cost: 0.85, vendor: organicFlourVendor },
     { ingredient: whiteSonoraFlour, qty: 50, unit: 'lb', cost: 2.50, vendor: flourVendor },
     { ingredient: turkeyRedFlour, qty: 50, unit: 'lb', cost: 2.50, vendor: flourVendor },
@@ -1274,6 +2614,93 @@ async function main() {
     { ingredient: driedApricots, qty: 10, unit: 'lb', cost: 10.00, vendor: dryGoodsVendor },
     { ingredient: pecans, qty: 10, unit: 'lb', cost: 14.00, vendor: dryGoodsVendor },
     { ingredient: instantYeast, qty: 5, unit: 'lb', cost: 6.00, vendor: dryGoodsVendor },
+
+    // --- Flours & Grains ---
+    { ingredient: allPurposeFlour, qty: 50, unit: 'lb', cost: 0.58, vendor: organicFlourVendor },
+    { ingredient: darkRyeFlour, qty: 40, unit: 'lb', cost: 0.93, vendor: flourVendor },
+    { ingredient: oatFlour, qty: 50, unit: 'lb', cost: 0.79, vendor: dryGoodsVendor },
+    { ingredient: riceFlour, qty: 50, unit: 'lb', cost: 0.95, vendor: organicFlourVendor },
+    { ingredient: emmerFlour, qty: 48, unit: 'lb', cost: 2.54, vendor: flourVendor },
+    { ingredient: speltFlour, qty: 48, unit: 'lb', cost: 2.02, vendor: flourVendor },
+    { ingredient: kamutFlour, qty: 50, unit: 'lb', cost: 1.30, vendor: flourVendor },
+    { ingredient: kernzaFlour, qty: 10, unit: 'lb', cost: 5.00, vendor: flourVendor },
+    { ingredient: yecoraRojoFlour, qty: 48, unit: 'lb', cost: 1.60, vendor: flourVendor },
+
+    // --- Seeds & Flakes ---
+    { ingredient: flaxseed, qty: 25, unit: 'lb', cost: 1.73, vendor: dryGoodsVendor },
+    { ingredient: hulledMillet, qty: 50, unit: 'lb', cost: 1.57, vendor: dryGoodsVendor },
+    { ingredient: poppySeeds, qty: 25, unit: 'lb', cost: 2.87, vendor: dryGoodsVendor },
+    { ingredient: sesameSeeds, qty: 25, unit: 'lb', cost: 2.87, vendor: dryGoodsVendor },
+    { ingredient: sunflowerSeeds, qty: 25, unit: 'lb', cost: 2.45, vendor: dryGoodsVendor },
+    { ingredient: ryeFlakes, qty: 25, unit: 'lb', cost: 3.26, vendor: dryGoodsVendor },
+    { ingredient: wheatFlakes, qty: 25, unit: 'lb', cost: 0.63, vendor: dryGoodsVendor },
+    { ingredient: wholeOatGroats, qty: 50, unit: 'lb', cost: 0.79, vendor: dryGoodsVendor },
+
+    // --- Dairy ---
+    { ingredient: buttermilk, qty: 8, unit: 'qt', cost: 2.25, vendor: dairyVendor },
+    { ingredient: nonfatDryMilk, qty: 25, unit: 'lb', cost: 3.19, vendor: dairyVendor },
+    { ingredient: saltedButter, qty: 36, unit: 'lb', cost: 3.61, vendor: dairyVendor },
+    { ingredient: cheddarCheese, qty: 10, unit: 'lb', cost: 12.30, vendor: dairyVendor },
+    { ingredient: parmesanCheese, qty: 5, unit: 'lb', cost: 8.25, vendor: dairyVendor },
+
+    // --- Chocolate ---
+    { ingredient: darkChocolateChips55, qty: 25, unit: 'lb', cost: 9.50, vendor: chocolateVendor },
+    { ingredient: darkChocolateChips85, qty: 10, unit: 'lb', cost: 15.00, vendor: chocolateVendor },
+    { ingredient: darkChocolateChunks, qty: 22, unit: 'lb', cost: 10.91, vendor: chocolateVendor },
+    { ingredient: milkChocolateChips, qty: 25, unit: 'lb', cost: 8.68, vendor: chocolateVendor },
+    { ingredient: whiteChocolateChips, qty: 25, unit: 'lb', cost: 7.56, vendor: chocolateVendor },
+    { ingredient: cocoaPowder, qty: 25, unit: 'lb', cost: 7.70, vendor: chocolateVendor },
+
+    // --- Nuts & Dried Fruit ---
+    { ingredient: pistachios, qty: 10, unit: 'lb', cost: 18.69, vendor: dryGoodsVendor },
+    { ingredient: walnuts, qty: 25, unit: 'lb', cost: 4.34, vendor: dryGoodsVendor },
+    { ingredient: driedApples, qty: 22, unit: 'lb', cost: 5.88, vendor: dryGoodsVendor },
+    { ingredient: driedCranberries, qty: 25, unit: 'lb', cost: 3.20, vendor: dryGoodsVendor },
+    { ingredient: raisins, qty: 30, unit: 'lb', cost: 2.33, vendor: dryGoodsVendor },
+
+    // --- Sweeteners ---
+    { ingredient: honey, qty: 5, unit: 'lb', cost: 5.42, vendor: dryGoodsVendor },
+    { ingredient: lightBrownSugar, qty: 50, unit: 'lb', cost: 1.26, vendor: dryGoodsVendor },
+    { ingredient: powderedSugar, qty: 50, unit: 'lb', cost: 1.24, vendor: dryGoodsVendor },
+    { ingredient: molasses, qty: 4, unit: 'qt', cost: 6.66, vendor: dryGoodsVendor },
+
+    // --- Spices ---
+    { ingredient: allspice, qty: 8, unit: 'oz', cost: 0.75, vendor: dryGoodsVendor },
+    { ingredient: blackPepper, qty: 8, unit: 'oz', cost: 0.74, vendor: dryGoodsVendor },
+    { ingredient: cardamom, qty: 16, unit: 'oz', cost: 2.06, vendor: dryGoodsVendor },
+    { ingredient: cloves, qty: 7, unit: 'oz', cost: 0.98, vendor: dryGoodsVendor },
+    { ingredient: ginger, qty: 16, unit: 'oz', cost: 0.25, vendor: dryGoodsVendor },
+    { ingredient: turmeric, qty: 16, unit: 'oz', cost: 0.18, vendor: dryGoodsVendor },
+    { ingredient: nutmeg, qty: 8, unit: 'oz', cost: 1.07, vendor: dryGoodsVendor },
+    { ingredient: redPepperFlakes, qty: 16, unit: 'oz', cost: 0.34, vendor: dryGoodsVendor },
+    { ingredient: garlicPowder, qty: 16, unit: 'oz', cost: 0.32, vendor: dryGoodsVendor },
+    { ingredient: onionPowder, qty: 16, unit: 'oz', cost: 0.37, vendor: dryGoodsVendor },
+    { ingredient: pinkSeaSalt, qty: 25, unit: 'lb', cost: 1.42, vendor: dryGoodsVendor },
+
+    // --- Herbs ---
+    { ingredient: driedBasil, qty: 8, unit: 'oz', cost: 0.22, vendor: dryGoodsVendor },
+    { ingredient: driedOregano, qty: 8, unit: 'oz', cost: 0.48, vendor: dryGoodsVendor },
+    { ingredient: driedRosemary, qty: 8, unit: 'oz', cost: 0.26, vendor: dryGoodsVendor },
+    { ingredient: freshRosemary, qty: 4, unit: 'oz', cost: 0.87, vendor: dairyVendor },
+    { ingredient: sage, qty: 6, unit: 'oz', cost: 0.67, vendor: dryGoodsVendor },
+
+    // --- Baking Essentials ---
+    { ingredient: bakingPowder, qty: 5, unit: 'lb', cost: 1.74, vendor: dryGoodsVendor },
+    { ingredient: bakingSoda, qty: 5, unit: 'lb', cost: 1.38, vendor: dryGoodsVendor },
+    { ingredient: creamOfTartar, qty: 16, unit: 'oz', cost: 0.40, vendor: dryGoodsVendor },
+    { ingredient: vanilla, qty: 16, unit: 'oz', cost: 1.06, vendor: dryGoodsVendor },
+
+    // --- Miscellaneous ---
+    { ingredient: oliveOil, qty: 3, unit: 'L', cost: 12.83, vendor: dryGoodsVendor },
+    { ingredient: lemonJuice, qty: 128, unit: 'oz', cost: 0.11, vendor: dryGoodsVendor },
+    { ingredient: lemonZest, qty: 16, unit: 'oz', cost: 1.34, vendor: dryGoodsVendor },
+    { ingredient: orangeZest, qty: 16, unit: 'oz', cost: 1.24, vendor: dryGoodsVendor },
+    { ingredient: water, qty: 6, unit: 'gal', cost: 0.88, vendor: null },
+    { ingredient: butterflyPeaFlowers, qty: 16, unit: 'oz', cost: 1.96, vendor: dryGoodsVendor },
+
+    // --- Pre-ferments ---
+    { ingredient: levain, qty: 10, unit: 'lb', cost: 0.40, vendor: null },
+    { ingredient: poolish, qty: 10, unit: 'lb', cost: 0.30, vendor: null },
   ];
 
   for (const item of inventoryItems) {
@@ -1373,6 +2800,76 @@ async function main() {
   console.log(`✅ Created 3 production sheets\n`);
 
   // ==========================================================================
+  // Recalculate Recipe Costs from Inventory
+  // ==========================================================================
+  console.log('💰 Calculating recipe costs from inventory...');
+
+  const allRecipes = await prisma.recipe.findMany({
+    where: { bakeryId: dailyGrains.id },
+    include: {
+      sections: {
+        include: {
+          ingredients: {
+            include: {
+              ingredient: {
+                include: {
+                  inventory: {
+                    include: {
+                      lots: { where: { remainingQty: { gt: 0 } } },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  for (const recipe of allRecipes) {
+    let totalCost = 0;
+
+    for (const section of recipe.sections) {
+      for (const si of section.ingredients) {
+        const inv = si.ingredient.inventory;
+        if (!inv || inv.lots.length === 0) continue;
+
+        // Weighted average cost per display unit
+        let totalValue = 0;
+        let totalQty = 0;
+        for (const lot of inv.lots) {
+          const remaining = Number(lot.remainingQty);
+          if (remaining <= 0) continue;
+          const qtyInDisplay = seedConvertQuantity(remaining, lot.purchaseUnit, inv.displayUnit);
+          const factor = seedGetConversionFactor(lot.purchaseUnit, inv.displayUnit);
+          if (qtyInDisplay == null || qtyInDisplay === 0 || factor == null || factor === 0) continue;
+          const costPerDisplay = Number(lot.costPerUnit) / factor;
+          totalValue += qtyInDisplay * costPerDisplay;
+          totalQty += qtyInDisplay;
+        }
+        const costPerUnit = totalQty > 0 ? totalValue / totalQty : 0;
+
+        // Convert recipe quantity to display unit
+        let adjustedQty = Number(si.quantity);
+        if (si.unit !== inv.displayUnit) {
+          const converted = seedConvertQuantity(adjustedQty, si.unit, inv.displayUnit);
+          if (converted != null) adjustedQty = converted;
+        }
+
+        totalCost += costPerUnit * adjustedQty;
+      }
+    }
+
+    await prisma.recipe.update({
+      where: { id: recipe.id },
+      data: { totalCost: Math.round(totalCost * 100) / 100 },
+    });
+  }
+
+  console.log(`✅ Updated costs for ${allRecipes.length} recipes\n`);
+
+  // ==========================================================================
   // Summary
   // ==========================================================================
   console.log('\n🎉 Database seed completed successfully!\n');
@@ -1383,13 +2880,13 @@ async function main() {
   console.log(`✅ Users: 4 demo + your account as platform admin`);
   console.log(`✅ Vendors: 5`);
   console.log(`✅ Ingredients: 85`);
-  console.log(`✅ Tag Types: 4`);
-  console.log(`✅ Tags: 12`);
-  console.log(`✅ Tag Assignments: ${ingredientTagAssignments.length}`);
+  console.log(`✅ Tag Types: 2 (Ingredient Categories, Recipe Categories)`);
+  console.log(`✅ Tags: 17 (12 ingredient + 5 recipe)`);
+  console.log(`✅ Tag Assignments: ${ingredientTagAssignments.length} ingredient + ${recipeTagAssignments.length} recipe`);
   console.log(`✅ Equipment: 6`);
-  console.log(`✅ Recipes: 5`);
+  console.log(`✅ Recipes: 40`);
   console.log(`✅ Unit Conversions: 16`);
-  console.log(`✅ Inventory Records: ${inventoryItems.length}`);
+  console.log(`✅ Inventory Records: ${inventoryItems.length} (all ingredients)`);
   console.log(`✅ Production Sheets: 3`);
   console.log('\n📧 Login Credentials (Development Only):');
   console.log('----------------------------------------');
