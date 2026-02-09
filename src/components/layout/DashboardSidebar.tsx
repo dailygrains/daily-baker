@@ -16,7 +16,9 @@ import {
   Activity,
   BarChart3,
   Wrench,
-  Shield
+  Shield,
+  Tags,
+  FolderTree
 } from 'lucide-react';
 import { BakerySelector } from './BakerySelector';
 
@@ -165,6 +167,34 @@ export function DashboardSidebar({
             >
               <ShoppingCart className="h-5 w-5 shrink-0" />
               <span className="is-drawer-close:hidden">Vendors</span>
+            </Link>
+          </li>
+
+          {/* Tagging */}
+          <li className="menu-title mt-4 is-drawer-close:hidden">
+            <span>Tagging</span>
+          </li>
+          <li className="is-drawer-open:hidden mt-2">
+            <div className="divider my-0"></div>
+          </li>
+          <li>
+            <Link
+              href="/dashboard/tag-types"
+              className={getLinkClass('/dashboard/tag-types')}
+              data-tip="Tag Types"
+            >
+              <FolderTree className="h-5 w-5 shrink-0" />
+              <span className="is-drawer-close:hidden">Tag Types</span>
+            </Link>
+          </li>
+          <li>
+            <Link
+              href="/dashboard/tags"
+              className={getLinkClass('/dashboard/tags')}
+              data-tip="Tags"
+            >
+              <Tags className="h-5 w-5 shrink-0" />
+              <span className="is-drawer-close:hidden">Tags</span>
             </Link>
           </li>
 

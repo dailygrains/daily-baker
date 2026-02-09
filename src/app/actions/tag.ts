@@ -199,6 +199,42 @@ export async function getTagTypesByBakery(bakeryId: string) {
   }
 }
 
+export async function getTagTypeById(id: string) {
+  try {
+    const currentUser = await getCurrentUser();
+
+    if (!currentUser) {
+      return { success: false, error: 'Unauthorized' };
+    }
+
+    const tagType = await db.tagType.findUnique({
+      where: { id },
+      include: {
+        tags: {
+          include: {
+            _count: { select: { entityTags: true } },
+          },
+          orderBy: { name: 'asc' },
+        },
+        _count: { select: { tags: true } },
+      },
+    });
+
+    if (!tagType) {
+      return { success: false, error: 'Tag type not found' };
+    }
+
+    if (currentUser.bakeryId !== tagType.bakeryId && !currentUser.isPlatformAdmin) {
+      return { success: false, error: 'Unauthorized: You can only view tag types for your bakery' };
+    }
+
+    return { success: true, data: tagType };
+  } catch (error) {
+    console.error('Error fetching tag type:', error);
+    return { success: false, error: 'Failed to fetch tag type' };
+  }
+}
+
 // ============================================================================
 // Tag Actions
 // ============================================================================
@@ -235,6 +271,7 @@ export async function createTag(data: CreateTagInput) {
         bakeryId: validatedData.bakeryId,
         tagTypeId: validatedData.tagTypeId,
         name: validatedData.name,
+        description: validatedData.description,
         color: validatedData.color,
       },
       include: {
@@ -383,6 +420,41 @@ export async function getTagsByBakery(bakeryId: string) {
   } catch (error) {
     console.error('Error fetching tags:', error);
     return { success: false, error: 'Failed to fetch tags' };
+  }
+}
+
+export async function getTagById(id: string) {
+  try {
+    const currentUser = await getCurrentUser();
+
+    if (!currentUser) {
+      return { success: false, error: 'Unauthorized' };
+    }
+
+    const tag = await db.tag.findUnique({
+      where: { id },
+      include: {
+        tagType: true,
+        _count: { select: { entityTags: true } },
+        entityTags: {
+          take: 50,
+          orderBy: { createdAt: 'desc' },
+        },
+      },
+    });
+
+    if (!tag) {
+      return { success: false, error: 'Tag not found' };
+    }
+
+    if (currentUser.bakeryId !== tag.bakeryId && !currentUser.isPlatformAdmin) {
+      return { success: false, error: 'Unauthorized: You can only view tags for your bakery' };
+    }
+
+    return { success: true, data: tag };
+  } catch (error) {
+    console.error('Error fetching tag:', error);
+    return { success: false, error: 'Failed to fetch tag' };
   }
 }
 

@@ -31,12 +31,14 @@ export const createTagSchema = z.object({
   bakeryId: z.string().cuid(),
   tagTypeId: z.string().cuid(),
   name: z.string().min(1, 'Tag name is required').max(50),
+  description: z.string().max(200).optional(),
   color: z.enum(TAG_COLORS).optional(),
 });
 
 export const updateTagSchema = z.object({
   id: z.string().cuid(),
   name: z.string().min(1, 'Tag name is required').max(50).optional(),
+  description: z.string().max(200).nullable().optional(),
   color: z.enum(TAG_COLORS).nullable().optional(),
 });
 
