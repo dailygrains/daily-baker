@@ -6,24 +6,15 @@ import { createTag, updateTag } from '@/app/actions/tag';
 import { useFormSubmit } from '@/hooks/useFormSubmit';
 import type { Tag, TagType } from '@/generated/prisma';
 
-const TAG_COLORS = [
-  { value: '', label: 'None' },
-  { value: 'primary', label: 'Primary' },
-  { value: 'secondary', label: 'Secondary' },
-  { value: 'accent', label: 'Accent' },
-  { value: 'success', label: 'Success' },
-  { value: 'warning', label: 'Warning' },
-  { value: 'error', label: 'Error' },
-] as const;
-
-const COLOR_CLASSES: Record<string, string> = {
-  primary: 'badge-primary',
-  secondary: 'badge-secondary',
-  accent: 'badge-accent',
-  success: 'badge-success',
-  warning: 'badge-warning',
-  error: 'badge-error',
-};
+// Helper to determine if text should be light or dark based on background color
+function getContrastColor(hexColor: string): string {
+  const hex = hexColor.replace('#', '');
+  const r = parseInt(hex.substring(0, 2), 16);
+  const g = parseInt(hex.substring(2, 4), 16);
+  const b = parseInt(hex.substring(4, 6), 16);
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.5 ? '#000000' : '#ffffff';
+}
 
 interface TagFormProps {
   bakeryId: string;
@@ -61,7 +52,7 @@ export function TagForm({
     name: tag?.name ?? '',
     description: tag?.description ?? '',
     tagTypeId: tag?.tagTypeId ?? defaultTagTypeId ?? (tagTypes[0]?.id || ''),
-    color: tag?.color ?? '',
+    color: tag?.color ?? '#6366f1', // Default to a nice indigo
   });
 
   // Notify parent of form ref changes
@@ -95,14 +86,14 @@ export function TagForm({
               id: tag.id,
               name: formData.name,
               description: formData.description || null,
-              color: (formData.color || null) as 'primary' | 'secondary' | 'accent' | 'success' | 'warning' | 'error' | null,
+              color: formData.color,
             })
           : createTag({
               bakeryId,
               tagTypeId: formData.tagTypeId,
               name: formData.name,
               description: formData.description || undefined,
-              color: formData.color as 'primary' | 'secondary' | 'accent' | 'success' | 'warning' | 'error' | undefined,
+              color: formData.color,
             }),
       formData.name
     );
@@ -181,28 +172,38 @@ export function TagForm({
 
         <fieldset className="fieldset">
           <legend className="fieldset-legend">Color</legend>
-          <div className="flex flex-wrap gap-3">
-            {TAG_COLORS.map((color) => (
-              <label key={color.value} className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="radio"
-                  name="color"
-                  className="radio radio-sm"
-                  value={color.value}
-                  checked={formData.color === color.value}
-                  onChange={(e) => updateField('color', e.target.value)}
-                />
-                {color.value ? (
-                  <span className={`badge ${COLOR_CLASSES[color.value]}`}>{color.label}</span>
-                ) : (
-                  <span className="text-sm">{color.label}</span>
-                )}
-              </label>
-            ))}
+          <div className="flex items-center gap-3">
+            <input
+              type="color"
+              className="w-12 h-12 rounded-lg cursor-pointer border-2 border-base-300 p-1"
+              value={formData.color}
+              onChange={(e) => updateField('color', e.target.value)}
+            />
+            <input
+              type="text"
+              className="input input-bordered w-32 font-mono"
+              value={formData.color}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value.match(/^#[0-9A-Fa-f]{0,6}$/)) {
+                  updateField('color', value);
+                }
+              }}
+              placeholder="#000000"
+            />
           </div>
           <label className="label">
-            <span className="label-text-alt">
-              Preview: <span className={`badge ${formData.color ? COLOR_CLASSES[formData.color] : 'badge-ghost'}`}>{formData.name || 'Tag Name'}</span>
+            <span className="label-text-alt flex items-center gap-2">
+              Preview:{' '}
+              <span
+                className="badge"
+                style={{
+                  backgroundColor: formData.color,
+                  color: getContrastColor(formData.color.length === 7 ? formData.color : '#6366f1'),
+                }}
+              >
+                {formData.name || 'Tag Name'}
+              </span>
             </span>
           </label>
         </fieldset>

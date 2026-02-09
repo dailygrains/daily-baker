@@ -27,12 +27,19 @@ export default async function EditIngredientPage({
 
   const ingredient = ingredientResult.data;
 
+  // Calculate lot count from inventory
+  const lotCount = ingredient.inventory?.lots?.length ?? 0;
+
   // Serialize Decimal values for client component
   const serializedIngredient = {
     ...ingredient,
     currentQty: ingredient.currentQty.toString(),
     costPerUnit: ingredient.costPerUnit.toString(),
     lowStockThreshold: ingredient.lowStockThreshold ?? null,
+    _count: {
+      recipeUses: ingredient._count?.recipeUses ?? 0,
+      lots: lotCount,
+    },
   };
 
   return (

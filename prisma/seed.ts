@@ -809,148 +809,181 @@ async function main() {
   // ==========================================================================
   console.log('🏷️  Creating tag types and tags...');
 
-  // Create tag types
-  const dietaryTagType = await prisma.tagType.create({
+  // Create single tag type for ingredient categories (like grocery store sections)
+  const categoryTagType = await prisma.tagType.create({
     data: {
       bakeryId: dailyGrains.id,
-      name: 'Dietary',
-      description: 'Dietary restrictions and preferences',
+      name: 'Category',
+      description: 'Ingredient categories (like grocery store sections)',
       order: 0,
     },
   });
 
-  const sourceTagType = await prisma.tagType.create({
-    data: {
-      bakeryId: dailyGrains.id,
-      name: 'Source',
-      description: 'Where the ingredient comes from',
-      order: 1,
-    },
+  // Create category tags with distinct colors
+  const floursGrainsTag = await prisma.tag.create({
+    data: { bakeryId: dailyGrains.id, tagTypeId: categoryTagType.id, name: 'Flours & Grains', color: '#D4A574' }, // Wheat/tan
   });
 
-  const allergenTagType = await prisma.tagType.create({
-    data: {
-      bakeryId: dailyGrains.id,
-      name: 'Allergen',
-      description: 'Common allergens',
-      order: 2,
-    },
+  const dairyEggsTag = await prisma.tag.create({
+    data: { bakeryId: dailyGrains.id, tagTypeId: categoryTagType.id, name: 'Dairy & Eggs', color: '#87CEEB' }, // Light blue
   });
 
-  const storageTagType = await prisma.tagType.create({
-    data: {
-      bakeryId: dailyGrains.id,
-      name: 'Storage',
-      description: 'Storage requirements',
-      order: 3,
-    },
+  const sweetenersTag = await prisma.tag.create({
+    data: { bakeryId: dailyGrains.id, tagTypeId: categoryTagType.id, name: 'Sweeteners', color: '#FFD700' }, // Golden
   });
 
-  // Create tags under each type
-  const organicTag = await prisma.tag.create({
-    data: { bakeryId: dailyGrains.id, tagTypeId: sourceTagType.id, name: 'Organic', color: 'success' },
+  const chocolateTag = await prisma.tag.create({
+    data: { bakeryId: dailyGrains.id, tagTypeId: categoryTagType.id, name: 'Chocolate', color: '#5D3A1A' }, // Dark brown
   });
 
-  const localTag = await prisma.tag.create({
-    data: { bakeryId: dailyGrains.id, tagTypeId: sourceTagType.id, name: 'Local', color: 'primary' },
+  const nutsSeedsTag = await prisma.tag.create({
+    data: { bakeryId: dailyGrains.id, tagTypeId: categoryTagType.id, name: 'Nuts & Seeds', color: '#8B7355' }, // Nutty brown
   });
 
-  const heritageTag = await prisma.tag.create({
-    data: { bakeryId: dailyGrains.id, tagTypeId: sourceTagType.id, name: 'Heritage', color: 'accent' },
+  const driedFruitsTag = await prisma.tag.create({
+    data: { bakeryId: dailyGrains.id, tagTypeId: categoryTagType.id, name: 'Dried Fruits', color: '#FF6B6B' }, // Reddish
   });
 
-  const veganTag = await prisma.tag.create({
-    data: { bakeryId: dailyGrains.id, tagTypeId: dietaryTagType.id, name: 'Vegan', color: 'success' },
+  const spicesTag = await prisma.tag.create({
+    data: { bakeryId: dailyGrains.id, tagTypeId: categoryTagType.id, name: 'Spices', color: '#C4721A' }, // Spice orange
   });
 
-  const glutenFreeTag = await prisma.tag.create({
-    data: { bakeryId: dailyGrains.id, tagTypeId: dietaryTagType.id, name: 'Gluten-Free', color: 'warning' },
+  const herbsSeasoningsTag = await prisma.tag.create({
+    data: { bakeryId: dailyGrains.id, tagTypeId: categoryTagType.id, name: 'Herbs & Seasonings', color: '#228B22' }, // Forest green
   });
 
-  const dairyFreeTag = await prisma.tag.create({
-    data: { bakeryId: dailyGrains.id, tagTypeId: dietaryTagType.id, name: 'Dairy-Free', color: 'secondary' },
+  const leaveningTag = await prisma.tag.create({
+    data: { bakeryId: dailyGrains.id, tagTypeId: categoryTagType.id, name: 'Leavening', color: '#E8E8E8' }, // Light gray (bubbly)
   });
 
-  const containsGlutenTag = await prisma.tag.create({
-    data: { bakeryId: dailyGrains.id, tagTypeId: allergenTagType.id, name: 'Contains Gluten', color: 'error' },
+  const oilsTag = await prisma.tag.create({
+    data: { bakeryId: dailyGrains.id, tagTypeId: categoryTagType.id, name: 'Oils', color: '#9ACD32' }, // Yellow-green (olive)
   });
 
-  const containsDairyTag = await prisma.tag.create({
-    data: { bakeryId: dailyGrains.id, tagTypeId: allergenTagType.id, name: 'Contains Dairy', color: 'error' },
+  const citrusTag = await prisma.tag.create({
+    data: { bakeryId: dailyGrains.id, tagTypeId: categoryTagType.id, name: 'Citrus', color: '#FFA500' }, // Orange
   });
 
-  const containsNutsTag = await prisma.tag.create({
-    data: { bakeryId: dailyGrains.id, tagTypeId: allergenTagType.id, name: 'Contains Nuts', color: 'error' },
+  const specialtyTag = await prisma.tag.create({
+    data: { bakeryId: dailyGrains.id, tagTypeId: categoryTagType.id, name: 'Specialty', color: '#9370DB' }, // Purple
   });
 
-  const refrigeratedTag = await prisma.tag.create({
-    data: { bakeryId: dailyGrains.id, tagTypeId: storageTagType.id, name: 'Refrigerated', color: 'primary' },
-  });
-
-  const frozenTag = await prisma.tag.create({
-    data: { bakeryId: dailyGrains.id, tagTypeId: storageTagType.id, name: 'Frozen', color: 'secondary' },
-  });
-
-  const dryStorageTag = await prisma.tag.create({
-    data: { bakeryId: dailyGrains.id, tagTypeId: storageTagType.id, name: 'Dry Storage', color: 'accent' },
-  });
-
-  // Assign some tags to ingredients
+  // Assign category tags to all ingredients
   const ingredientTagAssignments = [
-    // Heritage grains - local and heritage
-    { tagId: heritageTag.id, entityType: 'ingredient', entityId: whiteSonoraFlour.id },
-    { tagId: localTag.id, entityType: 'ingredient', entityId: whiteSonoraFlour.id },
-    { tagId: containsGlutenTag.id, entityType: 'ingredient', entityId: whiteSonoraFlour.id },
+    // Flours & Grains
+    { tagId: floursGrainsTag.id, entityType: 'ingredient', entityId: breadFlour.id },
+    { tagId: floursGrainsTag.id, entityType: 'ingredient', entityId: allPurposeFlour.id },
+    { tagId: floursGrainsTag.id, entityType: 'ingredient', entityId: whiteSonoraFlour.id },
+    { tagId: floursGrainsTag.id, entityType: 'ingredient', entityId: turkeyRedFlour.id },
+    { tagId: floursGrainsTag.id, entityType: 'ingredient', entityId: rougeFlour.id },
+    { tagId: floursGrainsTag.id, entityType: 'ingredient', entityId: einkornFlour.id },
+    { tagId: floursGrainsTag.id, entityType: 'ingredient', entityId: speltFlour.id },
+    { tagId: floursGrainsTag.id, entityType: 'ingredient', entityId: kamutFlour.id },
+    { tagId: floursGrainsTag.id, entityType: 'ingredient', entityId: kernzaFlour.id },
+    { tagId: floursGrainsTag.id, entityType: 'ingredient', entityId: yecoraRojoFlour.id },
+    { tagId: floursGrainsTag.id, entityType: 'ingredient', entityId: emmerFlour.id },
+    { tagId: floursGrainsTag.id, entityType: 'ingredient', entityId: darkRyeFlour.id },
+    { tagId: floursGrainsTag.id, entityType: 'ingredient', entityId: oatFlour.id },
+    { tagId: floursGrainsTag.id, entityType: 'ingredient', entityId: riceFlour.id },
+    { tagId: floursGrainsTag.id, entityType: 'ingredient', entityId: thickRolledOats.id },
+    { tagId: floursGrainsTag.id, entityType: 'ingredient', entityId: wholeOatGroats.id },
+    { tagId: floursGrainsTag.id, entityType: 'ingredient', entityId: ryeFlakes.id },
+    { tagId: floursGrainsTag.id, entityType: 'ingredient', entityId: wheatFlakes.id },
 
-    { tagId: heritageTag.id, entityType: 'ingredient', entityId: turkeyRedFlour.id },
-    { tagId: localTag.id, entityType: 'ingredient', entityId: turkeyRedFlour.id },
-    { tagId: containsGlutenTag.id, entityType: 'ingredient', entityId: turkeyRedFlour.id },
+    // Dairy & Eggs
+    { tagId: dairyEggsTag.id, entityType: 'ingredient', entityId: butter.id },
+    { tagId: dairyEggsTag.id, entityType: 'ingredient', entityId: saltedButter.id },
+    { tagId: dairyEggsTag.id, entityType: 'ingredient', entityId: eggs.id },
+    { tagId: dairyEggsTag.id, entityType: 'ingredient', entityId: milk.id },
+    { tagId: dairyEggsTag.id, entityType: 'ingredient', entityId: buttermilk.id },
+    { tagId: dairyEggsTag.id, entityType: 'ingredient', entityId: nonfatDryMilk.id },
+    { tagId: dairyEggsTag.id, entityType: 'ingredient', entityId: parmesanCheese.id },
+    { tagId: dairyEggsTag.id, entityType: 'ingredient', entityId: cheddarCheese.id },
 
-    { tagId: heritageTag.id, entityType: 'ingredient', entityId: einkornFlour.id },
-    { tagId: organicTag.id, entityType: 'ingredient', entityId: einkornFlour.id },
-    { tagId: containsGlutenTag.id, entityType: 'ingredient', entityId: einkornFlour.id },
-
-    // Organic flours
-    { tagId: organicTag.id, entityType: 'ingredient', entityId: breadFlour.id },
-    { tagId: containsGlutenTag.id, entityType: 'ingredient', entityId: breadFlour.id },
-    { tagId: dryStorageTag.id, entityType: 'ingredient', entityId: breadFlour.id },
-
-    // Dairy - refrigerated and contains dairy
-    { tagId: organicTag.id, entityType: 'ingredient', entityId: butter.id },
-    { tagId: containsDairyTag.id, entityType: 'ingredient', entityId: butter.id },
-    { tagId: refrigeratedTag.id, entityType: 'ingredient', entityId: butter.id },
-
-    { tagId: organicTag.id, entityType: 'ingredient', entityId: eggs.id },
-    { tagId: refrigeratedTag.id, entityType: 'ingredient', entityId: eggs.id },
-
-    { tagId: organicTag.id, entityType: 'ingredient', entityId: milk.id },
-    { tagId: containsDairyTag.id, entityType: 'ingredient', entityId: milk.id },
-    { tagId: refrigeratedTag.id, entityType: 'ingredient', entityId: milk.id },
-
-    // Nuts
-    { tagId: containsNutsTag.id, entityType: 'ingredient', entityId: pecans.id },
-    { tagId: organicTag.id, entityType: 'ingredient', entityId: pecans.id },
-    { tagId: dryStorageTag.id, entityType: 'ingredient', entityId: pecans.id },
-
-    { tagId: containsNutsTag.id, entityType: 'ingredient', entityId: walnuts.id },
-    { tagId: dryStorageTag.id, entityType: 'ingredient', entityId: walnuts.id },
+    // Sweeteners
+    { tagId: sweetenersTag.id, entityType: 'ingredient', entityId: caneS.id },
+    { tagId: sweetenersTag.id, entityType: 'ingredient', entityId: brownSugar.id },
+    { tagId: sweetenersTag.id, entityType: 'ingredient', entityId: lightBrownSugar.id },
+    { tagId: sweetenersTag.id, entityType: 'ingredient', entityId: powderedSugar.id },
+    { tagId: sweetenersTag.id, entityType: 'ingredient', entityId: honey.id },
+    { tagId: sweetenersTag.id, entityType: 'ingredient', entityId: molasses.id },
 
     // Chocolate
-    { tagId: veganTag.id, entityType: 'ingredient', entityId: darkChocolateChips.id },
-    { tagId: dairyFreeTag.id, entityType: 'ingredient', entityId: darkChocolateChips.id },
-    { tagId: dryStorageTag.id, entityType: 'ingredient', entityId: darkChocolateChips.id },
+    { tagId: chocolateTag.id, entityType: 'ingredient', entityId: darkChocolateChips.id },
+    { tagId: chocolateTag.id, entityType: 'ingredient', entityId: darkChocolateChips55.id },
+    { tagId: chocolateTag.id, entityType: 'ingredient', entityId: darkChocolateChips85.id },
+    { tagId: chocolateTag.id, entityType: 'ingredient', entityId: milkChocolateChips.id },
+    { tagId: chocolateTag.id, entityType: 'ingredient', entityId: whiteChocolateChips.id },
+    { tagId: chocolateTag.id, entityType: 'ingredient', entityId: darkChocolateChunks.id },
+    { tagId: chocolateTag.id, entityType: 'ingredient', entityId: cocoaPowder.id },
 
-    // Oats - gluten free (certified)
-    { tagId: organicTag.id, entityType: 'ingredient', entityId: thickRolledOats.id },
-    { tagId: veganTag.id, entityType: 'ingredient', entityId: thickRolledOats.id },
-    { tagId: dryStorageTag.id, entityType: 'ingredient', entityId: thickRolledOats.id },
+    // Nuts & Seeds
+    { tagId: nutsSeedsTag.id, entityType: 'ingredient', entityId: pecans.id },
+    { tagId: nutsSeedsTag.id, entityType: 'ingredient', entityId: walnuts.id },
+    { tagId: nutsSeedsTag.id, entityType: 'ingredient', entityId: pistachios.id },
+    { tagId: nutsSeedsTag.id, entityType: 'ingredient', entityId: sunflowerSeeds.id },
+    { tagId: nutsSeedsTag.id, entityType: 'ingredient', entityId: sesameSeeds.id },
+    { tagId: nutsSeedsTag.id, entityType: 'ingredient', entityId: flaxseed.id },
+    { tagId: nutsSeedsTag.id, entityType: 'ingredient', entityId: poppySeeds.id },
+    { tagId: nutsSeedsTag.id, entityType: 'ingredient', entityId: hulledMillet.id },
+
+    // Dried Fruits
+    { tagId: driedFruitsTag.id, entityType: 'ingredient', entityId: driedApples.id },
+    { tagId: driedFruitsTag.id, entityType: 'ingredient', entityId: driedApricots.id },
+    { tagId: driedFruitsTag.id, entityType: 'ingredient', entityId: driedCherries.id },
+    { tagId: driedFruitsTag.id, entityType: 'ingredient', entityId: raisins.id },
+    { tagId: driedFruitsTag.id, entityType: 'ingredient', entityId: driedCranberries.id },
+
+    // Spices
+    { tagId: spicesTag.id, entityType: 'ingredient', entityId: seaSalt.id },
+    { tagId: spicesTag.id, entityType: 'ingredient', entityId: pinkSeaSalt.id },
+    { tagId: spicesTag.id, entityType: 'ingredient', entityId: cinnamon.id },
+    { tagId: spicesTag.id, entityType: 'ingredient', entityId: nutmeg.id },
+    { tagId: spicesTag.id, entityType: 'ingredient', entityId: cardamom.id },
+    { tagId: spicesTag.id, entityType: 'ingredient', entityId: ginger.id },
+    { tagId: spicesTag.id, entityType: 'ingredient', entityId: allspice.id },
+    { tagId: spicesTag.id, entityType: 'ingredient', entityId: vanilla.id },
+    { tagId: spicesTag.id, entityType: 'ingredient', entityId: cloves.id },
+    { tagId: spicesTag.id, entityType: 'ingredient', entityId: blackPepper.id },
+    { tagId: spicesTag.id, entityType: 'ingredient', entityId: turmeric.id },
+    { tagId: spicesTag.id, entityType: 'ingredient', entityId: creamOfTartar.id },
+
+    // Herbs & Seasonings
+    { tagId: herbsSeasoningsTag.id, entityType: 'ingredient', entityId: freshRosemary.id },
+    { tagId: herbsSeasoningsTag.id, entityType: 'ingredient', entityId: driedRosemary.id },
+    { tagId: herbsSeasoningsTag.id, entityType: 'ingredient', entityId: sage.id },
+    { tagId: herbsSeasoningsTag.id, entityType: 'ingredient', entityId: driedBasil.id },
+    { tagId: herbsSeasoningsTag.id, entityType: 'ingredient', entityId: driedOregano.id },
+    { tagId: herbsSeasoningsTag.id, entityType: 'ingredient', entityId: redPepperFlakes.id },
+    { tagId: herbsSeasoningsTag.id, entityType: 'ingredient', entityId: garlicPowder.id },
+    { tagId: herbsSeasoningsTag.id, entityType: 'ingredient', entityId: onionPowder.id },
+
+    // Leavening
+    { tagId: leaveningTag.id, entityType: 'ingredient', entityId: sourdoughCulture.id },
+    { tagId: leaveningTag.id, entityType: 'ingredient', entityId: levain.id },
+    { tagId: leaveningTag.id, entityType: 'ingredient', entityId: poolish.id },
+    { tagId: leaveningTag.id, entityType: 'ingredient', entityId: instantYeast.id },
+    { tagId: leaveningTag.id, entityType: 'ingredient', entityId: bakingSoda.id },
+    { tagId: leaveningTag.id, entityType: 'ingredient', entityId: bakingPowder.id },
+
+    // Oils
+    { tagId: oilsTag.id, entityType: 'ingredient', entityId: oliveOil.id },
+
+    // Citrus
+    { tagId: citrusTag.id, entityType: 'ingredient', entityId: lemonZest.id },
+    { tagId: citrusTag.id, entityType: 'ingredient', entityId: lemonJuice.id },
+    { tagId: citrusTag.id, entityType: 'ingredient', entityId: orangeZest.id },
+
+    // Specialty
+    { tagId: specialtyTag.id, entityType: 'ingredient', entityId: butterflyPeaFlowers.id },
+    { tagId: specialtyTag.id, entityType: 'ingredient', entityId: water.id },
   ];
 
   await prisma.entityTag.createMany({
     data: ingredientTagAssignments,
   });
 
-  console.log(`✅ Created 4 tag types, 12 tags, and ${ingredientTagAssignments.length} tag assignments\n`);
+  console.log(`✅ Created 1 tag type, 12 category tags, and ${ingredientTagAssignments.length} tag assignments\n`);
 
   // ==========================================================================
   // Create Equipment (for Daily Grains)

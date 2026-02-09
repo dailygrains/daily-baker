@@ -32,6 +32,7 @@ interface RecipeFormProps {
   onFormRefChange?: (ref: HTMLFormElement | null) => void;
   onSavingChange?: (isSaving: boolean) => void;
   showBottomActions?: boolean;
+  renderAfterYield?: React.ReactNode;
 }
 
 interface SectionFormData {
@@ -57,6 +58,7 @@ export function RecipeForm({
   onFormRefChange,
   onSavingChange,
   showBottomActions = true,
+  renderAfterYield,
 }: RecipeFormProps) {
   const router = useRouter();
   const showToast = useToastStore((state) => state.addToast);
@@ -356,6 +358,8 @@ export function RecipeForm({
             <span className="label-text-alt">Quantity and description of what this recipe produces</span>
           </label>
         </fieldset>
+
+        {renderAfterYield}
       </div>
 
       <div className="space-y-0">

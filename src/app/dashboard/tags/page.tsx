@@ -4,15 +4,7 @@ import { SetPageHeader } from '@/components/layout/SetPageHeader';
 import { getTagsByBakery } from '@/app/actions/tag';
 import Link from 'next/link';
 import { Plus, Tags } from 'lucide-react';
-
-const COLOR_CLASSES: Record<string, string> = {
-  primary: 'badge-primary',
-  secondary: 'badge-secondary',
-  accent: 'badge-accent',
-  success: 'badge-success',
-  warning: 'badge-warning',
-  error: 'badge-error',
-};
+import { TagBadges } from '@/components/tags/TagBadges';
 
 export default async function TagsPage() {
   const user = await getCurrentUser();
@@ -36,18 +28,6 @@ export default async function TagsPage() {
   }
 
   const tags = tagsResult.data || [];
-  const totalTags = tags.length;
-  const totalUsage = tags.reduce((sum, t) => sum + t._count.entityTags, 0);
-
-  // Group tags by tag type for display
-  const tagsByType = tags.reduce((acc, tag) => {
-    const typeName = tag.tagType.name;
-    if (!acc[typeName]) {
-      acc[typeName] = [];
-    }
-    acc[typeName].push(tag);
-    return acc;
-  }, {} as Record<string, typeof tags>);
 
   return (
     <div className="space-y-6">
@@ -61,20 +41,6 @@ export default async function TagsPage() {
           </Link>
         }
       />
-
-      {/* Stats */}
-      <div className="card bg-base-100 p-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <p className="text-sm text-base-content/70">Total Tags</p>
-            <p className="text-2xl font-bold text-primary">{totalTags}</p>
-          </div>
-          <div>
-            <p className="text-sm text-base-content/70">Total Usage</p>
-            <p className="text-2xl font-bold">{totalUsage}</p>
-          </div>
-        </div>
-      </div>
 
       {/* Tags List */}
       {tags.length === 0 ? (
@@ -107,11 +73,9 @@ export default async function TagsPage() {
                   <td>
                     <Link
                       href={`/dashboard/tags/${tag.id}`}
-                      className="hover:text-primary"
+                      className="hover:opacity-80"
                     >
-                      <span className={`badge ${tag.color ? COLOR_CLASSES[tag.color] : 'badge-ghost'}`}>
-                        {tag.name}
-                      </span>
+                      <TagBadges tags={[tag]} size="md" />
                     </Link>
                   </td>
                   <td>

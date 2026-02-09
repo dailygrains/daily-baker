@@ -41,7 +41,7 @@ interface IngredientFormProps {
     }>;
     tags?: Tag[];
   };
-  defaultTagTypeId?: string;
+  tagTypes?: Array<{ id: string; name: string }>;
   onFormRefChange?: (ref: HTMLFormElement | null) => void;
   onSavingChange?: (isSaving: boolean) => void;
   onUnsavedChangesChange?: (hasChanges: boolean) => void;
@@ -51,7 +51,7 @@ interface IngredientFormProps {
 export function IngredientForm({
   bakeryId,
   ingredient,
-  defaultTagTypeId,
+  tagTypes = [],
   onFormRefChange,
   onSavingChange,
   onUnsavedChangesChange,
@@ -370,8 +370,8 @@ export function IngredientForm({
               entityType="ingredient"
               entityId={ingredient.id}
               initialTags={ingredient.tags || []}
-              allowCreate={Boolean(defaultTagTypeId)}
-              defaultTagTypeId={defaultTagTypeId}
+              allowCreate={tagTypes.length > 0}
+              tagTypes={tagTypes}
             />
             <label className="label">
               <span className="label-text-alt">

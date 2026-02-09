@@ -4,7 +4,14 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ClipboardList } from 'lucide-react';
 import { Pagination, usePageSize } from '@/components/ui/Pagination';
+import { TagBadges } from '@/components/tags';
 import { formatQuantity, formatCurrency } from '@/lib/format';
+
+interface Tag {
+  id: string;
+  name: string;
+  color?: string | null;
+}
 
 interface Recipe {
   id: string;
@@ -17,6 +24,7 @@ interface Recipe {
     sections: number;
     productionSheetRecipes: number;
   };
+  tags?: Tag[];
 }
 
 interface RecipesTableProps {
@@ -54,6 +62,7 @@ export function RecipesTable({ recipes }: RecipesTableProps) {
               <th>Yield</th>
               <th>Total Cost</th>
               <th>Cost per Unit</th>
+              <th>Tags</th>
               <th>Production Sheets</th>
             </tr>
           </thead>
@@ -90,6 +99,13 @@ export function RecipesTable({ recipes }: RecipesTableProps) {
                   </td>
                   <td className="align-top">
                     {formatCurrency(costPerUnit)}
+                  </td>
+                  <td className="align-top">
+                    {recipe.tags && recipe.tags.length > 0 ? (
+                      <TagBadges tags={recipe.tags} size="sm" />
+                    ) : (
+                      <span className="text-base-content/40 italic">No tags</span>
+                    )}
                   </td>
                   <td className="align-top">
                     {recipe._count.productionSheetRecipes > 0 ? (

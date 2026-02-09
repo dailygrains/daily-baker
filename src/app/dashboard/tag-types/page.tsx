@@ -27,9 +27,6 @@ export default async function TagTypesPage() {
   }
 
   const tagTypes = tagTypesResult.data || [];
-  const totalTagTypes = tagTypes.length;
-  const totalTags = tagTypes.reduce((sum, tt) => sum + tt._count.tags, 0);
-
   return (
     <div className="space-y-6">
       <SetPageHeader
@@ -42,20 +39,6 @@ export default async function TagTypesPage() {
           </Link>
         }
       />
-
-      {/* Stats */}
-      <div className="card bg-base-100 p-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <p className="text-sm text-base-content/70">Total Tag Types</p>
-            <p className="text-2xl font-bold text-primary">{totalTagTypes}</p>
-          </div>
-          <div>
-            <p className="text-sm text-base-content/70">Total Tags</p>
-            <p className="text-2xl font-bold">{totalTags}</p>
-          </div>
-        </div>
-      </div>
 
       {/* Tag Types List */}
       {tagTypes.length === 0 ? (

@@ -30,6 +30,7 @@ export default async function IngredientsPage() {
     costPerUnit: ingredient.costPerUnit.toString(),
     lowStockThreshold: ingredient.lowStockThreshold ?? null,
     vendors: ingredient.vendors,
+    tags: ingredient.tags,
   }));
 
   return (

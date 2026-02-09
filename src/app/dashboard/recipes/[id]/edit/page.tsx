@@ -2,6 +2,7 @@ import { getCurrentUser } from '@/lib/clerk';
 import { redirect } from 'next/navigation';
 import { RecipeEditPageContent } from '@/components/recipes/RecipeEditPageContent';
 import { getRecipeById } from '@/app/actions/recipe';
+import { getTagsForEntity, getTagTypesByBakery } from '@/app/actions/tag';
 import { db } from '@/lib/db';
 
 export default async function EditRecipePage({
@@ -39,6 +40,7 @@ export default async function EditRecipePage({
     updatedAt: recipe.updatedAt,
     bakeryId: recipe.bakeryId,
     totalCost: recipe.totalCost.toString(),
+    _count: recipe._count,
     sections: recipe.sections.map(section => ({
       id: section.id,
       name: section.name,
@@ -77,11 +79,34 @@ export default async function EditRecipePage({
     },
   });
 
+  // Fetch tags and tag types for the recipe
+  const [tagsResult, tagTypesResult] = await Promise.all([
+    getTagsForEntity('recipe', id),
+    getTagTypesByBakery(user.bakeryId),
+  ]);
+
+  const initialTags = (tagsResult.success && tagsResult.data
+    ? tagsResult.data
+    : []
+  ).map((t) => ({
+    id: t.id,
+    name: t.name,
+    color: t.color,
+    tagType: t.tagType ? { id: t.tagType.id, name: t.tagType.name } : undefined,
+  }));
+
+  const tagTypes = (tagTypesResult.success && tagTypesResult.data
+    ? tagTypesResult.data
+    : []
+  ).map((tt) => ({ id: tt.id, name: tt.name }));
+
   return (
     <RecipeEditPageContent
       bakeryId={user.bakeryId}
       recipe={serializedRecipe}
       availableIngredients={ingredients}
+      initialTags={initialTags}
+      tagTypes={tagTypes}
     />
   );
 }

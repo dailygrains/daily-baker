@@ -6,15 +6,7 @@ import { db } from '@/lib/db';
 import Link from 'next/link';
 import { Package, BookOpen, ShoppingCart } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-
-const COLOR_CLASSES: Record<string, string> = {
-  primary: 'badge-primary',
-  secondary: 'badge-secondary',
-  accent: 'badge-accent',
-  success: 'badge-success',
-  warning: 'badge-warning',
-  error: 'badge-error',
-};
+import { TagBadges } from '@/components/tags/TagBadges';
 
 const ENTITY_ICONS: Record<string, typeof Package> = {
   ingredient: Package,
@@ -119,9 +111,7 @@ export default async function TagDetailPage({
 
       {/* Tag badge display */}
       <div className="mb-6">
-        <span className={`badge badge-lg ${tag.color ? COLOR_CLASSES[tag.color] : 'badge-ghost'}`}>
-          {tag.name}
-        </span>
+        <TagBadges tags={[tag]} size="md" />
       </div>
 
       <div className="space-y-8">

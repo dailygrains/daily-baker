@@ -1,10 +1,10 @@
 import { getCurrentUser } from '@/lib/clerk';
 import { redirect } from 'next/navigation';
-import { SetPageHeader } from '@/components/layout/SetPageHeader';
-import { TagForm } from '@/components/tags/TagForm';
+import { TagNewPageContent } from '@/components/tags/TagNewPageContent';
 import { getTagTypesByBakery } from '@/app/actions/tag';
 import Link from 'next/link';
 import { FolderTree, Plus } from 'lucide-react';
+import { SetPageHeader } from '@/components/layout/SetPageHeader';
 
 export default async function NewTagPage({
   searchParams,
@@ -62,20 +62,10 @@ export default async function NewTagPage({
   }
 
   return (
-    <>
-      <SetPageHeader
-        title="Add New Tag"
-        breadcrumbs={[
-          { label: 'Tags', href: '/dashboard/tags' },
-          { label: 'New Tag' },
-        ]}
-      />
-
-      <TagForm
-        bakeryId={user.bakeryId}
-        tagTypes={tagTypes}
-        defaultTagTypeId={tagTypeId}
-      />
-    </>
+    <TagNewPageContent
+      bakeryId={user.bakeryId}
+      tagTypes={tagTypes}
+      defaultTagTypeId={tagTypeId}
+    />
   );
 }

@@ -13,6 +13,23 @@ interface Tag {
   };
 }
 
+interface TagTypeOption {
+  id: string;
+  name: string;
+}
+
+const TAG_COLORS = [
+  { value: '', label: 'Default (no color)' },
+  { value: '#ef4444', label: 'Red' },
+  { value: '#f97316', label: 'Orange' },
+  { value: '#eab308', label: 'Yellow' },
+  { value: '#22c55e', label: 'Green' },
+  { value: '#3b82f6', label: 'Blue' },
+  { value: '#8b5cf6', label: 'Purple' },
+  { value: '#ec4899', label: 'Pink' },
+  { value: '#6b7280', label: 'Gray' },
+];
+
 interface TagAutocompleteProps {
   bakeryId: string;
   onSelect: (tag: Tag) => void;
@@ -20,7 +37,8 @@ interface TagAutocompleteProps {
   tagTypeId?: string;
   placeholder?: string;
   allowCreate?: boolean;
-  onCreate?: (name: string) => Promise<Tag | null>;
+  onCreate?: (name: string, tagTypeId: string, color?: string) => Promise<Tag | null>;
+  tagTypes?: TagTypeOption[];
 }
 
 export function TagAutocomplete({
@@ -31,6 +49,7 @@ export function TagAutocomplete({
   placeholder = 'Search tags...',
   allowCreate = false,
   onCreate,
+  tagTypes = [],
 }: TagAutocompleteProps) {
   const [query, setQuery] = useState('');
   const [tags, setTags] = useState<Tag[]>([]);
@@ -38,6 +57,10 @@ export function TagAutocomplete({
   const [isLoading, setIsLoading] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [createName, setCreateName] = useState('');
+  const [createTagTypeId, setCreateTagTypeId] = useState('');
+  const [createColor, setCreateColor] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -113,13 +136,28 @@ export function TagAutocomplete({
     inputRef.current?.focus();
   };
 
+  const handleOpenCreateModal = () => {
+    const trimmed = query.trim();
+    const capitalized = trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+    setCreateName(capitalized);
+    setCreateTagTypeId(tagTypeId || '');
+    setCreateColor('');
+    setShowCreateModal(true);
+    setIsOpen(false);
+  };
+
   const handleCreate = async () => {
-    if (!onCreate || !query.trim()) return;
+    if (!onCreate || !createName.trim() || !createTagTypeId) return;
 
     setIsCreating(true);
     try {
-      const newTag = await onCreate(query.trim());
+      const newTag = await onCreate(
+        createName.trim(),
+        createTagTypeId,
+        createColor || undefined,
+      );
       if (newTag) {
+        setShowCreateModal(false);
         handleSelect(newTag);
       }
     } finally {
@@ -148,7 +186,7 @@ export function TagAutocomplete({
           }
         } else if (showCreateOption) {
           // Selected the create option
-          handleCreate();
+          handleOpenCreateModal();
         }
         break;
       case 'Escape':
@@ -225,8 +263,7 @@ export function TagAutocomplete({
                 <li>
                   <button
                     type="button"
-                    onClick={handleCreate}
-                    disabled={isCreating}
+                    onClick={handleOpenCreateModal}
                     className={`w-full text-left px-4 py-2 hover:bg-primary/10 text-primary ${
                       selectedIndex === tags.length ? 'bg-primary/10' : ''
                     }`}
@@ -246,6 +283,103 @@ export function TagAutocomplete({
             </ul>
           )}
         </div>
+      )}
+
+      {showCreateModal && (
+        <dialog className="modal modal-open">
+          <div className="modal-box">
+            <h3 className="font-bold text-lg mb-4">Add New Tag</h3>
+
+            <div className="space-y-4">
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text">Name</span>
+                </label>
+                <input
+                  type="text"
+                  className="input input-bordered w-full"
+                  value={createName}
+                  onChange={(e) => setCreateName(e.target.value)}
+                  placeholder="Tag name"
+                  autoFocus
+                />
+              </div>
+
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text">Tag Type</span>
+                </label>
+                <select
+                  className="select select-bordered w-full"
+                  value={createTagTypeId}
+                  onChange={(e) => setCreateTagTypeId(e.target.value)}
+                >
+                  <option value="">Select tag type</option>
+                  {tagTypes.map((tt) => (
+                    <option key={tt.id} value={tt.id}>
+                      {tt.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text">Color (optional)</span>
+                </label>
+                <select
+                  className="select select-bordered w-full"
+                  value={createColor}
+                  onChange={(e) => setCreateColor(e.target.value)}
+                >
+                  {TAG_COLORS.map((c) => (
+                    <option key={c.value} value={c.value}>
+                      {c.label}
+                    </option>
+                  ))}
+                </select>
+                {createColor && (
+                  <div className="mt-2 flex items-center gap-2">
+                    <span
+                      className="inline-block w-4 h-4 rounded-full border border-base-300"
+                      style={{ backgroundColor: createColor }}
+                    />
+                    <span className="text-sm text-base-content/60">Preview</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="modal-action">
+              <button
+                type="button"
+                className="btn btn-ghost"
+                onClick={() => setShowCreateModal(false)}
+                disabled={isCreating}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleCreate}
+                disabled={isCreating || !createName.trim() || !createTagTypeId}
+              >
+                {isCreating ? (
+                  <>
+                    <span className="loading loading-spinner loading-sm"></span>
+                    Creating...
+                  </>
+                ) : (
+                  'Create Tag'
+                )}
+              </button>
+            </div>
+          </div>
+          <form method="dialog" className="modal-backdrop">
+            <button onClick={() => setShowCreateModal(false)}>close</button>
+          </form>
+        </dialog>
       )}
     </div>
   );

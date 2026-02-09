@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { SetPageHeader } from '@/components/layout/SetPageHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { getRecipesByBakery } from '@/app/actions/recipe';
+import { getTagsForEntity } from '@/app/actions/tag';
 import { RecipesTable } from '@/components/recipes/RecipesTable';
 import Link from 'next/link';
 import { Plus, ChefHat } from 'lucide-react';
@@ -36,10 +37,20 @@ export default async function RecipesPage() {
 
   const recipes = recipesResult.data || [];
 
+  // Fetch tags for all recipes in parallel
+  const recipeTags = await Promise.all(
+    recipes.map((r) => getTagsForEntity('recipe', r.id))
+  );
+
   // Serialize Decimal values for client component
-  const serializedRecipes = recipes.map(recipe => ({
+  const serializedRecipes = recipes.map((recipe, i) => ({
     ...recipe,
     totalCost: recipe.totalCost.toString(),
+    tags: (recipeTags[i].success && recipeTags[i].data ? recipeTags[i].data : []).map((t) => ({
+      id: t.id,
+      name: t.name,
+      color: t.color,
+    })),
   }));
 
   return (

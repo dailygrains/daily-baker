@@ -25,7 +25,7 @@ interface TagManagerProps {
   initialTags: Tag[];
   tagTypeId?: string;
   allowCreate?: boolean;
-  defaultTagTypeId?: string;
+  tagTypes?: Array<{ id: string; name: string }>;
 }
 
 export function TagManager({
@@ -35,7 +35,7 @@ export function TagManager({
   initialTags,
   tagTypeId,
   allowCreate = false,
-  defaultTagTypeId,
+  tagTypes = [],
 }: TagManagerProps) {
   const router = useRouter();
   const showToast = useToastStore((state) => state.addToast);
@@ -90,20 +90,13 @@ export function TagManager({
     }
   };
 
-  const handleCreateTag = async (name: string): Promise<Tag | null> => {
-    // Use provided tagTypeId or defaultTagTypeId for creation
-    const typeId = tagTypeId || defaultTagTypeId;
-
-    if (!typeId) {
-      showToast('Cannot create tag: No tag type specified', 'error');
-      return null;
-    }
-
+  const handleCreateTag = async (name: string, selectedTagTypeId: string, color?: string): Promise<Tag | null> => {
     try {
       const result = await createTag({
         bakeryId,
-        tagTypeId: typeId,
+        tagTypeId: selectedTagTypeId,
         name,
+        color,
       });
 
       if (result.success && result.data) {
@@ -133,8 +126,9 @@ export function TagManager({
         excludeTagIds={tags.map((t) => t.id)}
         tagTypeId={tagTypeId}
         placeholder="Search and add tags..."
-        allowCreate={allowCreate && Boolean(tagTypeId || defaultTagTypeId)}
+        allowCreate={allowCreate && tagTypes.length > 0}
         onCreate={allowCreate ? handleCreateTag : undefined}
+        tagTypes={tagTypes}
       />
 
       {tags.length > 0 && (

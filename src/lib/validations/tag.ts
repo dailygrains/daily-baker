@@ -25,26 +25,26 @@ export type UpdateTagTypeInput = z.infer<typeof updateTagTypeSchema>;
 // Tag Schemas
 // ============================================================================
 
-const TAG_COLORS = ['primary', 'secondary', 'accent', 'success', 'warning', 'error'] as const;
+// Hex color validation (accepts #RGB, #RRGGBB formats)
+const hexColorSchema = z.string().regex(/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/, 'Invalid hex color');
 
 export const createTagSchema = z.object({
   bakeryId: z.string().cuid(),
   tagTypeId: z.string().cuid(),
   name: z.string().min(1, 'Tag name is required').max(50),
   description: z.string().max(200).optional(),
-  color: z.enum(TAG_COLORS).optional(),
+  color: hexColorSchema.optional(),
 });
 
 export const updateTagSchema = z.object({
   id: z.string().cuid(),
   name: z.string().min(1, 'Tag name is required').max(50).optional(),
   description: z.string().max(200).nullable().optional(),
-  color: z.enum(TAG_COLORS).nullable().optional(),
+  color: hexColorSchema.nullable().optional(),
 });
 
 export type CreateTagInput = z.infer<typeof createTagSchema>;
 export type UpdateTagInput = z.infer<typeof updateTagSchema>;
-export type TagColor = (typeof TAG_COLORS)[number];
 
 // ============================================================================
 // Entity Tag Schemas

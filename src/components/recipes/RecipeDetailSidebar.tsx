@@ -1,6 +1,13 @@
 import { formatDistanceToNow } from 'date-fns';
 import { formatCurrency } from '@/lib/format';
 import { SnapshotSummary } from '@/components/snapshot/SnapshotSummary';
+import { TagBadges } from '@/components/tags';
+
+interface Tag {
+  id: string;
+  name: string;
+  color?: string | null;
+}
 
 interface RecipeDetailSidebarProps {
   recipe: {
@@ -17,6 +24,7 @@ interface RecipeDetailSidebarProps {
   totalCost: number;
   costPerUnit: number;
   totalIngredients: number;
+  tags?: Tag[];
 }
 
 export function RecipeDetailSidebar({
@@ -24,6 +32,7 @@ export function RecipeDetailSidebar({
   totalCost,
   costPerUnit,
   totalIngredients,
+  tags = [],
 }: RecipeDetailSidebarProps) {
   return (
     <div className="space-y-6">
@@ -82,6 +91,14 @@ export function RecipeDetailSidebar({
           </div>
         </div>
       </div>
+
+      {/* Tags */}
+      {tags.length > 0 && (
+        <div>
+          <h3 className="font-semibold text-base-content/70 mb-3">Tags</h3>
+          <TagBadges tags={tags} size="md" />
+        </div>
+      )}
 
       {/* History */}
       <div>

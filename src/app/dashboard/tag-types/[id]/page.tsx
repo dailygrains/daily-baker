@@ -5,15 +5,7 @@ import { getTagTypeById } from '@/app/actions/tag';
 import Link from 'next/link';
 import { Tags, Plus } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-
-const COLOR_CLASSES: Record<string, string> = {
-  primary: 'badge-primary',
-  secondary: 'badge-secondary',
-  accent: 'badge-accent',
-  success: 'badge-success',
-  warning: 'badge-warning',
-  error: 'badge-error',
-};
+import { TagBadges } from '@/components/tags/TagBadges';
 
 export default async function TagTypeDetailPage({
   params,
@@ -130,9 +122,9 @@ export default async function TagTypeDetailPage({
                       <td>
                         <Link
                           href={`/dashboard/tags/${tag.id}`}
-                          className="font-semibold hover:text-primary"
+                          className="hover:opacity-80"
                         >
-                          {tag.name}
+                          <TagBadges tags={[tag]} />
                         </Link>
                       </td>
                       <td className="text-base-content/70 max-w-xs truncate">
@@ -140,9 +132,13 @@ export default async function TagTypeDetailPage({
                       </td>
                       <td>
                         {tag.color ? (
-                          <span className={`badge ${COLOR_CLASSES[tag.color] || 'badge-ghost'}`}>
-                            {tag.color}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span
+                              className="w-4 h-4 rounded-full border border-base-300"
+                              style={{ backgroundColor: tag.color }}
+                            />
+                            <span className="font-mono text-xs">{tag.color}</span>
+                          </div>
                         ) : (
                           '-'
                         )}

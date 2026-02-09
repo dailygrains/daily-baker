@@ -2,6 +2,7 @@ import { getCurrentUser } from '@/lib/clerk';
 import { redirect } from 'next/navigation';
 import { SetPageHeader } from '@/components/layout/SetPageHeader';
 import { getRecipeById } from '@/app/actions/recipe';
+import { getTagsForEntity } from '@/app/actions/tag';
 import Link from 'next/link';
 import { calculateIngredientCost } from '@/lib/unitConvert';
 import { RecipeDetailContent } from '@/components/recipes/RecipeDetailContent';
@@ -53,6 +54,14 @@ export default async function RecipeDetailPage({
     0
   );
 
+  // Fetch tags for this recipe
+  const tagsResult = await getTagsForEntity('recipe', id);
+  const tags = (tagsResult.success && tagsResult.data ? tagsResult.data : []).map((t) => ({
+    id: t.id,
+    name: t.name,
+    color: t.color,
+  }));
+
   return (
     <>
       <SetPageHeader
@@ -85,6 +94,7 @@ export default async function RecipeDetailPage({
             totalCost={totalCost}
             costPerUnit={costPerUnit}
             totalIngredients={totalIngredients}
+            tags={tags}
           />
         </div>
       </div>
