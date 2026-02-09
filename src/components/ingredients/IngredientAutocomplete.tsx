@@ -194,7 +194,7 @@ export function IngredientAutocomplete({
           <input
             ref={inputRef}
             type="text"
-            className="input input-bordered w-full"
+            className="input input-bordered w-full text-base"
             placeholder={placeholder}
             value={query}
             onChange={(e) => {

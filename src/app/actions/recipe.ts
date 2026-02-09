@@ -150,6 +150,8 @@ export async function createRecipe(data: CreateRecipeInput) {
             name: section.name,
             order: section.order,
             instructions: section.instructions,
+            useBakersMath: section.useBakersMath,
+            bakersMathBaseIndex: section.bakersMathBaseIndex,
             ingredients: {
               create: section.ingredients.map((ing) => ({
                 ingredientId: ing.ingredientId,
@@ -239,7 +241,7 @@ export async function createRecipe(data: CreateRecipeInput) {
     }
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to create recipe',
+      error: 'Failed to create recipe. Please try again.',
     };
   }
 }
@@ -280,51 +282,58 @@ export async function updateRecipe(data: UpdateRecipeInput) {
     let totalCost: number | undefined;
     if (validatedData.sections) {
       totalCost = await calculateRecipeCost(validatedData.sections);
-
-      // Delete existing sections (cascade will delete ingredients)
-      await db.recipeSection.deleteMany({
-        where: { recipeId: validatedData.id },
-      });
     }
 
-    // Update recipe
-    const recipe = await db.recipe.update({
-      where: { id: validatedData.id },
-      data: {
-        name: validatedData.name,
-        description: validatedData.description,
-        yieldQty: validatedData.yieldQty,
-        yieldUnit: validatedData.yieldUnit,
-        ...(totalCost !== undefined && { totalCost: new Decimal(totalCost) }),
-        ...(validatedData.sections && {
+    // Use a transaction so delete + recreate is atomic
+    const recipe = await db.$transaction(async (tx) => {
+      if (validatedData.sections) {
+        // Delete existing sections (cascade will delete ingredients)
+        await tx.recipeSection.deleteMany({
+          where: { recipeId: validatedData.id },
+        });
+      }
+
+      // Update recipe
+      return tx.recipe.update({
+        where: { id: validatedData.id },
+        data: {
+          name: validatedData.name,
+          description: validatedData.description,
+          yieldQty: validatedData.yieldQty,
+          yieldUnit: validatedData.yieldUnit,
+          ...(totalCost !== undefined && { totalCost: new Decimal(totalCost) }),
+          ...(validatedData.sections && {
+            sections: {
+              create: validatedData.sections.map((section) => ({
+                name: section.name,
+                order: section.order,
+                instructions: section.instructions,
+                useBakersMath: section.useBakersMath,
+                bakersMathBaseIndex: section.bakersMathBaseIndex,
+                ingredients: {
+                  create: section.ingredients.map((ing) => ({
+                    ingredientId: ing.ingredientId,
+                    quantity: new Decimal(ing.quantity),
+                    unit: ing.unit,
+                    preparation: ing.preparation || null,
+                  })),
+                },
+              })),
+            },
+          }),
+        },
+        include: {
           sections: {
-            create: validatedData.sections.map((section) => ({
-              name: section.name,
-              order: section.order,
-              instructions: section.instructions,
+            include: {
               ingredients: {
-                create: section.ingredients.map((ing) => ({
-                  ingredientId: ing.ingredientId,
-                  quantity: new Decimal(ing.quantity),
-                  unit: ing.unit,
-                  preparation: ing.preparation || null,
-                })),
-              },
-            })),
-          },
-        }),
-      },
-      include: {
-        sections: {
-          include: {
-            ingredients: {
-              include: {
-                ingredient: true,
+                include: {
+                  ingredient: true,
+                },
               },
             },
           },
         },
-      },
+      });
     });
 
     // Log activity
@@ -392,7 +401,7 @@ export async function updateRecipe(data: UpdateRecipeInput) {
     }
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to update recipe',
+      error: 'Failed to update recipe. Please try again.',
     };
   }
 }

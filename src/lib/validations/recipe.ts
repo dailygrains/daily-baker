@@ -4,8 +4,8 @@ import { z } from 'zod';
  * Validation schema for recipe section ingredients
  */
 export const recipeSectionIngredientSchema = z.object({
-  id: z.string().cuid().optional(), // For updates
-  ingredientId: z.string().cuid('Invalid ingredient'),
+  id: z.string().optional(), // For updates
+  ingredientId: z.string().min(1, 'Invalid ingredient'),
   quantity: z.number().positive('Quantity must be positive'),
   unit: z.string().min(1, 'Unit is required').max(20),
   preparation: z.string().max(200, 'Preparation notes too long').optional().nullable(),
@@ -15,11 +15,13 @@ export const recipeSectionIngredientSchema = z.object({
  * Validation schema for recipe sections
  */
 export const recipeSectionSchema = z.object({
-  id: z.string().cuid().optional(), // For updates
+  id: z.string().optional(), // For updates
   name: z.string().max(100),
   order: z.number().int().nonnegative('Order must be a non-negative integer'),
   instructions: z.string().max(10000, 'Instructions too long'),
   ingredients: z.array(recipeSectionIngredientSchema).default([]),
+  useBakersMath: z.boolean().default(false),
+  bakersMathBaseIndex: z.number().int().nonnegative().default(0),
 });
 
 /**

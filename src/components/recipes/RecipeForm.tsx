@@ -39,6 +39,8 @@ interface SectionFormData {
   name: string;
   order: number;
   instructions: string;
+  useBakersMath: boolean;
+  bakersMathBaseIndex: number;
   ingredients: Array<{
     id?: string;
     ingredientId: string;
@@ -84,6 +86,8 @@ export function RecipeForm({
       name: s.name,
       order: s.order,
       instructions: s.instructions,
+      useBakersMath: (s as { useBakersMath?: boolean }).useBakersMath ?? false,
+      bakersMathBaseIndex: (s as { bakersMathBaseIndex?: number }).bakersMathBaseIndex ?? 0,
       ingredients: s.ingredients.map((ing) => ({
         id: ing.id,
         ingredientId: ing.ingredientId,
@@ -96,6 +100,8 @@ export function RecipeForm({
         name: '',
         order: 0,
         instructions: '',
+        useBakersMath: false,
+        bakersMathBaseIndex: 0,
         ingredients: [],
       },
     ]
@@ -135,6 +141,8 @@ export function RecipeForm({
         name: '',
         order: sections.length,
         instructions: '',
+        useBakersMath: false,
+        bakersMathBaseIndex: 0,
         ingredients: [],
       },
     ]);
@@ -192,9 +200,15 @@ export function RecipeForm({
   const removeIngredient = useCallback((sectionIndex: number, ingredientIndex: number) => {
     setSections((prevSections) => {
       const newSections = [...prevSections];
+      newSections[sectionIndex] = { ...newSections[sectionIndex] };
       newSections[sectionIndex].ingredients = newSections[sectionIndex].ingredients.filter(
         (_, i) => i !== ingredientIndex
       );
+      // Clamp bakersMathBaseIndex if it's now out of range
+      const maxIndex = Math.max(0, newSections[sectionIndex].ingredients.length - 1);
+      if (newSections[sectionIndex].bakersMathBaseIndex > maxIndex) {
+        newSections[sectionIndex].bakersMathBaseIndex = 0;
+      }
       return newSections;
     });
   }, []);
@@ -257,6 +271,15 @@ export function RecipeForm({
       isMounted.current = false;
     };
   }, []);
+
+  const computeBakersPercent = (quantity: number, baseQuantity: number): number | null => {
+    if (baseQuantity === 0) return null;
+    return (quantity / baseQuantity) * 100;
+  };
+
+  const quantityFromPercent = (percent: number, baseQuantity: number): number => {
+    return (percent / 100) * baseQuantity;
+  };
 
   useEffect(() => {
     if (onFormRefChange && formRef.current) {
@@ -385,11 +408,26 @@ export function RecipeForm({
 
                 <fieldset className="fieldset">
                   <legend className="fieldset-legend">Ingredients</legend>
+                  <label className="flex items-center gap-2 cursor-pointer mb-3">
+                    <input
+                      type="checkbox"
+                      className="toggle toggle-sm"
+                      checked={section.useBakersMath}
+                      onChange={(e) => updateSection(sectionIndex, 'useBakersMath', e.target.checked)}
+                    />
+                    <span className="text-sm">Baker&apos;s Math</span>
+                  </label>
                   <div className="space-y-3">
                     {section.ingredients.map((ingredient, ingredientIndex) => {
                       const selectedIngredient = localIngredients.find(
                         (ing) => ing.id === ingredient.ingredientId
                       );
+                      const isBase = section.useBakersMath && ingredientIndex === section.bakersMathBaseIndex;
+                      const baseIngredient = section.ingredients[section.bakersMathBaseIndex];
+                      const baseQty = baseIngredient?.quantity ?? 0;
+                      const bakersPercent = isBase
+                        ? 100
+                        : computeBakersPercent(ingredient.quantity, baseQty);
                       return (
                       <div key={ingredientIndex} className="flex flex-wrap gap-2 items-center">
                         <div className="flex-1 min-w-[200px]">
@@ -410,22 +448,6 @@ export function RecipeForm({
                           />
                         </div>
                         <input
-                          type="number"
-                          step="0.001"
-                          min="0"
-                          className="input input-bordered w-28 text-base"
-                          value={ingredient.quantity}
-                          onChange={(e) =>
-                            updateIngredient(
-                              sectionIndex,
-                              ingredientIndex,
-                              'quantity',
-                              parseFloat(e.target.value) || 0
-                            )
-                          }
-                        />
-                        <span className="text-base self-center w-16">{ingredient.unit}</span>
-                        <input
                           type="text"
                           className="input input-bordered flex-1 min-w-[150px] text-base"
                           value={ingredient.preparation || ''}
@@ -440,6 +462,56 @@ export function RecipeForm({
                           placeholder="Preparation (e.g., finely diced)"
                           maxLength={200}
                         />
+                        <label className="input input-bordered w-36 text-base">
+                          <input
+                            type="number"
+                            step="0.001"
+                            min="0"
+                            value={ingredient.quantity}
+                            onChange={(e) =>
+                              updateIngredient(
+                                sectionIndex,
+                                ingredientIndex,
+                                'quantity',
+                                parseFloat(e.target.value) || 0
+                              )
+                            }
+                          />
+                          <span className="label">{ingredient.unit}</span>
+                        </label>
+                        {section.useBakersMath && section.ingredients.length > 0 && (
+                          <label className="input input-bordered w-32 text-base">
+                            <input
+                              type="number"
+                              step="0.1"
+                              min="0"
+                              value={bakersPercent !== null ? Math.round(bakersPercent * 10) / 10 : ''}
+                              disabled={isBase}
+                              onChange={(e) => {
+                                const newPercent = parseFloat(e.target.value);
+                                if (!isNaN(newPercent) && baseQty > 0) {
+                                  updateIngredient(
+                                    sectionIndex,
+                                    ingredientIndex,
+                                    'quantity',
+                                    Math.round(quantityFromPercent(newPercent, baseQty) * 1000) / 1000
+                                  );
+                                }
+                              }}
+                            />
+                            <span className="label">%</span>
+                          </label>
+                        )}
+                        {section.useBakersMath && section.ingredients.length > 0 && (
+                          <input
+                            type="radio"
+                            className="radio radio-sm"
+                            name={`bakers-base-${sectionIndex}`}
+                            checked={isBase}
+                            onChange={() => updateSection(sectionIndex, 'bakersMathBaseIndex', ingredientIndex)}
+                            title="Set as base ingredient (100%)"
+                          />
+                        )}
                         <button
                           type="button"
                           className="btn btn-error btn-sm"

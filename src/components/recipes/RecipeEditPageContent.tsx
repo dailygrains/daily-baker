@@ -21,6 +21,8 @@ interface RecipeEditPageContentProps {
       name: string;
       order: number;
       instructions: string;
+      useBakersMath: boolean;
+      bakersMathBaseIndex: number;
       recipeId: string;
       ingredients: Array<{
         id: string;

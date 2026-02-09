@@ -7,6 +7,8 @@ interface RecipeSection {
   id: string;
   name: string;
   instructions: string;
+  useBakersMath?: boolean;
+  bakersMathBaseIndex?: number;
   ingredients: Array<{
     id: string;
     quantity: { toString(): string } | number;
@@ -50,7 +52,17 @@ export function RecipeDetailContent({
           )}
 
           {/* Ingredients */}
-          {section.ingredients.length > 0 && (
+          {section.ingredients.length > 0 && (() => {
+            const showBakersMath = section.useBakersMath && section.ingredients.length > 0;
+            const baseIndex = section.bakersMathBaseIndex ?? 0;
+            const baseIngredient = section.ingredients[baseIndex];
+            const baseQty = baseIngredient
+              ? typeof baseIngredient.quantity === 'number'
+                ? baseIngredient.quantity
+                : Number(baseIngredient.quantity.toString())
+              : 0;
+
+            return (
             <div>
               <h3 className="font-semibold mb-2 text-base-content/70">Ingredients</h3>
               <div className="overflow-x-auto">
@@ -59,12 +71,15 @@ export function RecipeDetailContent({
                     <tr>
                       <th>Ingredient</th>
                       <th className="w-[12%] whitespace-nowrap">Quantity</th>
+                      {showBakersMath && (
+                        <th className="w-[10%] whitespace-nowrap">Baker&apos;s %</th>
+                      )}
                       <th className="w-[12%] whitespace-nowrap">Unit Cost</th>
                       <th className="w-[10%] whitespace-nowrap">Total Cost</th>
                     </tr>
                   </thead>
                   <tbody className="text-base">
-                    {section.ingredients.map((ing) => {
+                    {section.ingredients.map((ing, ingIndex) => {
                       const quantity =
                         typeof ing.quantity === 'number'
                           ? ing.quantity
@@ -80,6 +95,14 @@ export function RecipeDetailContent({
                         unitCost,
                         ingredientUnit
                       );
+
+                      // Baker's math percentage
+                      const isBase = ingIndex === baseIndex;
+                      const bakersPercent = isBase
+                        ? 100
+                        : baseQty > 0
+                          ? (quantity / baseQty) * 100
+                          : null;
 
                       return (
                         <tr key={ing.id}>
@@ -99,6 +122,13 @@ export function RecipeDetailContent({
                           <td className="whitespace-nowrap">
                             {formatQuantity(quantity)} {formatUnit(recipeUnit)}
                           </td>
+                          {showBakersMath && (
+                            <td className={`whitespace-nowrap ${isBase ? 'font-bold' : ''}`}>
+                              {bakersPercent !== null
+                                ? `${Math.round(bakersPercent * 10) / 10}%`
+                                : 'N/A'}
+                            </td>
+                          )}
                           <td className="whitespace-nowrap">
                             {formatCurrency(unitCost)}/{formatUnit(ingredientUnit)}
                           </td>
@@ -114,7 +144,8 @@ export function RecipeDetailContent({
                 </table>
               </div>
             </div>
-          )}
+            );
+          })()}
 
           {/* Instructions */}
           {section.instructions && (
