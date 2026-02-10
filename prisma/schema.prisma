@@ -2,14 +2,16 @@
 // Database Schema with Two-Tier Permission System
 
 generator client {
-  provider = "prisma-client-js"
-  output   = "../src/generated/prisma"
+  provider        = "prisma-client-js"
+  output          = "../src/generated/prisma"
+  previewFeatures = ["multiSchema"]
 }
 
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_DATABASE_URL")
+  schemas   = ["baker"]
 }
 
 // ============================================================================
@@ -46,6 +48,7 @@ model Bakery {
 
   @@index([isActive])
   @@map("bakeries")
+  @@schema("baker")
 }
 
 model User {
@@ -71,6 +74,7 @@ model User {
   @@index([isPlatformAdmin])
   @@index([clerkId])
   @@map("users")
+  @@schema("baker")
 }
 
 model UserBakery {
@@ -85,6 +89,7 @@ model UserBakery {
   @@index([userId])
   @@index([bakeryId])
   @@map("user_bakeries")
+  @@schema("baker")
 }
 
 model Invitation {
@@ -108,6 +113,7 @@ model Invitation {
   @@index([token])
   @@index([createdBy])
   @@map("invitations")
+  @@schema("baker")
 }
 
 enum InvitationStatus {
@@ -115,6 +121,8 @@ enum InvitationStatus {
   ACCEPTED
   EXPIRED
   REVOKED
+
+  @@schema("baker")
 }
 
 model Role {
@@ -130,6 +138,7 @@ model Role {
   invitations Invitation[]
 
   @@map("roles")
+  @@schema("baker")
 }
 
 // ============================================================================
@@ -155,6 +164,7 @@ model Recipe {
   @@index([bakeryId])
   @@index([name])
   @@map("recipes")
+  @@schema("baker")
 }
 
 model RecipeSection {
@@ -175,6 +185,7 @@ model RecipeSection {
   @@index([recipeId])
   @@index([order])
   @@map("recipe_sections")
+  @@schema("baker")
 }
 
 model RecipeSectionIngredient {
@@ -191,6 +202,7 @@ model RecipeSectionIngredient {
   @@index([sectionId])
   @@index([ingredientId])
   @@map("recipe_section_ingredients")
+  @@schema("baker")
 }
 
 // ============================================================================
@@ -214,6 +226,7 @@ model Ingredient {
   @@index([bakeryId])
   @@index([name])
   @@map("ingredients")
+  @@schema("baker")
 }
 
 // Master inventory configuration per ingredient
@@ -233,6 +246,7 @@ model Inventory {
 
   @@index([bakeryId])
   @@map("inventories")
+  @@schema("baker")
 }
 
 // Individual purchase lots (FIFO tracking)
@@ -263,6 +277,7 @@ model InventoryLot {
   @@index([expiresAt])
   @@index([vendorId])
   @@map("inventory_lots")
+  @@schema("baker")
 }
 
 // Usage tracking (links consumption to specific lots)
@@ -285,12 +300,15 @@ model InventoryUsage {
   @@index([createdBy])
   @@index([createdAt])
   @@map("inventory_usages")
+  @@schema("baker")
 }
 
 enum UsageReason {
   USE    // Normal production usage
   WASTE  // Spoilage/loss
   ADJUST // Manual correction (can be negative)
+
+  @@schema("baker")
 }
 
 // ============================================================================
@@ -318,6 +336,7 @@ model Vendor {
   @@index([bakeryId])
   @@index([name])
   @@map("vendors")
+  @@schema("baker")
 }
 
 model IngredientVendor {
@@ -332,6 +351,7 @@ model IngredientVendor {
   @@index([ingredientId])
   @@index([vendorId])
   @@map("ingredient_vendors")
+  @@schema("baker")
 }
 
 model VendorContact {
@@ -346,6 +366,7 @@ model VendorContact {
 
   @@index([vendorId])
   @@map("vendor_contacts")
+  @@schema("baker")
 }
 
 // ============================================================================
@@ -372,6 +393,7 @@ model Equipment {
   @@index([status])
   @@index([vendorId])
   @@map("equipment")
+  @@schema("baker")
 }
 
 enum EquipmentStatus {
@@ -381,6 +403,8 @@ enum EquipmentStatus {
   IN_USE
   MAINTENANCE
   RETIRED
+
+  @@schema("baker")
 }
 
 // ============================================================================
@@ -411,6 +435,7 @@ model ProductionSheet {
   @@index([scheduledFor])
   @@index([createdAt])
   @@map("production_sheets")
+  @@schema("baker")
 }
 
 model ProductionSheetRecipe {
@@ -427,6 +452,7 @@ model ProductionSheetRecipe {
   @@index([productionSheetId])
   @@index([recipeId])
   @@map("production_sheet_recipes")
+  @@schema("baker")
 }
 
 // ============================================================================
@@ -445,6 +471,7 @@ model UnitConversion {
   @@unique([fromUnit, toUnit])
   @@index([category])
   @@map("unit_conversions")
+  @@schema("baker")
 }
 
 // ============================================================================
@@ -471,6 +498,7 @@ model ActivityLog {
   @@index([entityType])
   @@index([createdAt])
   @@map("activity_logs")
+  @@schema("baker")
 }
 
 enum ActivityType {
@@ -482,6 +510,8 @@ enum ActivityType {
   REVOKE
   LOGIN
   LOGOUT
+
+  @@schema("baker")
 }
 
 // ============================================================================
@@ -503,6 +533,7 @@ model TagType {
   @@unique([bakeryId, name])
   @@index([bakeryId])
   @@map("tag_types")
+  @@schema("baker")
 }
 
 model Tag {
@@ -523,6 +554,7 @@ model Tag {
   @@index([bakeryId])
   @@index([tagTypeId])
   @@map("tags")
+  @@schema("baker")
 }
 
 model EntityTag {
@@ -537,4 +569,5 @@ model EntityTag {
   @@index([tagId])
   @@index([entityType, entityId])
   @@map("entity_tags")
+  @@schema("baker")
 }
