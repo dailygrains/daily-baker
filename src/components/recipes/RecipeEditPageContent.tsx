@@ -34,7 +34,7 @@ interface RecipeEditPageContentProps {
       order: number;
       instructions: string;
       useBakersMath: boolean;
-      bakersMathBaseIndex: number;
+      bakersMathBaseIndices: number[];
       recipeId: string;
       ingredients: Array<{
         id: string;

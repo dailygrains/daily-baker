@@ -8,7 +8,7 @@ interface RecipeSection {
   name: string;
   instructions: string;
   useBakersMath?: boolean;
-  bakersMathBaseIndex?: number;
+  bakersMathBaseIndices?: number[] | unknown;
   ingredients: Array<{
     id: string;
     quantity: { toString(): string } | number;
@@ -54,13 +54,15 @@ export function RecipeDetailContent({
           {/* Ingredients */}
           {section.ingredients.length > 0 && (() => {
             const showBakersMath = section.useBakersMath && section.ingredients.length > 0;
-            const baseIndex = section.bakersMathBaseIndex ?? 0;
-            const baseIngredient = section.ingredients[baseIndex];
-            const baseQty = baseIngredient
-              ? typeof baseIngredient.quantity === 'number'
-                ? baseIngredient.quantity
-                : Number(baseIngredient.quantity.toString())
-              : 0;
+            const baseIndices = (Array.isArray(section.bakersMathBaseIndices) ? section.bakersMathBaseIndices : []) as number[];
+            const baseQty = baseIndices.reduce((sum, idx) => {
+              const ing = section.ingredients[idx];
+              if (!ing) return sum;
+              const qty = typeof ing.quantity === 'number'
+                ? ing.quantity
+                : Number(ing.quantity.toString());
+              return sum + qty;
+            }, 0);
 
             return (
             <div>
@@ -97,12 +99,10 @@ export function RecipeDetailContent({
                       );
 
                       // Baker's math percentage
-                      const isBase = ingIndex === baseIndex;
-                      const bakersPercent = isBase
-                        ? 100
-                        : baseQty > 0
-                          ? (quantity / baseQty) * 100
-                          : null;
+                      const isBase = baseIndices.includes(ingIndex);
+                      const bakersPercent = baseQty > 0
+                        ? (quantity / baseQty) * 100
+                        : null;
 
                       return (
                         <tr key={ing.id}>

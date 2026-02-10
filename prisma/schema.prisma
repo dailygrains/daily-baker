@@ -164,8 +164,8 @@ model RecipeSection {
   name         String // "Poolish", "Dough", "Final Mix"
   order        Int // Display order
   instructions String   @db.Text // MDX content
-  useBakersMath        Boolean @default(false)
-  bakersMathBaseIndex  Int     @default(0) // 0-based index into section's ingredients
+  useBakersMath         Boolean @default(false)
+  bakersMathBaseIndices Json    @default("[]") // Array of 0-based indices into section's ingredients
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 

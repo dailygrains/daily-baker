@@ -41,7 +41,7 @@ interface SectionFormData {
   order: number;
   instructions: string;
   useBakersMath: boolean;
-  bakersMathBaseIndex: number;
+  bakersMathBaseIndices: number[];
   ingredients: Array<{
     id?: string;
     ingredientId: string;
@@ -89,7 +89,7 @@ export function RecipeForm({
       order: s.order,
       instructions: s.instructions,
       useBakersMath: (s as { useBakersMath?: boolean }).useBakersMath ?? false,
-      bakersMathBaseIndex: (s as { bakersMathBaseIndex?: number }).bakersMathBaseIndex ?? 0,
+      bakersMathBaseIndices: (s as { bakersMathBaseIndices?: number[] }).bakersMathBaseIndices ?? [],
       ingredients: s.ingredients.map((ing) => ({
         id: ing.id,
         ingredientId: ing.ingredientId,
@@ -103,7 +103,7 @@ export function RecipeForm({
         order: 0,
         instructions: '',
         useBakersMath: false,
-        bakersMathBaseIndex: 0,
+        bakersMathBaseIndices: [],
         ingredients: [],
       },
     ]
@@ -144,7 +144,7 @@ export function RecipeForm({
         order: sections.length,
         instructions: '',
         useBakersMath: false,
-        bakersMathBaseIndex: 0,
+        bakersMathBaseIndices: [],
         ingredients: [],
       },
     ]);
@@ -206,11 +206,10 @@ export function RecipeForm({
       newSections[sectionIndex].ingredients = newSections[sectionIndex].ingredients.filter(
         (_, i) => i !== ingredientIndex
       );
-      // Clamp bakersMathBaseIndex if it's now out of range
-      const maxIndex = Math.max(0, newSections[sectionIndex].ingredients.length - 1);
-      if (newSections[sectionIndex].bakersMathBaseIndex > maxIndex) {
-        newSections[sectionIndex].bakersMathBaseIndex = 0;
-      }
+      // Filter out the removed index and shift down indices above it
+      newSections[sectionIndex].bakersMathBaseIndices = newSections[sectionIndex].bakersMathBaseIndices
+        .filter((idx) => idx !== ingredientIndex)
+        .map((idx) => (idx > ingredientIndex ? idx - 1 : idx));
       return newSections;
     });
   }, []);
@@ -426,12 +425,11 @@ export function RecipeForm({
                       const selectedIngredient = localIngredients.find(
                         (ing) => ing.id === ingredient.ingredientId
                       );
-                      const isBase = section.useBakersMath && ingredientIndex === section.bakersMathBaseIndex;
-                      const baseIngredient = section.ingredients[section.bakersMathBaseIndex];
-                      const baseQty = baseIngredient?.quantity ?? 0;
-                      const bakersPercent = isBase
-                        ? 100
-                        : computeBakersPercent(ingredient.quantity, baseQty);
+                      const isBase = section.useBakersMath && section.bakersMathBaseIndices.includes(ingredientIndex);
+                      const baseQty = section.bakersMathBaseIndices.reduce(
+                        (sum, idx) => sum + (section.ingredients[idx]?.quantity ?? 0), 0
+                      );
+                      const bakersPercent = computeBakersPercent(ingredient.quantity, baseQty);
                       return (
                       <div key={ingredientIndex} className="flex flex-wrap gap-2 items-center">
                         <div className="flex-1 min-w-[200px]">
@@ -508,12 +506,17 @@ export function RecipeForm({
                         )}
                         {section.useBakersMath && section.ingredients.length > 0 && (
                           <input
-                            type="radio"
-                            className="radio radio-sm"
-                            name={`bakers-base-${sectionIndex}`}
+                            type="checkbox"
+                            className="checkbox checkbox-sm"
                             checked={isBase}
-                            onChange={() => updateSection(sectionIndex, 'bakersMathBaseIndex', ingredientIndex)}
-                            title="Set as base ingredient (100%)"
+                            onChange={(e) => {
+                              const current = section.bakersMathBaseIndices;
+                              const updated = e.target.checked
+                                ? [...current, ingredientIndex]
+                                : current.filter((idx) => idx !== ingredientIndex);
+                              updateSection(sectionIndex, 'bakersMathBaseIndices', updated);
+                            }}
+                            title="Include in base (100%)"
                           />
                         )}
                         <button

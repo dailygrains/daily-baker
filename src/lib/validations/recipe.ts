@@ -21,7 +21,7 @@ export const recipeSectionSchema = z.object({
   instructions: z.string().max(10000, 'Instructions too long'),
   ingredients: z.array(recipeSectionIngredientSchema).default([]),
   useBakersMath: z.boolean().default(false),
-  bakersMathBaseIndex: z.number().int().nonnegative().default(0),
+  bakersMathBaseIndices: z.array(z.number().int().nonnegative()).default([]),
 });
 
 /**

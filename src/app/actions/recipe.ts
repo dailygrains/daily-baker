@@ -151,7 +151,7 @@ export async function createRecipe(data: CreateRecipeInput) {
             order: section.order,
             instructions: section.instructions,
             useBakersMath: section.useBakersMath,
-            bakersMathBaseIndex: section.bakersMathBaseIndex,
+            bakersMathBaseIndices: section.bakersMathBaseIndices,
             ingredients: {
               create: section.ingredients.map((ing) => ({
                 ingredientId: ing.ingredientId,
@@ -309,7 +309,7 @@ export async function updateRecipe(data: UpdateRecipeInput) {
                 order: section.order,
                 instructions: section.instructions,
                 useBakersMath: section.useBakersMath,
-                bakersMathBaseIndex: section.bakersMathBaseIndex,
+                bakersMathBaseIndices: section.bakersMathBaseIndices,
                 ingredients: {
                   create: section.ingredients.map((ing) => ({
                     ingredientId: ing.ingredientId,

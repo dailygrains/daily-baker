@@ -47,7 +47,7 @@ export default async function EditRecipePage({
       order: section.order,
       instructions: section.instructions,
       useBakersMath: section.useBakersMath,
-      bakersMathBaseIndex: section.bakersMathBaseIndex,
+      bakersMathBaseIndices: section.bakersMathBaseIndices as number[],
       recipeId: section.recipeId,
       ingredients: section.ingredients.map(ing => ({
         id: ing.id,
