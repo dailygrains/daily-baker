@@ -486,7 +486,7 @@ export async function deleteRecipe(id: string) {
 /**
  * Get all recipes for a bakery
  */
-export async function getRecipesByBakery(bakeryId: string) {
+export async function getRecipesByBakery(bakeryId: string, search?: string) {
   try {
     const currentUser = await getCurrentUser();
 
@@ -503,7 +503,12 @@ export async function getRecipesByBakery(bakeryId: string) {
     }
 
     const recipes = await db.recipe.findMany({
-      where: { bakeryId },
+      where: {
+        bakeryId,
+        ...(search && {
+          name: { contains: search, mode: 'insensitive' },
+        }),
+      },
       include: {
         _count: {
           select: {

@@ -37,7 +37,7 @@ export function UnifiedHeader() {
   return (
     <>
       <header className={`bg-base-100 border-b border-base-300 ${stickyClass}`}>
-        <div className="flex items-start gap-2 px-4 py-3">
+        <div className="relative flex items-center gap-2 px-4 py-3">
           {/* Sidebar Toggle */}
           <label
             htmlFor="sidebar-drawer"
@@ -49,7 +49,7 @@ export function UnifiedHeader() {
 
           {/* Page Header Content */}
           {config ? (
-            <div className="flex flex-1 flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4">
+            <>
               <div className="min-w-0 flex-1">
                 <h1 className="text-3xl font-bold truncate">{config.title}</h1>
                 {config.breadcrumbs && config.breadcrumbs.length > 0 && (
@@ -73,6 +73,14 @@ export function UnifiedHeader() {
                   <p className="text-sm text-base-content/60 truncate">{config.description}</p>
                 )}
               </div>
+              {/* Center Content (e.g., search) — absolutely centered on the header */}
+              {config.centerContent && (
+                <div className="hidden sm:flex absolute inset-0 items-center justify-center pointer-events-none">
+                  <div className="pointer-events-auto">
+                    {config.centerContent}
+                  </div>
+                </div>
+              )}
               {/* Actions - vertically aligned with back button auto-added */}
               <div className="flex items-center gap-2 shrink-0 [&_.btn]:btn-lg">
                 {backUrl && (
@@ -90,7 +98,7 @@ export function UnifiedHeader() {
                   {config.actions}
                 </div>
               </div>
-            </div>
+            </>
           ) : (
             <div className="flex-1">
               <span className="font-bold text-lg">Daily Baker</span>

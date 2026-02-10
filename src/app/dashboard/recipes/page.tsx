@@ -2,13 +2,18 @@ import { getCurrentUser } from '@/lib/clerk';
 import { redirect } from 'next/navigation';
 import { SetPageHeader } from '@/components/layout/SetPageHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { SearchFilterInput } from '@/components/ui/SearchFilterInput';
 import { getRecipesByBakery } from '@/app/actions/recipe';
 import { getTagsForEntity } from '@/app/actions/tag';
 import { RecipesTable } from '@/components/recipes/RecipesTable';
 import Link from 'next/link';
 import { Plus, ChefHat } from 'lucide-react';
 
-export default async function RecipesPage() {
+export default async function RecipesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ search?: string }>;
+}) {
   const user = await getCurrentUser();
 
   if (!user) {
@@ -19,7 +24,8 @@ export default async function RecipesPage() {
     redirect('/dashboard');
   }
 
-  const recipesResult = await getRecipesByBakery(user.bakeryId);
+  const { search } = await searchParams;
+  const recipesResult = await getRecipesByBakery(user.bakeryId, search);
 
   if (!recipesResult.success) {
     return (
@@ -59,6 +65,7 @@ export default async function RecipesPage() {
         title="Recipes"
         description="Create and manage your bakery recipes"
         sticky
+        centerContent={<SearchFilterInput placeholder="Search recipes..." />}
         actions={
           <Link href="/dashboard/recipes/new" className="btn btn-primary">
             <Plus className="h-5 w-5 mr-2" />
@@ -68,19 +75,27 @@ export default async function RecipesPage() {
       />
 
       {recipes.length === 0 ? (
-        <EmptyState
-          icon={ChefHat}
-          title="No recipes yet"
-          description="Start by adding your first recipe to track costs and manage your bakery menu."
-          action={
-            <Link href="/dashboard/recipes/new" className="btn btn-primary">
-              <Plus className="h-5 w-5 mr-2" />
-              Add First Recipe
-            </Link>
-          }
-        />
+        search ? (
+          <EmptyState
+            icon={ChefHat}
+            title="No recipes found"
+            description={`No recipes matching "${search}". Try a different search term.`}
+          />
+        ) : (
+          <EmptyState
+            icon={ChefHat}
+            title="No recipes yet"
+            description="Start by adding your first recipe to track costs and manage your bakery menu."
+            action={
+              <Link href="/dashboard/recipes/new" className="btn btn-primary">
+                <Plus className="h-5 w-5 mr-2" />
+                Add First Recipe
+              </Link>
+            }
+          />
+        )
       ) : (
-        <RecipesTable recipes={serializedRecipes} />
+        <RecipesTable key={search || ''} recipes={serializedRecipes} />
       )}
     </>
   );

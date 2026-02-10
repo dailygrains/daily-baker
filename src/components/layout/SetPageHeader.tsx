@@ -12,6 +12,7 @@ interface SetPageHeaderProps {
   title: string;
   description?: string;
   actions?: ReactNode;
+  centerContent?: ReactNode;
   sticky?: boolean;
   breadcrumbs?: Breadcrumb[];
   hasUnsavedChanges?: boolean;
@@ -21,6 +22,7 @@ export function SetPageHeader({
   title,
   description,
   actions,
+  centerContent,
   sticky = false,
   breadcrumbs,
   hasUnsavedChanges = false,
@@ -32,6 +34,7 @@ export function SetPageHeader({
       title,
       description,
       actions,
+      centerContent,
       sticky,
       breadcrumbs,
       hasUnsavedChanges,
@@ -48,11 +51,12 @@ export function SetPageHeader({
       title,
       description,
       actions,
+      centerContent,
       sticky,
       breadcrumbs,
       hasUnsavedChanges,
     });
-  }, [actions, breadcrumbs, title, description, sticky, hasUnsavedChanges, setHeader]);
+  }, [actions, centerContent, breadcrumbs, title, description, sticky, hasUnsavedChanges, setHeader]);
 
   return null;
 }

@@ -341,7 +341,7 @@ export async function deleteIngredient(id: string) {
   }
 }
 
-export async function getIngredientsByBakery(bakeryId: string) {
+export async function getIngredientsByBakery(bakeryId: string, search?: string) {
   try {
     const currentUser = await getCurrentUser();
 
@@ -360,7 +360,12 @@ export async function getIngredientsByBakery(bakeryId: string) {
     }
 
     const ingredients = await db.ingredient.findMany({
-      where: { bakeryId },
+      where: {
+        bakeryId,
+        ...(search && {
+          name: { contains: search, mode: 'insensitive' },
+        }),
+      },
       include: {
         vendors: {
           include: {

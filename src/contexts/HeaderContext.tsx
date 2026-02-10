@@ -11,6 +11,7 @@ export interface HeaderConfig {
   title: string;
   description?: string;
   actions?: ReactNode;
+  centerContent?: ReactNode;
   sticky?: boolean;
   breadcrumbs?: Breadcrumb[];
   hasUnsavedChanges?: boolean;
