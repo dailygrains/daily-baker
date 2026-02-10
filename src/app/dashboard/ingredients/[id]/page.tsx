@@ -4,7 +4,7 @@ import { SetPageHeader } from '@/components/layout/SetPageHeader';
 import { getIngredientById } from '@/app/actions/ingredient';
 import { TagBadges } from '@/components/tags';
 import Link from 'next/link';
-import { Edit, Boxes, AlertTriangle, TrendingDown, Plus, AlertCircle } from 'lucide-react';
+import { Edit, Boxes, AlertTriangle, TrendingDown, Plus, AlertCircle, Pencil } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 export default async function IngredientDetailPage({
@@ -191,6 +191,7 @@ export default async function IngredientDetailPage({
                     <th>Cost/Unit</th>
                     <th>Expires</th>
                     <th>Status</th>
+                    <th></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -254,6 +255,14 @@ export default async function IngredientDetailPage({
                             ) : (
                               <span className="badge badge-success">Active</span>
                             )}
+                          </Link>
+                        </td>
+                        <td>
+                          <Link
+                            href={`/dashboard/inventory/lots/${lot.id}/edit`}
+                            className="btn btn-ghost btn-xs"
+                          >
+                            <Pencil className="h-4 w-4" />
                           </Link>
                         </td>
                       </tr>
