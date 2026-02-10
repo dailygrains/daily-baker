@@ -17,6 +17,10 @@
   border-radius: 9999px !important;
 }
 
+.toast.toast-top {
+  top: calc(1rem + 25px) !important;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
