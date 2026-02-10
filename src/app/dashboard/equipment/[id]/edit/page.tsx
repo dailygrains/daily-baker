@@ -1,8 +1,7 @@
 import { getCurrentUser } from '@/lib/clerk';
 import { redirect } from 'next/navigation';
-import { SetPageHeader } from '@/components/layout/SetPageHeader';
-import { EquipmentForm } from '@/components/equipment/EquipmentForm';
 import { getEquipmentById } from '@/app/actions/equipment';
+import { EquipmentEditPageContent } from '@/components/equipment/EquipmentEditPageContent';
 import { db } from '@/lib/db';
 
 export default async function EditEquipmentPage({
@@ -27,7 +26,10 @@ export default async function EditEquipmentPage({
     redirect('/dashboard/equipment');
   }
 
-  const equipment = equipmentResult.data;
+  const equipment = {
+    ...equipmentResult.data,
+    cost: equipmentResult.data.cost ? Number(equipmentResult.data.cost) : null,
+  };
 
   // Fetch vendors for the dropdown
   const vendors = await db.vendor.findMany({
@@ -42,21 +44,10 @@ export default async function EditEquipmentPage({
   });
 
   return (
-    <div className="space-y-6">
-        <SetPageHeader
-          title="Edit Equipment"
-          description={`Update details for ${equipment.name}`}
-        />
-
-        <div className="card bg-base-100 shadow-xl">
-          <div className="card-body">
-            <EquipmentForm
-              bakeryId={user.bakeryId}
-              equipment={equipment}
-              vendors={vendors}
-            />
-          </div>
-        </div>
-      </div>
+    <EquipmentEditPageContent
+      bakeryId={user.bakeryId}
+      equipment={equipment}
+      vendors={vendors}
+    />
   );
 }

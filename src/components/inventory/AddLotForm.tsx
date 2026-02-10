@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { addInventoryLot } from '@/app/actions/inventory';
 import { useToast } from '@/contexts/ToastContext';
+import { DollarSign } from 'lucide-react';
 
 interface Ingredient {
   id: string;
@@ -185,13 +186,13 @@ export function AddLotForm({
 
           <fieldset className="fieldset">
             <legend className="fieldset-legend">Cost per Unit *</legend>
-            <label className="input input-bordered flex items-center gap-2 w-full">
-              <span className="text-white">$</span>
+            <label className="input input-bordered w-full">
+              <DollarSign className="h-4 w-4 opacity-50" />
               <input
                 type="number"
                 step="0.01"
                 min="0"
-                className="grow bg-transparent outline-none"
+                className="grow"
                 value={formData.costPerUnit}
                 onChange={(e) => setFormData({ ...formData, costPerUnit: e.target.value })}
                 required

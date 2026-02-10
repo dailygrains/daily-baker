@@ -1,23 +1,40 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createEquipment, updateEquipment } from '@/app/actions/equipment';
 import { useFormSubmit } from '@/hooks/useFormSubmit';
 import type { Equipment, EquipmentStatus } from '@/generated/prisma';
+import { DollarSign } from 'lucide-react';
 
 interface EquipmentFormProps {
   bakeryId: string;
-  equipment?: Equipment & { vendor: { id: string; name: string; email: string | null; phone: string | null } | null };
+  equipment?: Omit<Equipment, 'cost'> & { cost: number | null } & { vendor: { id: string; name: string; email: string | null; phone: string | null } | null };
   vendors?: Array<{ id: string; name: string }>;
+  onFormRefChange?: (ref: HTMLFormElement | null) => void;
+  onSavingChange?: (isSaving: boolean) => void;
+  onUnsavedChangesChange?: (hasChanges: boolean) => void;
+  showBottomActions?: boolean;
 }
 
-export function EquipmentForm({ bakeryId, equipment, vendors = [] }: EquipmentFormProps) {
+export function EquipmentForm({
+  bakeryId,
+  equipment,
+  vendors = [],
+  onFormRefChange,
+  onSavingChange,
+  onUnsavedChangesChange,
+  showBottomActions = true,
+}: EquipmentFormProps) {
   const router = useRouter();
+  const formRef = useRef<HTMLFormElement>(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
   const { submit, isSubmitting, error } = useFormSubmit({
     mode: equipment ? 'edit' : 'create',
     entityName: 'Equipment',
     listPath: '/dashboard/equipment',
+    onSuccess: () => setHasUnsavedChanges(false),
   });
 
   const [formData, setFormData] = useState<{
@@ -41,6 +58,27 @@ export function EquipmentForm({ bakeryId, equipment, vendors = [] }: EquipmentFo
     serialNumber: equipment?.serialNumber ?? '',
     notes: equipment?.notes ?? '',
   });
+
+  // Notify parent of form ref changes
+  useEffect(() => {
+    if (onFormRefChange && formRef.current) {
+      onFormRefChange(formRef.current);
+    }
+  }, [onFormRefChange]);
+
+  // Notify parent of saving state changes
+  useEffect(() => {
+    if (onSavingChange) {
+      onSavingChange(isSubmitting);
+    }
+  }, [isSubmitting, onSavingChange]);
+
+  // Notify parent of unsaved changes state
+  useEffect(() => {
+    if (onUnsavedChangesChange) {
+      onUnsavedChangesChange(hasUnsavedChanges);
+    }
+  }, [hasUnsavedChanges, onUnsavedChangesChange]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,175 +108,174 @@ export function EquipmentForm({ bakeryId, equipment, vendors = [] }: EquipmentFo
     );
   };
 
+  const updateField = (field: string, value: string | number) => {
+    setFormData({ ...formData, [field]: value });
+    setHasUnsavedChanges(true);
+  };
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form ref={formRef} onSubmit={handleSubmit} className="space-y-8">
       {error && (
         <div className="alert alert-error">
+          <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
           <span>{error}</span>
         </div>
       )}
 
-      <div className="form-control">
-        <label className="label">
-          <span className="label-text">Equipment Name *</span>
-        </label>
-        <input
-          type="text"
-          className="input input-bordered"
-          value={formData.name}
-          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          required
-          maxLength={200}
-          placeholder="e.g., Commercial Oven"
-        />
-      </div>
+      <div className="space-y-0">
+        <h2 className="text-xl font-semibold">Basic Information</h2>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="form-control">
-          <label className="label">
-            <span className="label-text">Status *</span>
-          </label>
-          <select
-            className="select select-bordered"
-            value={formData.status}
-            onChange={(e) => setFormData({ ...formData, status: e.target.value as EquipmentStatus })}
-            required
-          >
-            <option value="CONSIDERING">Considering</option>
-            <option value="ORDERED">Ordered</option>
-            <option value="RECEIVED">Received</option>
-            <option value="IN_USE">In Use</option>
-            <option value="MAINTENANCE">Maintenance</option>
-            <option value="RETIRED">Retired</option>
-          </select>
-          <label className="label">
-            <span className="label-text-alt">Current status of the equipment</span>
-          </label>
-        </div>
-
-        <div className="form-control">
-          <label className="label">
-            <span className="label-text">Quantity *</span>
-          </label>
+        <fieldset className="fieldset">
+          <legend className="fieldset-legend">Equipment Name *</legend>
           <input
-            type="number"
-            min="1"
-            className="input input-bordered"
-            value={formData.quantity}
-            onChange={(e) =>
-              setFormData({ ...formData, quantity: parseInt(e.target.value) || 1 })
-            }
+            type="text"
+            className="input input-bordered w-full"
+            value={formData.name}
+            onChange={(e) => updateField('name', e.target.value)}
             required
+            maxLength={200}
+            placeholder="e.g., Commercial Oven"
           />
-        </div>
-      </div>
+        </fieldset>
 
-      <div className="form-control">
-        <label className="label">
-          <span className="label-text">Vendor</span>
-        </label>
-        <select
-          className="select select-bordered"
-          value={formData.vendorId}
-          onChange={(e) => setFormData({ ...formData, vendorId: e.target.value })}
-        >
-          <option value="">No vendor</option>
-          {vendors.map((vendor) => (
-            <option key={vendor.id} value={vendor.id}>
-              {vendor.name}
-            </option>
-          ))}
-        </select>
-        <label className="label">
-          <span className="label-text-alt">Link to a vendor for easier tracking</span>
-        </label>
-      </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+          <fieldset className="fieldset">
+            <legend className="fieldset-legend">Status *</legend>
+            <select
+              className="select select-bordered w-full"
+              value={formData.status}
+              onChange={(e) => updateField('status', e.target.value)}
+              required
+            >
+              <option value="CONSIDERING">Considering</option>
+              <option value="ORDERED">Ordered</option>
+              <option value="RECEIVED">Received</option>
+              <option value="IN_USE">In Use</option>
+              <option value="MAINTENANCE">Maintenance</option>
+              <option value="RETIRED">Retired</option>
+            </select>
+          </fieldset>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="form-control">
-          <label className="label">
-            <span className="label-text">Purchase Date</span>
-          </label>
-          <input
-            type="date"
-            className="input input-bordered"
-            value={formData.purchaseDate}
-            onChange={(e) => setFormData({ ...formData, purchaseDate: e.target.value })}
-          />
-        </div>
-
-        <div className="form-control">
-          <label className="label">
-            <span className="label-text">Cost</span>
-          </label>
-          <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base-content/50">
-              $
-            </span>
+          <fieldset className="fieldset">
+            <legend className="fieldset-legend">Quantity *</legend>
             <input
               type="number"
-              step="0.01"
-              min="0"
-              className="input input-bordered pl-8"
-              value={formData.cost}
-              onChange={(e) =>
-                setFormData({ ...formData, cost: parseFloat(e.target.value) || 0 })
-              }
-              placeholder="0.00"
+              min="1"
+              className="input input-bordered w-full"
+              value={formData.quantity}
+              onChange={(e) => updateField('quantity', parseInt(e.target.value) || 1)}
+              required
             />
-          </div>
+          </fieldset>
         </div>
       </div>
 
-      <div className="form-control">
-        <label className="label">
-          <span className="label-text">Serial Number</span>
-        </label>
-        <input
-          type="text"
-          className="input input-bordered"
-          value={formData.serialNumber}
-          onChange={(e) => setFormData({ ...formData, serialNumber: e.target.value })}
-          maxLength={100}
-          placeholder="Serial or model number"
-        />
+      <div className="space-y-0">
+        <h2 className="text-xl font-semibold">Vendor & Purchase Details</h2>
+
+        <fieldset className="fieldset">
+          <legend className="fieldset-legend">Vendor</legend>
+          <select
+            className="select select-bordered w-full"
+            value={formData.vendorId}
+            onChange={(e) => updateField('vendorId', e.target.value)}
+          >
+            <option value="">No vendor</option>
+            {vendors.map((vendor) => (
+              <option key={vendor.id} value={vendor.id}>
+                {vendor.name}
+              </option>
+            ))}
+          </select>
+        </fieldset>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+          <fieldset className="fieldset">
+            <legend className="fieldset-legend">Purchase Date</legend>
+            <input
+              type="date"
+              className="input input-bordered w-full"
+              value={formData.purchaseDate}
+              onChange={(e) => updateField('purchaseDate', e.target.value)}
+            />
+          </fieldset>
+
+          <fieldset className="fieldset">
+            <legend className="fieldset-legend">Cost</legend>
+            <label className="input input-bordered w-full">
+              <DollarSign className="h-4 w-4 opacity-50" />
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                className="grow"
+                value={formData.cost}
+                onChange={(e) => updateField('cost', parseFloat(e.target.value) || 0)}
+                placeholder="0.00"
+              />
+            </label>
+          </fieldset>
+        </div>
+
+        <fieldset className="fieldset">
+          <legend className="fieldset-legend">Serial Number</legend>
+          <input
+            type="text"
+            className="input input-bordered w-full"
+            value={formData.serialNumber}
+            onChange={(e) => updateField('serialNumber', e.target.value)}
+            maxLength={100}
+            placeholder="Serial or model number"
+          />
+        </fieldset>
       </div>
 
-      <div className="form-control">
-        <label className="label">
-          <span className="label-text">Notes</span>
-        </label>
-        <textarea
-          className="textarea textarea-bordered h-32"
-          value={formData.notes}
-          onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-          maxLength={2000}
-          placeholder="Additional notes about this equipment..."
-        />
+      <div className="space-y-0">
+        <h2 className="text-xl font-semibold">Additional Details</h2>
+
+        <fieldset className="fieldset">
+          <legend className="fieldset-legend">Notes</legend>
+          <textarea
+            className="textarea textarea-bordered w-full h-32"
+            value={formData.notes}
+            onChange={(e) => updateField('notes', e.target.value)}
+            maxLength={2000}
+            placeholder="Additional notes about this equipment..."
+          />
+          <label className="label">
+            <span className="label-text-alt">
+              Optional notes for internal reference
+            </span>
+          </label>
+        </fieldset>
       </div>
 
-      <div className="flex gap-3 justify-end">
-        <button
-          type="button"
-          className="btn btn-ghost"
-          onClick={() => router.back()}
-          disabled={isSubmitting}
-        >
-          Cancel
-        </button>
-        <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
-          {isSubmitting ? (
-            <>
-              <span className="loading loading-spinner loading-sm"></span>
-              Saving...
-            </>
-          ) : equipment ? (
-            'Update Equipment'
-          ) : (
-            'Create Equipment'
-          )}
-        </button>
-      </div>
+      {showBottomActions && (
+        <div className="flex gap-3 justify-between pt-4">
+          <div className="flex gap-3 ml-auto">
+            <button
+              type="button"
+              className="btn btn-ghost"
+              onClick={() => router.back()}
+              disabled={isSubmitting}
+            >
+              Cancel
+            </button>
+            <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <span className="loading loading-spinner loading-sm"></span>
+                  {equipment ? 'Saving...' : 'Creating...'}
+                </>
+              ) : (
+                equipment ? 'Save Changes' : 'Create Equipment'
+              )}
+            </button>
+          </div>
+        </div>
+      )}
     </form>
   );
 }
