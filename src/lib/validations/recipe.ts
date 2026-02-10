@@ -9,6 +9,7 @@ export const recipeSectionIngredientSchema = z.object({
   quantity: z.number().positive('Quantity must be positive'),
   unit: z.string().min(1, 'Unit is required').max(20),
   preparation: z.string().max(200, 'Preparation notes too long').optional().nullable(),
+  order: z.number().int().nonnegative().default(0),
 });
 
 /**

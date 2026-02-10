@@ -56,6 +56,7 @@ export default async function EditRecipePage({
         unit: ing.unit,
         preparation: ing.preparation,
         sectionId: ing.sectionId,
+        order: ing.order,
         ingredient: {
           id: ing.ingredient.id,
           name: ing.ingredient.name,

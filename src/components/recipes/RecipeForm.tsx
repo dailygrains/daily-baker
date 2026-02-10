@@ -6,10 +6,26 @@ import { createRecipe, updateRecipe } from '@/app/actions/recipe';
 import { createIngredient } from '@/app/actions/ingredient';
 import { useToastStore } from '@/store/toast-store';
 import { useFormSubmit } from '@/hooks/useFormSubmit';
-import { Plus, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
+import { Plus, Trash2, ChevronUp, ChevronDown, GripVertical } from 'lucide-react';
 import { MDXEditor } from '@/components/ui/MDXEditor';
 import { IngredientAutocomplete } from '@/components/ingredients/IngredientAutocomplete';
 import type { Recipe, RecipeSection, RecipeSectionIngredient, Ingredient } from '@/generated/prisma';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 type RecipeWithSections = Omit<Recipe, 'totalCost'> & {
   totalCost: string | Recipe['totalCost'];
@@ -48,7 +64,158 @@ interface SectionFormData {
     quantity: number;
     unit: string;
     preparation?: string | null;
+    order: number;
   }>;
+}
+
+interface SortableIngredientRowProps {
+  sortId: string;
+  ingredient: SectionFormData['ingredients'][number];
+  ingredientIndex: number;
+  sectionIndex: number;
+  selectedIngredient: { id: string; name: string; unit: string } | undefined;
+  localIngredients: Array<{ id: string; name: string; unit: string }>;
+  isBase: boolean;
+  baseQty: number;
+  bakersPercent: number | null;
+  useBakersMath: boolean;
+  hasIngredients: boolean;
+  bakersMathBaseIndices: number[];
+  sectionName: string;
+  updateIngredient: (sectionIndex: number, ingredientIndex: number, field: string, value: unknown) => void;
+  removeIngredient: (sectionIndex: number, ingredientIndex: number) => void;
+  updateSection: (index: number, field: keyof SectionFormData, value: unknown) => void;
+  handleCreateIngredient: (name: string, unit: string) => Promise<{ id: string; name: string; unit: string } | null>;
+  quantityFromPercent: (percent: number, baseQuantity: number) => number;
+}
+
+function SortableIngredientRow({
+  sortId,
+  ingredient,
+  ingredientIndex,
+  sectionIndex,
+  selectedIngredient,
+  localIngredients,
+  isBase,
+  baseQty,
+  bakersPercent,
+  useBakersMath,
+  hasIngredients,
+  bakersMathBaseIndices,
+  sectionName,
+  updateIngredient,
+  removeIngredient,
+  updateSection,
+  handleCreateIngredient,
+  quantityFromPercent,
+}: SortableIngredientRowProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: sortId });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : undefined,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} className="flex flex-wrap gap-2 items-center">
+      <button
+        type="button"
+        className="btn btn-ghost btn-sm cursor-grab active:cursor-grabbing px-1"
+        {...attributes}
+        {...listeners}
+        aria-label="Drag to reorder"
+      >
+        <GripVertical className="h-4 w-4 text-base-content/40" />
+      </button>
+      <div className="flex-1 min-w-[200px]">
+        <IngredientAutocomplete
+          ingredients={localIngredients}
+          value={selectedIngredient?.name || ''}
+          onSelect={(ing) => {
+            updateIngredient(sectionIndex, ingredientIndex, 'ingredientId', ing.id);
+          }}
+          placeholder="Search ingredients..."
+          allowCreate
+          onCreate={handleCreateIngredient}
+        />
+      </div>
+      <input
+        type="text"
+        className="input input-bordered flex-1 min-w-[150px] text-base"
+        value={ingredient.preparation || ''}
+        onChange={(e) =>
+          updateIngredient(sectionIndex, ingredientIndex, 'preparation', e.target.value || null)
+        }
+        placeholder="Preparation (e.g., finely diced)"
+        maxLength={200}
+      />
+      <label className="input input-bordered w-36 text-base">
+        <input
+          type="number"
+          step="0.001"
+          min="0"
+          value={ingredient.quantity}
+          onChange={(e) =>
+            updateIngredient(sectionIndex, ingredientIndex, 'quantity', parseFloat(e.target.value) || 0)
+          }
+        />
+        <span className="label">{ingredient.unit}</span>
+      </label>
+      {useBakersMath && hasIngredients && (
+        <label className="input input-bordered w-32 text-base">
+          <input
+            type="number"
+            step="0.1"
+            min="0"
+            value={bakersPercent !== null ? Math.round(bakersPercent * 10) / 10 : ''}
+            disabled={isBase}
+            onChange={(e) => {
+              const newPercent = parseFloat(e.target.value);
+              if (!isNaN(newPercent) && baseQty > 0) {
+                updateIngredient(
+                  sectionIndex,
+                  ingredientIndex,
+                  'quantity',
+                  Math.round(quantityFromPercent(newPercent, baseQty) * 1000) / 1000
+                );
+              }
+            }}
+          />
+          <span className="label">%</span>
+        </label>
+      )}
+      {useBakersMath && hasIngredients && (
+        <input
+          type="checkbox"
+          className="checkbox checkbox-sm"
+          checked={isBase}
+          onChange={(e) => {
+            const updated = e.target.checked
+              ? [...bakersMathBaseIndices, ingredientIndex]
+              : bakersMathBaseIndices.filter((idx) => idx !== ingredientIndex);
+            updateSection(sectionIndex, 'bakersMathBaseIndices', updated);
+          }}
+          title="Include in base (100%)"
+        />
+      )}
+      <button
+        type="button"
+        className="btn btn-error btn-sm"
+        onClick={() => removeIngredient(sectionIndex, ingredientIndex)}
+        aria-label={`Remove ingredient from ${sectionName}`}
+      >
+        <Trash2 className="h-4 w-4" />
+      </button>
+    </div>
+  );
 }
 
 export function RecipeForm({
@@ -90,12 +257,13 @@ export function RecipeForm({
       instructions: s.instructions,
       useBakersMath: (s as { useBakersMath?: boolean }).useBakersMath ?? false,
       bakersMathBaseIndices: (s as { bakersMathBaseIndices?: number[] }).bakersMathBaseIndices ?? [],
-      ingredients: s.ingredients.map((ing) => ({
+      ingredients: s.ingredients.map((ing, ingIdx) => ({
         id: ing.id,
         ingredientId: ing.ingredientId,
         quantity: Number(ing.quantity),
         unit: ing.unit,
         preparation: (ing as { preparation?: string | null }).preparation ?? null,
+        order: (ing as { order?: number }).order ?? ingIdx,
       })),
     })) || [
       {
@@ -194,6 +362,7 @@ export function RecipeForm({
         quantity: 0,
         unit: localIngredients[0]?.unit || 'g',
         preparation: null,
+        order: newSections[sectionIndex].ingredients.length,
       });
       return newSections;
     });
@@ -206,6 +375,8 @@ export function RecipeForm({
       newSections[sectionIndex].ingredients = newSections[sectionIndex].ingredients.filter(
         (_, i) => i !== ingredientIndex
       );
+      // Reassign order values
+      newSections[sectionIndex].ingredients.forEach((ing, i) => { ing.order = i; });
       // Filter out the removed index and shift down indices above it
       newSections[sectionIndex].bakersMathBaseIndices = newSections[sectionIndex].bakersMathBaseIndices
         .filter((idx) => idx !== ingredientIndex)
@@ -265,6 +436,52 @@ export function RecipeForm({
       return null;
     }
   }, [bakeryId, showToast, router]);
+
+  const moveIngredient = useCallback((sectionIndex: number, oldIndex: number, newIndex: number) => {
+    if (oldIndex === newIndex) return;
+    setSections((prevSections) => {
+      const newSections = [...prevSections];
+      const section = { ...newSections[sectionIndex] };
+      const ingredients = [...section.ingredients];
+
+      // Move the ingredient
+      const [moved] = ingredients.splice(oldIndex, 1);
+      ingredients.splice(newIndex, 0, moved);
+
+      // Reassign order values
+      ingredients.forEach((ing, i) => { ing.order = i; });
+
+      // Remap bakersMathBaseIndices: build old->new index map
+      const indexMap = new Map<number, number>();
+      // Before the move, ingredient at oldIndex moved to newIndex.
+      // All other indices shift accordingly.
+      for (let i = 0; i < section.ingredients.length; i++) {
+        let mapped: number;
+        if (i === oldIndex) {
+          mapped = newIndex;
+        } else if (oldIndex < newIndex) {
+          // Moved down: indices between (oldIndex, newIndex] shift up by 1
+          mapped = (i > oldIndex && i <= newIndex) ? i - 1 : i;
+        } else {
+          // Moved up: indices between [newIndex, oldIndex) shift down by 1
+          mapped = (i >= newIndex && i < oldIndex) ? i + 1 : i;
+        }
+        indexMap.set(i, mapped);
+      }
+      section.bakersMathBaseIndices = section.bakersMathBaseIndices.map(
+        (idx) => indexMap.get(idx) ?? idx
+      );
+
+      section.ingredients = ingredients;
+      newSections[sectionIndex] = section;
+      return newSections;
+    });
+  }, []);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
 
   useEffect(() => {
     isMounted.current = true;
@@ -420,6 +637,24 @@ export function RecipeForm({
                     />
                     <span className="text-sm">Baker&apos;s Math</span>
                   </label>
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={(event: DragEndEvent) => {
+                      const { active, over } = event;
+                      if (over && active.id !== over.id) {
+                        const oldIndex = section.ingredients.findIndex((_, i) => `ing-${sectionIndex}-${i}` === active.id);
+                        const newIndex = section.ingredients.findIndex((_, i) => `ing-${sectionIndex}-${i}` === over.id);
+                        if (oldIndex !== -1 && newIndex !== -1) {
+                          moveIngredient(sectionIndex, oldIndex, newIndex);
+                        }
+                      }
+                    }}
+                  >
+                  <SortableContext
+                    items={section.ingredients.map((_, i) => `ing-${sectionIndex}-${i}`)}
+                    strategy={verticalListSortingStrategy}
+                  >
                   <div className="space-y-3">
                     {section.ingredients.map((ingredient, ingredientIndex) => {
                       const selectedIngredient = localIngredients.find(
@@ -431,103 +666,27 @@ export function RecipeForm({
                       );
                       const bakersPercent = computeBakersPercent(ingredient.quantity, baseQty);
                       return (
-                      <div key={ingredientIndex} className="flex flex-wrap gap-2 items-center">
-                        <div className="flex-1 min-w-[200px]">
-                          <IngredientAutocomplete
-                            ingredients={localIngredients}
-                            value={selectedIngredient?.name || ''}
-                            onSelect={(ing) => {
-                              updateIngredient(
-                                sectionIndex,
-                                ingredientIndex,
-                                'ingredientId',
-                                ing.id
-                              );
-                            }}
-                            placeholder="Search ingredients..."
-                            allowCreate
-                            onCreate={handleCreateIngredient}
-                          />
-                        </div>
-                        <input
-                          type="text"
-                          className="input input-bordered flex-1 min-w-[150px] text-base"
-                          value={ingredient.preparation || ''}
-                          onChange={(e) =>
-                            updateIngredient(
-                              sectionIndex,
-                              ingredientIndex,
-                              'preparation',
-                              e.target.value || null
-                            )
-                          }
-                          placeholder="Preparation (e.g., finely diced)"
-                          maxLength={200}
-                        />
-                        <label className="input input-bordered w-36 text-base">
-                          <input
-                            type="number"
-                            step="0.001"
-                            min="0"
-                            value={ingredient.quantity}
-                            onChange={(e) =>
-                              updateIngredient(
-                                sectionIndex,
-                                ingredientIndex,
-                                'quantity',
-                                parseFloat(e.target.value) || 0
-                              )
-                            }
-                          />
-                          <span className="label">{ingredient.unit}</span>
-                        </label>
-                        {section.useBakersMath && section.ingredients.length > 0 && (
-                          <label className="input input-bordered w-32 text-base">
-                            <input
-                              type="number"
-                              step="0.1"
-                              min="0"
-                              value={bakersPercent !== null ? Math.round(bakersPercent * 10) / 10 : ''}
-                              disabled={isBase}
-                              onChange={(e) => {
-                                const newPercent = parseFloat(e.target.value);
-                                if (!isNaN(newPercent) && baseQty > 0) {
-                                  updateIngredient(
-                                    sectionIndex,
-                                    ingredientIndex,
-                                    'quantity',
-                                    Math.round(quantityFromPercent(newPercent, baseQty) * 1000) / 1000
-                                  );
-                                }
-                              }}
-                            />
-                            <span className="label">%</span>
-                          </label>
-                        )}
-                        {section.useBakersMath && section.ingredients.length > 0 && (
-                          <input
-                            type="checkbox"
-                            className="checkbox checkbox-sm"
-                            checked={isBase}
-                            onChange={(e) => {
-                              const current = section.bakersMathBaseIndices;
-                              const updated = e.target.checked
-                                ? [...current, ingredientIndex]
-                                : current.filter((idx) => idx !== ingredientIndex);
-                              updateSection(sectionIndex, 'bakersMathBaseIndices', updated);
-                            }}
-                            title="Include in base (100%)"
-                          />
-                        )}
-                        <button
-                          type="button"
-                          className="btn btn-error btn-sm"
-                          onClick={() => removeIngredient(sectionIndex, ingredientIndex)}
-                          aria-label={`Remove ingredient from ${section.name}`}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
+                      <SortableIngredientRow
+                        key={`ing-${sectionIndex}-${ingredientIndex}`}
+                        sortId={`ing-${sectionIndex}-${ingredientIndex}`}
+                        ingredient={ingredient}
+                        ingredientIndex={ingredientIndex}
+                        sectionIndex={sectionIndex}
+                        selectedIngredient={selectedIngredient}
+                        localIngredients={localIngredients}
+                        isBase={isBase}
+                        baseQty={baseQty}
+                        bakersPercent={bakersPercent}
+                        useBakersMath={section.useBakersMath}
+                        hasIngredients={section.ingredients.length > 0}
+                        bakersMathBaseIndices={section.bakersMathBaseIndices}
+                        sectionName={section.name}
+                        updateIngredient={updateIngredient}
+                        removeIngredient={removeIngredient}
+                        updateSection={updateSection}
+                        handleCreateIngredient={handleCreateIngredient}
+                        quantityFromPercent={quantityFromPercent}
+                      />
                       );
                     })}
 
@@ -535,6 +694,8 @@ export function RecipeForm({
                       <p className="text-sm text-base-content/50">No ingredients added yet</p>
                     )}
                   </div>
+                  </SortableContext>
+                  </DndContext>
                   <button
                     type="button"
                     className="btn btn-outline w-full mt-4"

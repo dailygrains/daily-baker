@@ -186,6 +186,7 @@ model RecipeSectionIngredient {
   quantity     Decimal       @db.Decimal(10, 3)
   unit         String // "g", "ml", "kg", "lbs"
   preparation  String?       @db.VarChar(200) // Optional preparation notes (e.g., "finely diced", "room temperature")
+  order        Int           @default(0) // Display order within the section
 
   @@index([sectionId])
   @@index([ingredientId])

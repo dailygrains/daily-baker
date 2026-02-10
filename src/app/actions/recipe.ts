@@ -153,11 +153,12 @@ export async function createRecipe(data: CreateRecipeInput) {
             useBakersMath: section.useBakersMath,
             bakersMathBaseIndices: section.bakersMathBaseIndices,
             ingredients: {
-              create: section.ingredients.map((ing) => ({
+              create: section.ingredients.map((ing, ingIndex) => ({
                 ingredientId: ing.ingredientId,
                 quantity: new Decimal(ing.quantity),
                 unit: ing.unit,
                 preparation: ing.preparation || null,
+                order: ing.order ?? ingIndex,
               })),
             },
           })),
@@ -170,6 +171,7 @@ export async function createRecipe(data: CreateRecipeInput) {
               include: {
                 ingredient: true,
               },
+              orderBy: { order: 'asc' },
             },
           },
         },
@@ -311,11 +313,12 @@ export async function updateRecipe(data: UpdateRecipeInput) {
                 useBakersMath: section.useBakersMath,
                 bakersMathBaseIndices: section.bakersMathBaseIndices,
                 ingredients: {
-                  create: section.ingredients.map((ing) => ({
+                  create: section.ingredients.map((ing, ingIndex) => ({
                     ingredientId: ing.ingredientId,
                     quantity: new Decimal(ing.quantity),
                     unit: ing.unit,
                     preparation: ing.preparation || null,
+                    order: ing.order ?? ingIndex,
                   })),
                 },
               })),
@@ -329,6 +332,7 @@ export async function updateRecipe(data: UpdateRecipeInput) {
                 include: {
                   ingredient: true,
                 },
+                orderBy: { order: 'asc' },
               },
             },
           },
@@ -554,6 +558,7 @@ export async function getRecipeById(id: string) {
                   },
                 },
               },
+              orderBy: { order: 'asc' },
             },
           },
           orderBy: {
