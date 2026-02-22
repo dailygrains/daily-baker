@@ -5,6 +5,7 @@ import { getCurrentUser } from '@/lib/clerk';
 import { revalidatePath } from 'next/cache';
 import { randomBytes } from 'crypto';
 import { createActivityLog } from './activity-log';
+import { sendUserInvitation } from '@/lib/ses';
 
 export async function createInvitation(data: {
   email: string;
@@ -94,6 +95,21 @@ export async function createInvitation(data: {
       },
       bakeryId: invitation.bakeryId,
     });
+
+    // Send invitation email
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://baker.dailygrains.co';
+    const inviteUrl = `${appUrl}/sign-up?token=${token}`;
+
+    try {
+      await sendUserInvitation({
+        toEmail: data.email,
+        toName: data.email.split('@')[0],
+        bakeryName: invitation.bakery?.name || 'Daily Baker',
+        inviteUrl,
+      });
+    } catch (emailError) {
+      console.error('Failed to send invitation email:', emailError);
+    }
 
     revalidatePath('/admin/invitations');
 
@@ -324,6 +340,21 @@ export async function resendInvitation(id: string) {
         role: true,
       },
     });
+
+    // Resend invitation email
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://baker.dailygrains.co';
+    const inviteUrl = `${appUrl}/sign-up?token=${invitation.token}`;
+
+    try {
+      await sendUserInvitation({
+        toEmail: invitation.email,
+        toName: invitation.email.split('@')[0],
+        bakeryName: updatedInvitation.bakery?.name || 'Daily Baker',
+        inviteUrl,
+      });
+    } catch (emailError) {
+      console.error('Failed to resend invitation email:', emailError);
+    }
 
     revalidatePath('/admin/invitations');
 
