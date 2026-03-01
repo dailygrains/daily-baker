@@ -32,9 +32,10 @@ export async function getCurrentUser() {
   const shouldBePlatformAdmin = !!(platformAdminEmail && userEmail.toLowerCase() === platformAdminEmail.toLowerCase());
 
   if (!user) {
-    // Create new user record
-    const createdUser = await prisma.user.create({
-      data: {
+    // Upsert to handle race conditions (concurrent requests for the same new user)
+    const upsertedUser = await prisma.user.upsert({
+      where: { clerkId: clerkUser.id },
+      create: {
         clerkId: clerkUser.id,
         email: userEmail,
         name: `${clerkUser.firstName ?? ''} ${clerkUser.lastName ?? ''}`.trim() || null,
@@ -42,10 +43,10 @@ export async function getCurrentUser() {
         isPlatformAdmin: shouldBePlatformAdmin,
         lastLoginAt: new Date(),
       },
-    });
-    // Re-fetch with includes to get consistent type
-    user = await prisma.user.findUniqueOrThrow({
-      where: { id: createdUser.id },
+      update: {
+        lastLoginAt: new Date(),
+        imageUrl: clerkUser.imageUrl,
+      },
       include: {
         bakeries: {
           include: {
@@ -55,6 +56,45 @@ export async function getCurrentUser() {
         role: true,
       },
     });
+    user = upsertedUser;
+
+    // Auto-accept pending invitation for this email
+    const invitation = await prisma.invitation.findFirst({
+      where: {
+        email: userEmail,
+        status: 'PENDING',
+        expiresAt: { gte: new Date() },
+      },
+    });
+
+    if (invitation) {
+      await prisma.invitation.update({
+        where: { id: invitation.id },
+        data: { status: 'ACCEPTED', acceptedAt: new Date() },
+      });
+
+      // Assign bakery and role from invitation
+      if (invitation.bakeryId) {
+        await prisma.userBakery.create({
+          data: { userId: user.id, bakeryId: invitation.bakeryId },
+        }).catch(() => {}); // Ignore if already assigned
+      }
+      if (invitation.roleId) {
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { roleId: invitation.roleId },
+        });
+      }
+
+      // Re-fetch user with updated relations
+      user = await prisma.user.findUniqueOrThrow({
+        where: { id: user.id },
+        include: {
+          bakeries: { include: { bakery: true } },
+          role: true,
+        },
+      });
+    }
   } else {
     // Update last login, sync imageUrl, and promote to platform admin if email matches
     const updateData: { lastLoginAt: Date; imageUrl: string | null; isPlatformAdmin?: boolean } = {
@@ -72,6 +112,43 @@ export async function getCurrentUser() {
       where: { id: user.id },
       data: updateData,
     });
+
+    // Check for unclaimed pending invitations (e.g., user created before invitation was processed)
+    const pendingInvitation = await prisma.invitation.findFirst({
+      where: {
+        email: userEmail,
+        status: 'PENDING',
+        expiresAt: { gte: new Date() },
+      },
+    });
+
+    if (pendingInvitation) {
+      await prisma.invitation.update({
+        where: { id: pendingInvitation.id },
+        data: { status: 'ACCEPTED', acceptedAt: new Date() },
+      });
+
+      if (pendingInvitation.bakeryId) {
+        await prisma.userBakery.create({
+          data: { userId: user.id, bakeryId: pendingInvitation.bakeryId },
+        }).catch(() => {});
+      }
+      if (pendingInvitation.roleId && !user.roleId) {
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { roleId: pendingInvitation.roleId },
+        });
+      }
+
+      // Re-fetch user with updated relations
+      user = await prisma.user.findUniqueOrThrow({
+        where: { id: user.id },
+        include: {
+          bakeries: { include: { bakery: true } },
+          role: true,
+        },
+      });
+    }
   }
 
   // Transform user object to add convenience properties for backward compatibility

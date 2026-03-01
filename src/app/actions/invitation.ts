@@ -224,6 +224,47 @@ export async function revokeInvitation(id: string) {
   }
 }
 
+export async function deleteInvitation(id: string) {
+  try {
+    const currentUser = await getCurrentUser();
+
+    if (!currentUser?.isPlatformAdmin) {
+      return {
+        success: false,
+        error: 'Unauthorized',
+      };
+    }
+
+    const invitation = await db.invitation.delete({
+      where: { id },
+    });
+
+    // Log the activity
+    await createActivityLog({
+      userId: currentUser.id!,
+      action: 'DELETE',
+      entityType: 'invitation',
+      entityId: id,
+      entityName: invitation.email,
+      description: `Deleted invitation for ${invitation.email}`,
+      metadata: { email: invitation.email },
+      bakeryId: invitation.bakeryId,
+    });
+
+    revalidatePath('/admin/invitations');
+
+    return {
+      success: true,
+    };
+  } catch (error) {
+    console.error('Error deleting invitation:', error);
+    return {
+      success: false,
+      error: 'Failed to delete invitation',
+    };
+  }
+}
+
 export async function getInvitationByEmail(email: string) {
   try {
     const invitation = await db.invitation.findFirst({

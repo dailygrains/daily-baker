@@ -2,9 +2,10 @@ import { getCurrentUser } from '@/lib/clerk';
 import { SetPageHeader } from '@/components/layout/SetPageHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { redirect } from 'next/navigation';
-import { getAllInvitations, revokeInvitation } from '@/app/actions/invitation';
-import { Mail, Plus, Copy, X } from 'lucide-react';
+import { getAllInvitations, revokeInvitation, deleteInvitation } from '@/app/actions/invitation';
+import { Mail, Plus, X, Trash2 } from 'lucide-react';
 import Link from 'next/link';
+import { CopyInvitationLinkButton } from './CopyInvitationLinkButton';
 
 export default async function InvitationsPage() {
   const user = await getCurrentUser();
@@ -40,20 +41,6 @@ export default async function InvitationsPage() {
   const expiredInvitations = invitations.filter((inv) =>
     inv.status === 'PENDING' && new Date(inv.expiresAt) < new Date()
   );
-
-  function getInvitationUrl(token: string) {
-    if (typeof window !== 'undefined') {
-      return `${window.location.origin}/accept-invitation?token=${token}`;
-    }
-    return `/accept-invitation?token=${token}`;
-  }
-
-  async function copyInvitationLink(token: string) {
-    if (typeof window !== 'undefined') {
-      const url = getInvitationUrl(token);
-      await navigator.clipboard.writeText(url);
-    }
-  }
 
   return (
     
@@ -159,13 +146,7 @@ export default async function InvitationsPage() {
                         <div className="flex gap-2 justify-end">
                           {invitation.status === 'PENDING' && !isExpired && (
                             <>
-                              <button
-                                onClick={() => copyInvitationLink(invitation.token)}
-                                className="btn btn-sm btn-ghost"
-                                title="Copy invitation link"
-                              >
-                                <Copy className="h-4 w-4" />
-                              </button>
+                              <CopyInvitationLinkButton token={invitation.token} />
                               <form action={async () => {
                                 'use server';
                                 await revokeInvitation(invitation.id);
@@ -180,6 +161,18 @@ export default async function InvitationsPage() {
                               </form>
                             </>
                           )}
+                          <form action={async () => {
+                            'use server';
+                            await deleteInvitation(invitation.id);
+                          }}>
+                            <button
+                              type="submit"
+                              className="btn btn-sm btn-ghost text-error"
+                              title="Delete invitation"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </form>
                         </div>
                       </td>
                     </tr>
