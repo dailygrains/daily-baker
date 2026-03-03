@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Geist, Geist_Mono } from "next/font/google";
+import { VercelToolbar } from "@vercel/toolbar/next";
 import { ToastProvider } from "@/contexts/ToastContext";
 import { HeaderProvider } from "@/contexts/HeaderContext";
 import "./globals.css";
@@ -36,6 +37,7 @@ export default function RootLayout({
               {children}
             </HeaderProvider>
           </ToastProvider>
+          {process.env.NODE_ENV === 'development' && <VercelToolbar />}
         </body>
       </html>
     </ClerkProvider>

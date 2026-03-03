@@ -56,6 +56,29 @@ Server actions (`src/app/actions/*.ts`) are the primary mutation layer. They fol
 - Decimal fields use `@db.Decimal(x, y)` — handle with Prisma's `Decimal` type
 - Server actions use `'use server'` directive and return `{ success, data?, error? }` pattern
 
+### Form Conventions
+All forms follow a consistent pattern. Reference `EquipmentForm.tsx` or `TagForm.tsx` as canonical examples.
+
+**Structure:**
+- Form wrapper: `<form className="space-y-8">`
+- Sections: `<div className="space-y-0">` with `<h2 className="text-xl font-semibold">` header
+- Fields: `<fieldset className="fieldset">` + `<legend className="fieldset-legend">Name *</legend>` (not `form-control`/`label`/`label-text`)
+- All inputs/selects get `w-full` class
+- Side-by-side fields: `grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6`
+- Helper text: `<label className="label"><span className="label-text-alt">...</span></label>` below inputs
+
+**State & submission:**
+- Use `useFormSubmit` hook from `@/hooks/useFormSubmit` — not manual `isSubmitting`/`error` state
+- Errors display via toast only (from `useFormSubmit`) — no inline error alerts in the form body
+
+**Action buttons:**
+- Action buttons go in the sticky navbar, not at the bottom of the form
+- Each form has a `*NewPageContent` or `*EditPageContent` client wrapper that:
+  - Manages `formRef` and `isSaving` state
+  - Passes `onFormRefChange`, `onSavingChange`, `showBottomActions={false}` to the form
+  - Renders `<SetPageHeader sticky actions={...} />` with save/create button that calls `formRef.requestSubmit()`
+- Forms keep `showBottomActions` prop (default `true`) as fallback but page content wrappers set it to `false`
+
 ### Component Organization
 - `src/components/ui/` — shared UI primitives
 - `src/components/layout/` — app shell (AppLayout with sidebar nav)

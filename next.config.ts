@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 import { withSentryConfig } from '@sentry/nextjs';
+import { withVercelToolbar } from '@vercel/toolbar/plugins/next';
 
 const nextConfig: NextConfig = {
   transpilePackages: ['@mdxeditor/editor'],
@@ -49,6 +50,8 @@ const sentryConfig = {
   automaticVercelMonitors: true,
 };
 
+const configWithToolbar = withVercelToolbar()(nextConfig);
+
 export default process.env.NEXT_PUBLIC_SENTRY_DSN
-  ? withSentryConfig(nextConfig, sentryConfig)
-  : nextConfig;
+  ? withSentryConfig(configWithToolbar, sentryConfig)
+  : configWithToolbar;
