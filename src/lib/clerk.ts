@@ -173,12 +173,6 @@ export async function getCurrentUser() {
   let currentBakeryData: (typeof user.bakeries[0]['bakery']) | undefined = undefined;
   let currentBakeryIdValue: string | undefined = undefined;
 
-  // Auto-select for regular users with exactly one bakery
-  if (!user.isPlatformAdmin && user.bakeries.length === 1 && currentBakery && !selectedBakeryId) {
-    currentBakeryData = currentBakery.bakery;
-    currentBakeryIdValue = currentBakery.bakeryId;
-  }
-
   // Override with cookie selection if present
   if (selectedBakeryId) {
     if (user.isPlatformAdmin) {
@@ -199,6 +193,12 @@ export async function getCurrentUser() {
         currentBakeryIdValue = selected.bakeryId;
       }
     }
+  }
+
+  // Fall back to auto-select if no valid bakery was resolved (no cookie, or stale cookie)
+  if (!currentBakeryIdValue && !user.isPlatformAdmin && currentBakery) {
+    currentBakeryData = currentBakery.bakery;
+    currentBakeryIdValue = currentBakery.bakeryId;
   }
 
   // Log warning if user has multiple bakeries (helps identify when migration is needed)
