@@ -615,7 +615,10 @@ export async function getRecipeById(id: string) {
                 notes: lot.notes,
               })),
             };
-            costPerUnit = getWeightedAverageCost(inventoryForCalc);
+            const density = ing.ingredient.densityGramsPerMl
+              ? Number(ing.ingredient.densityGramsPerMl)
+              : null;
+            costPerUnit = getWeightedAverageCost(inventoryForCalc, density);
           }
 
           return {

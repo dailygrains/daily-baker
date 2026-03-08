@@ -37,7 +37,7 @@ export interface InventoryWithLots {
 /**
  * Calculate total quantity in display units from all lots with remaining inventory
  */
-export function getTotalQuantity(inventory: InventoryWithLots): number {
+export function getTotalQuantity(inventory: InventoryWithLots, densityGramsPerMl?: number | null): number {
   return inventory.lots.reduce((sum, lot) => {
     const remaining = Number(lot.remainingQty);
     if (remaining <= 0) return sum;
@@ -45,7 +45,8 @@ export function getTotalQuantity(inventory: InventoryWithLots): number {
     const inDisplayUnit = convertQuantity(
       remaining,
       lot.purchaseUnit,
-      inventory.displayUnit
+      inventory.displayUnit,
+      densityGramsPerMl
     );
 
     return sum + (inDisplayUnit ?? 0);
@@ -57,7 +58,7 @@ export function getTotalQuantity(inventory: InventoryWithLots): number {
  * Cost = SUM(remainingQty * costPerUnit) / SUM(remainingQty)
  * All quantities converted to display unit for consistent calculation
  */
-export function getWeightedAverageCost(inventory: InventoryWithLots): number {
+export function getWeightedAverageCost(inventory: InventoryWithLots, densityGramsPerMl?: number | null): number {
   let totalValue = 0;
   let totalQty = 0;
 
@@ -69,7 +70,8 @@ export function getWeightedAverageCost(inventory: InventoryWithLots): number {
     const qtyInDisplay = convertQuantity(
       remaining,
       lot.purchaseUnit,
-      inventory.displayUnit
+      inventory.displayUnit,
+      densityGramsPerMl
     );
 
     if (qtyInDisplay === null || qtyInDisplay === 0) continue;
@@ -78,7 +80,8 @@ export function getWeightedAverageCost(inventory: InventoryWithLots): number {
     // If lot is in lbs at $5/lb and display is kg, we need cost per kg
     const conversionFactor = getConversionFactorSync(
       lot.purchaseUnit,
-      inventory.displayUnit
+      inventory.displayUnit,
+      densityGramsPerMl
     );
 
     if (conversionFactor === null || conversionFactor === 0) continue;
