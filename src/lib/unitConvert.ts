@@ -372,8 +372,13 @@ export function scaleUnitCost(
   unit: string,
   densityGramsPerMl?: number | null
 ): { cost: number; unit: string } {
-  // If already readable (>= $0.01), keep as-is
-  if (costPerUnit >= 0.01) {
+  // Small units that should always try to scale up
+  const smallUnits = new Set(['g', 'mg', 'ml', 'mL', 'tsp']);
+  const normalized = normalizeUnit(unit);
+  const isSmallUnit = normalized ? smallUnits.has(normalized) : false;
+
+  // If already readable and not a small unit, keep as-is
+  if (costPerUnit >= 0.01 && !isSmallUnit) {
     return { cost: costPerUnit, unit };
   }
 
