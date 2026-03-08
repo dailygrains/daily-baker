@@ -372,25 +372,23 @@ export function scaleUnitCost(
   unit: string,
   densityGramsPerMl?: number | null
 ): { cost: number; unit: string } {
-  // Small units that should always try to scale up
-  const smallUnits = new Set(['g', 'mg', 'ml', 'mL', 'tsp']);
   const normalized = normalizeUnit(unit);
-  const isSmallUnit = normalized ? smallUnits.has(normalized) : false;
 
-  // If already readable and not a small unit, keep as-is
-  if (costPerUnit >= 0.01 && !isSmallUnit) {
+  // If already readable ($0.01+), keep as-is
+  if (costPerUnit >= 0.01) {
     return { cost: costPerUnit, unit };
   }
 
-  const category = getUnitCategory(unit);
-
-  // Scale-up candidates ordered by preference (most familiar first)
-  const scaleTargets: Record<string, string[]> = {
-    mass: ['lb', 'kg', 'oz'],
-    volume: ['cup', 'L', 'fl-oz'],
+  // Scale to the next larger unit in the same system
+  // Metric stays metric, imperial stays imperial
+  const scaleMap: Record<string, string[]> = {
+    'mg': ['g', 'kg'],
+    'g': ['kg'],
+    'ml': ['l'],
+    'tsp': ['Tbs', 'cup'],
   };
 
-  const targets = category ? scaleTargets[category] : null;
+  const targets = normalized ? scaleMap[normalized] : null;
   if (!targets) {
     return { cost: costPerUnit, unit };
   }
