@@ -32,7 +32,8 @@ Production URL: https://baker.dailygrains.co
 - `/sign-in`, `/sign-up` — Clerk auth pages (public)
 - `/dashboard/*` — main app (requires auth + bakery association)
 - `/admin/*` — platform admin panel (requires `isPlatformAdmin`)
-- `/api/*` — API routes (bakeries, tags, upload, users, vendors)
+- `/api/*` — internal API routes (bakeries, tags, upload, users, vendors)
+- `/api/v1/*` — public REST API (see REST API section below)
 
 ### Data Flow Pattern
 Server actions (`src/app/actions/*.ts`) are the primary mutation layer. They follow this pattern:
@@ -44,7 +45,7 @@ Server actions (`src/app/actions/*.ts`) are the primary mutation layer. They fol
 
 ### Auth & Multi-Tenancy
 - `src/lib/clerk.ts` → `getCurrentUser()` is the central auth function. It syncs Clerk users to the DB, auto-accepts pending invitations, handles bakery selection via cookie, and returns an enriched user object with `bakeryId`, `bakery`, and `allBakeries`.
-- `src/middleware.ts` → Clerk middleware protects all routes except `/`, `/sign-in`, `/sign-up`, and `/api/webhooks`.
+- `src/proxy.ts` → Clerk middleware protects all routes except `/`, `/sign-in`, `/sign-up`, `/api/webhooks`, and `/api/v1/*` (REST API handles its own auth).
 - `src/lib/permissions.ts` → Role-based permission system. Platform admins bypass all checks. Bakery-level permissions stored as JSON in the `Role` model.
 - Multi-bakery: schema supports many-to-many via `UserBakery`, but UI currently treats users as single-bakery. Platform admins can switch bakeries via cookie.
 
@@ -88,6 +89,27 @@ All forms follow a consistent pattern. Reference `EquipmentForm.tsx` or `TagForm
 
 ### Inventory System
 FIFO lot-based tracking. `Inventory` is a config record per ingredient, `InventoryLot` tracks individual purchases with remaining quantities. `InventoryUsage` records consumption tied to production sheets. Weighted average costing flows up to recipe cost calculation.
+
+### REST API (`/api/v1/`)
+Public REST API for programmatic access to bakery data. All bakery-scoped endpoints automatically filter by the authenticated user's bakery.
+
+**Authentication** — dual-mode via `resolveApiAuth()` in `src/lib/api/auth.ts`:
+- **API keys**: `Authorization: Bearer dbk_...` — keys are bcrypt-hashed in the `ApiKey` model, matched by prefix lookup. Scopes: `read`, `write`.
+- **Clerk JWT**: `Authorization: Bearer <clerk-session-token>` — validated via Clerk's `verifyToken()`.
+
+**Route factory** — `createCrudRoutes()` in `src/lib/api/create-crud-routes.ts` generates GET (list + single), POST, PUT, DELETE handlers for a Prisma model. Config options: `bakeryScoped`, `searchFields`, `allowedIncludes`, `validators`, `readOnly`, `adminOnly`, lifecycle hooks (`beforeCreate`, `afterCreate`, `beforeDelete`).
+
+**Route files** — `src/app/api/v1/{model}/route.ts` (collection) and `src/app/api/v1/{model}/[id]/route.ts` (single record). 14 models: equipment, ingredients, inventory, inventory-lots, production-sheets, production-sheet-items, recipes, recipe-sections, recipe-section-ingredients, roles, tags, users, user-bakeries, vendors.
+
+**Response shape**: `{ success: boolean, data?: T, meta?: { page, limit, total, totalPages }, error?: string }`
+
+**Pagination**: `?page=&limit=&search=&sort=&order=&include=` — parsed by `src/lib/api/pagination.ts`.
+
+**API documentation**:
+- OpenAPI 3.1 spec: `GET /api/v1/openapi.json` — auto-generated from route registry (`src/lib/api/route-registry.ts`) + Zod schemas via `toJSONSchema()`.
+- Swagger UI: `/api/v1/docs` — interactive API explorer using `swagger-ui-react`.
+
+**API key management UI**: `/dashboard/settings/api-keys/` — create keys (with name, scopes, optional expiration), copy on reveal, revoke. Component: `src/components/settings/ApiKeyManager.tsx`, server actions: `src/app/actions/apiKey.ts`.
 
 ## Deployment (Vercel)
 - Project: `daily-baker` under `pbonnevilles-projects`
