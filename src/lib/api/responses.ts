@@ -5,10 +5,9 @@ export function apiSuccess(data: unknown, meta?: Record<string, unknown>) {
 }
 
 export function apiError(message: string, status: number, details?: unknown) {
-  return NextResponse.json(
-    { success: false, error: message, ...(details && { details }) },
-    { status }
-  );
+  const body: Record<string, unknown> = { success: false, error: message };
+  if (details !== undefined) body.details = details;
+  return NextResponse.json(body, { status });
 }
 
 export function api401() {
