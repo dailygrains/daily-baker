@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { MarkdownViewer } from '@/components/ui/MarkdownViewer';
-import { calculateIngredientCost, formatUnit } from '@/lib/unitConvert';
+import { calculateIngredientCost, formatUnit, scaleUnitCost } from '@/lib/unitConvert';
 import { formatQuantity, formatCurrency } from '@/lib/format';
 
 interface RecipeSection {
@@ -138,8 +138,8 @@ export function RecipeDetailContent({
                             {totalIngredientCost !== null && quantity > 0
                               ? (() => {
                                   const costPerRecipeUnit = totalIngredientCost / quantity;
-                                  const decimals = costPerRecipeUnit < 0.01 ? 4 : costPerRecipeUnit < 0.1 ? 3 : 2;
-                                  return `${formatCurrency(costPerRecipeUnit, decimals)}/${formatUnit(recipeUnit)}`;
+                                  const scaled = scaleUnitCost(costPerRecipeUnit, recipeUnit, ing.ingredient.densityGramsPerMl);
+                                  return `${formatCurrency(scaled.cost)}/${formatUnit(scaled.unit)}`;
                                 })()
                               : 'N/A'}
                           </td>

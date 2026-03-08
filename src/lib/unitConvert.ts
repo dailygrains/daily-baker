@@ -363,6 +363,47 @@ export function formatUnit(unit: string): string {
 }
 
 /**
+ * Scale a per-unit cost to a more readable unit.
+ * E.g., $0.0018/g → $8.10/lb, $0.31/tbsp stays as-is.
+ * Returns { cost, unit } with the best display unit.
+ */
+export function scaleUnitCost(
+  costPerUnit: number,
+  unit: string,
+  densityGramsPerMl?: number | null
+): { cost: number; unit: string } {
+  // If already readable (>= $0.01), keep as-is
+  if (costPerUnit >= 0.01) {
+    return { cost: costPerUnit, unit };
+  }
+
+  const category = getUnitCategory(unit);
+
+  // Scale-up candidates ordered by preference (most familiar first)
+  const scaleTargets: Record<string, string[]> = {
+    mass: ['lb', 'kg', 'oz'],
+    volume: ['cup', 'L', 'fl-oz'],
+  };
+
+  const targets = category ? scaleTargets[category] : null;
+  if (!targets) {
+    return { cost: costPerUnit, unit };
+  }
+
+  for (const target of targets) {
+    const factor = getConversionFactorSync(target, unit, densityGramsPerMl);
+    if (factor !== null && factor > 0) {
+      const scaledCost = costPerUnit * factor;
+      if (scaledCost >= 0.01) {
+        return { cost: scaledCost, unit: target };
+      }
+    }
+  }
+
+  return { cost: costPerUnit, unit };
+}
+
+/**
  * Get all available units for a category
  */
 export function getUnitsForCategory(category: 'mass' | 'volume'): string[] {
