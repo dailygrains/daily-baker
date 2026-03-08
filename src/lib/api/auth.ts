@@ -37,6 +37,8 @@ async function resolveApiKeyAuth(token: string): Promise<ApiAuthContext | null> 
   // Find by prefix (first 12 chars: "dbk_" + 8 char id)
   const prefix = token.slice(0, 12);
 
+  console.log('[API Auth] Looking up key with prefix:', prefix);
+
   const apiKey = await db.apiKey.findFirst({
     where: {
       prefix,
@@ -44,11 +46,20 @@ async function resolveApiKeyAuth(token: string): Promise<ApiAuthContext | null> 
     },
   });
 
-  if (!apiKey) return null;
+  if (!apiKey) {
+    console.log('[API Auth] No key found for prefix:', prefix);
+    // Debug: list all keys
+    const allKeys = await db.apiKey.findMany({ select: { prefix: true, revokedAt: true } });
+    console.log('[API Auth] All keys in DB:', JSON.stringify(allKeys));
+    return null;
+  }
 
   // Verify full key hash
   const valid = await bcrypt.compare(token, apiKey.keyHash);
-  if (!valid) return null;
+  if (!valid) {
+    console.log('[API Auth] bcrypt.compare failed for key:', apiKey.name);
+    return null;
+  }
 
   // Check expiration
   if (apiKey.expiresAt && apiKey.expiresAt < new Date()) return null;
