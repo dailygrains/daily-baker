@@ -45,6 +45,7 @@ model Bakery {
   activityLogs ActivityLog[]
   tagTypes     TagType[]
   tags         Tag[]
+  apiKeys      ApiKey[]
 
   @@index([isActive])
   @@map("bakeries")
@@ -569,5 +570,28 @@ model EntityTag {
   @@index([tagId])
   @@index([entityType, entityId])
   @@map("entity_tags")
+  @@schema("baker")
+}
+
+// ============================================================================
+// API KEY SYSTEM
+// ============================================================================
+
+model ApiKey {
+  id         String    @id @default(cuid())
+  bakeryId   String
+  bakery     Bakery    @relation(fields: [bakeryId], references: [id], onDelete: Cascade)
+  name       String
+  keyHash    String    @unique
+  prefix     String
+  scopes     Json      @default("[]")
+  lastUsedAt DateTime?
+  expiresAt  DateTime?
+  createdAt  DateTime  @default(now())
+  revokedAt  DateTime?
+
+  @@index([bakeryId])
+  @@index([prefix])
+  @@map("api_keys")
   @@schema("baker")
 }
