@@ -69,6 +69,7 @@ function buildSearchWhere(search: string | null, fields: string[] | undefined) {
 }
 
 export function createCrudRoutes(config: CrudRouteConfig) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const prismaModel = (db as Record<string, any>)[config.model];
 
   // --- Collection handlers (GET list, POST create) ---
@@ -206,6 +207,7 @@ export function createCrudRoutes(config: CrudRouteConfig) {
     }
 
     // Remove id from update data
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { id: _id, ...updateData } = body;
     const record = await prismaModel.update({ where: { id }, data: updateData });
 

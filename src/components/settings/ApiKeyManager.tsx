@@ -29,8 +29,6 @@ export function ApiKeyManager({ bakeryId, initialKeys }: ApiKeyManagerProps) {
   const addToast = useToastStore((state) => state.addToast);
 
   const [keys, setKeys] = useState<ApiKeyData[]>(initialKeys);
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [isKeyRevealModalOpen, setIsKeyRevealModalOpen] = useState(false);
   const [revokeTarget, setRevokeTarget] = useState<ApiKeyData | null>(null);
   const [createdRawKey, setCreatedRawKey] = useState<string | null>(null);
   const [createdKeyName, setCreatedKeyName] = useState<string>('');
@@ -50,23 +48,19 @@ export function ApiKeyManager({ bakeryId, initialKeys }: ApiKeyManagerProps) {
     setNewKeyName('');
     setNewKeyScopes(['read', 'write']);
     setNewKeyExpiration('');
-    setIsCreateModalOpen(true);
     createModalRef.current?.showModal();
   }, []);
 
   const closeCreateModal = useCallback(() => {
-    setIsCreateModalOpen(false);
     createModalRef.current?.close();
   }, []);
 
   const openRevealModal = useCallback(() => {
     setHasCopied(false);
-    setIsKeyRevealModalOpen(true);
     revealModalRef.current?.showModal();
   }, []);
 
   const closeRevealModal = useCallback(() => {
-    setIsKeyRevealModalOpen(false);
     setCreatedRawKey(null);
     setCreatedKeyName('');
     revealModalRef.current?.close();
