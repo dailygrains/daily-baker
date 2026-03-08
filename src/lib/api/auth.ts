@@ -17,13 +17,15 @@ export interface ApiAuthContext {
  */
 export async function resolveApiAuth(req: NextRequest): Promise<ApiAuthContext | null> {
   const authHeader = req.headers.get('authorization');
+  console.warn('[API Auth] authHeader:', authHeader ? `${authHeader.slice(0, 20)}...` : 'none');
 
   if (!authHeader?.startsWith('Bearer ')) {
-    // Fall back to Clerk cookie-based auth (browser requests)
+    console.warn('[API Auth] No Bearer header, falling back to Clerk');
     return resolveClerkAuth();
   }
 
   const token = authHeader.slice(7);
+  console.warn('[API Auth] Token prefix:', token.slice(0, 12));
 
   if (token.startsWith('dbk_')) {
     return resolveApiKeyAuth(token);
