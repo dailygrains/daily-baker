@@ -41,12 +41,17 @@ async function resolveApiKeyAuth(token: string): Promise<ApiAuthContext | null> 
 
   let apiKey;
   try {
+    // Debug: count all keys to verify DB connectivity
+    const count = await db.apiKey.count();
+    console.warn('[API Auth] Total keys in DB:', count);
+
     apiKey = await db.apiKey.findFirst({
       where: {
         prefix,
         revokedAt: null,
       },
     });
+    console.warn('[API Auth] findFirst result:', apiKey ? apiKey.name : 'null');
   } catch (err) {
     console.error('[API Auth] DB query failed:', err);
     return null;
