@@ -135,7 +135,13 @@ export function RecipeDetailContent({
                             </td>
                           )}
                           <td className="whitespace-nowrap">
-                            {formatCurrency(unitCost)}/{formatUnit(ingredientUnit)}
+                            {totalIngredientCost !== null && quantity > 0
+                              ? (() => {
+                                  const costPerRecipeUnit = totalIngredientCost / quantity;
+                                  const decimals = costPerRecipeUnit < 0.01 ? 4 : costPerRecipeUnit < 0.1 ? 3 : 2;
+                                  return `${formatCurrency(costPerRecipeUnit, decimals)}/${formatUnit(recipeUnit)}`;
+                                })()
+                              : 'N/A'}
                           </td>
                           <td className="font-semibold whitespace-nowrap">
                             {totalIngredientCost !== null
