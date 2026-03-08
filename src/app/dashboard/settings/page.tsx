@@ -3,6 +3,7 @@ import { SetPageHeader } from '@/components/layout/SetPageHeader';
 import { redirect } from 'next/navigation';
 import { getBakeryById } from '@/app/actions/bakery';
 import { BakeryForm } from '@/components/bakery/BakeryForm';
+import Link from 'next/link';
 
 export default async function SettingsPage() {
   const user = await getCurrentUser();
@@ -87,6 +88,29 @@ export default async function SettingsPage() {
       </div>
 
       <BakeryForm bakery={bakery} mode="edit" redirectPath="/dashboard/settings" />
+
+      <div className="divider mt-10" />
+
+      <div className="space-y-0">
+        <h2 className="text-xl font-semibold">Developer</h2>
+
+        <Link
+          href="/dashboard/settings/api-keys"
+          className="card bg-base-200 hover:bg-base-300 transition-colors cursor-pointer mt-4"
+        >
+          <div className="card-body flex-row items-center gap-4 py-4">
+            <div className="flex-1">
+              <h3 className="card-title text-base">API Keys</h3>
+              <p className="text-sm text-base-content/60">
+                Manage API keys for programmatic access to your bakery data
+              </p>
+            </div>
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-base-content/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </div>
+        </Link>
+      </div>
     </>
   );
 }
