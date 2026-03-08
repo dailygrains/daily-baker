@@ -124,6 +124,8 @@ Public REST API for programmatic access to bakery data. All bakery-scoped endpoi
 - Package manager: pnpm (specified in `packageManager` field), but scripts use `npm run`
 
 ## Gotchas
+- Clerk middleware processes ALL matched requests, including "public" routes — it parses Bearer tokens as JWTs and sets `x-clerk-auth-status: signed-out` for non-JWT tokens (like `dbk_*` API keys), but does NOT strip the Authorization header. Route handlers still receive the original header.
+- `prisma db execute` is for DDL only — it does NOT return SELECT query results (always prints "Script executed successfully")
 - Vercel CLI deploy shows no progress for ~2min — this is normal
 - Keep Next.js, React, and @clerk/nextjs versions in sync — peer dep conflicts are common
 - Prisma generates on `postinstall` — no separate step needed after `npm ci`

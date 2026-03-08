@@ -58,7 +58,7 @@ export function AddLotForm({
     ingredientId: preselectedIngredientId || '',
     quantity: '',
     unit: preselectedIngredient?.unit || '',
-    costPerUnit: '',
+    totalCost: '',
     expiresAt: '',
     vendorId: '',
     notes: '',
@@ -83,7 +83,7 @@ export function AddLotForm({
         ingredientId: formData.ingredientId,
         quantity: parseFloat(formData.quantity),
         unit: formData.unit,
-        costPerUnit: parseFloat(formData.costPerUnit),
+        totalCost: parseFloat(formData.totalCost),
         expiresAt: formData.expiresAt ? new Date(formData.expiresAt) : null,
         vendorId: formData.vendorId || null,
         notes: formData.notes || null,
@@ -185,7 +185,7 @@ export function AddLotForm({
           </div>
 
           <fieldset className="fieldset">
-            <legend className="fieldset-legend">Cost per Unit *</legend>
+            <legend className="fieldset-legend">Total Cost *</legend>
             <label className="input input-bordered w-full">
               <DollarSign className="h-4 w-4 opacity-50" />
               <input
@@ -193,15 +193,15 @@ export function AddLotForm({
                 step="0.01"
                 min="0"
                 className="grow"
-                value={formData.costPerUnit}
-                onChange={(e) => setFormData({ ...formData, costPerUnit: e.target.value })}
+                value={formData.totalCost}
+                onChange={(e) => setFormData({ ...formData, totalCost: e.target.value })}
                 required
                 placeholder="0.00"
               />
             </label>
             <label className="label">
               <span className="label-text-alt">
-                Price per {formData.unit || 'unit'} for this purchase
+                Total price paid for this purchase
               </span>
             </label>
           </fieldset>

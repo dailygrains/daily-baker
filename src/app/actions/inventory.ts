@@ -79,14 +79,17 @@ export async function addInventoryLot(data: AddInventoryLotInput) {
         });
       }
 
-      // Create lot
+      // Create lot — compute cost per unit from total cost
+      const costPerUnit = validatedData.quantity > 0
+        ? validatedData.totalCost / validatedData.quantity
+        : 0;
       const lot = await tx.inventoryLot.create({
         data: {
           inventoryId: inventory.id,
           purchaseQty: new Decimal(validatedData.quantity),
           remainingQty: new Decimal(validatedData.quantity),
           purchaseUnit: validatedData.unit,
-          costPerUnit: new Decimal(validatedData.costPerUnit),
+          costPerUnit: new Decimal(costPerUnit),
           expiresAt: validatedData.expiresAt,
           vendorId: validatedData.vendorId,
           notes: validatedData.notes,
@@ -106,13 +109,13 @@ export async function addInventoryLot(data: AddInventoryLotInput) {
       entityType: 'inventory_lot',
       entityId: result.id,
       entityName: `${ingredient.name} - ${validatedData.quantity} ${validatedData.unit}`,
-      description: `Added ${validatedData.quantity} ${validatedData.unit} of "${ingredient.name}" at $${validatedData.costPerUnit}/${validatedData.unit}`,
+      description: `Added ${validatedData.quantity} ${validatedData.unit} of "${ingredient.name}" — total cost $${validatedData.totalCost.toFixed(2)}`,
       metadata: {
         ingredientId: ingredient.id,
         lotId: result.id,
         quantity: validatedData.quantity,
         unit: validatedData.unit,
-        costPerUnit: validatedData.costPerUnit,
+        totalCost: validatedData.totalCost,
         vendorId: validatedData.vendorId,
       },
       bakeryId: ingredient.bakeryId,

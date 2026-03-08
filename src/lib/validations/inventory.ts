@@ -13,7 +13,7 @@ export const addInventoryLotSchema = z.object({
   ingredientId: z.string().cuid('Invalid ingredient ID'),
   quantity: z.number().positive('Quantity must be positive'),
   unit: z.string().min(1, 'Unit is required').max(20),
-  costPerUnit: z.number().nonnegative('Cost per unit cannot be negative'),
+  totalCost: z.number().nonnegative('Total cost cannot be negative'),
   expiresAt: z.date().optional().nullable(),
   vendorId: z.string().cuid('Invalid vendor ID').optional().nullable(),
   notes: z.string().max(2000, 'Notes too long').optional().nullable(),
