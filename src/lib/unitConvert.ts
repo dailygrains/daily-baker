@@ -374,13 +374,7 @@ export function scaleUnitCost(
 ): { cost: number; unit: string } {
   const normalized = normalizeUnit(unit);
 
-  // If already readable ($0.01+), keep as-is
-  if (costPerUnit >= 0.01) {
-    return { cost: costPerUnit, unit };
-  }
-
-  // Scale to the next larger unit in the same system
-  // Metric stays metric, imperial stays imperial
+  // Scale small units to their larger counterpart in the same system
   const scaleMap: Record<string, string[]> = {
     'mg': ['g', 'kg'],
     'g': ['kg'],
@@ -389,6 +383,8 @@ export function scaleUnitCost(
   };
 
   const targets = normalized ? scaleMap[normalized] : null;
+
+  // If unit has no scale targets, keep as-is
   if (!targets) {
     return { cost: costPerUnit, unit };
   }
