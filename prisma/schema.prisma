@@ -215,8 +215,9 @@ model Ingredient {
   bakeryId  String
   bakery    Bakery   @relation(fields: [bakeryId], references: [id], onDelete: Cascade)
   name      String
-  unit      String // Reference unit for recipes (e.g., "g", "ml", "kg")
-  createdAt DateTime @default(now())
+  unit              String // Reference unit for recipes (e.g., "g", "ml", "kg")
+  densityGramsPerMl Decimal? @db.Decimal(10, 4) @map("density_grams_per_ml")
+  createdAt         DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // Relations

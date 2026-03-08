@@ -23,6 +23,7 @@ interface IngredientEditPageContentProps {
     unit: string;
     costPerUnit: number | string | Decimal;
     lowStockThreshold: number | null;
+    densityGramsPerMl: number | string | Decimal | null;
     vendors: Array<{
       vendor: Vendor;
     }>;

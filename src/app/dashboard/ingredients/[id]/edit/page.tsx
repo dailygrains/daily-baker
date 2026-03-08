@@ -36,6 +36,7 @@ export default async function EditIngredientPage({
     currentQty: ingredient.currentQty.toString(),
     costPerUnit: ingredient.costPerUnit.toString(),
     lowStockThreshold: ingredient.lowStockThreshold ?? null,
+    densityGramsPerMl: ingredient.densityGramsPerMl ? Number(ingredient.densityGramsPerMl) : null,
     _count: {
       recipeUses: ingredient._count?.recipeUses ?? 0,
       lots: lotCount,

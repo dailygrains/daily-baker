@@ -19,6 +19,7 @@ interface RecipeSection {
       name: string;
       unit: string;
       costPerUnit: number;
+      densityGramsPerMl?: number | null;
     };
   }>;
 }
@@ -95,7 +96,8 @@ export function RecipeDetailContent({
                         quantity,
                         recipeUnit,
                         unitCost,
-                        ingredientUnit
+                        ingredientUnit,
+                        ing.ingredient.densityGramsPerMl ?? undefined
                       );
 
                       // Baker's math percentage

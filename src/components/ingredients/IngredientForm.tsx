@@ -36,6 +36,7 @@ interface IngredientFormProps {
     unit: string;
     costPerUnit: number | string | Decimal;
     lowStockThreshold: number | null;
+    densityGramsPerMl: number | string | Decimal | null;
     vendors: Array<{
       vendor: Vendor;
     }>;
@@ -59,6 +60,35 @@ export function IngredientForm({
 }: IngredientFormProps) {
   const router = useRouter();
   const showToast = useToastStore((state) => state.addToast);
+  const VOLUME_UNITS = [
+    { value: 'cup', label: 'Cup', mlFactor: 236.588 },
+    { value: 'tbsp', label: 'Tablespoon', mlFactor: 14.787 },
+    { value: 'tsp', label: 'Teaspoon', mlFactor: 4.929 },
+    { value: 'fl-oz', label: 'Fluid Ounce', mlFactor: 29.574 },
+    { value: 'ml', label: 'Milliliter', mlFactor: 1 },
+    { value: 'l', label: 'Liter', mlFactor: 1000 },
+  ];
+
+  const storedDensity = ingredient?.densityGramsPerMl
+    ? Number(ingredient.densityGramsPerMl)
+    : null;
+
+  const getInitialDensityDisplay = () => {
+    if (!storedDensity) return { volumeUnit: 'cup', weightGrams: '' };
+    const cupMl = 236.588;
+    return {
+      volumeUnit: 'cup',
+      weightGrams: String(Math.round(storedDensity * cupMl * 100) / 100),
+    };
+  };
+
+  const [densityVolumeUnit, setDensityVolumeUnit] = useState(
+    getInitialDensityDisplay().volumeUnit
+  );
+  const [densityWeightGrams, setDensityWeightGrams] = useState(
+    getInitialDensityDisplay().weightGrams
+  );
+
   const formRef = useRef<HTMLFormElement>(null);
   const [assignedVendors, setAssignedVendors] = useState<Vendor[]>(
     ingredient?.vendors?.map((iv) => iv.vendor) ?? []
@@ -79,6 +109,7 @@ export function IngredientForm({
     unit: ingredient?.unit ?? '',
     costPerUnit: ingredient ? Number(ingredient.costPerUnit) : 0,
     lowStockThreshold: ingredient?.lowStockThreshold ?? null as number | null,
+    densityGramsPerMl: storedDensity,
   });
 
   // Notify parent of form ref changes
@@ -305,6 +336,61 @@ export function IngredientForm({
             </label>
           </fieldset>
         )}
+      </div>
+
+      <div className="space-y-0">
+        <h2 className="text-xl font-semibold">Density (Volume ↔ Weight)</h2>
+
+        <fieldset className="fieldset">
+          <legend className="fieldset-legend">Volume-to-Weight Equivalence</legend>
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-medium whitespace-nowrap">1</span>
+            <select
+              className="select select-bordered"
+              value={densityVolumeUnit}
+              onChange={(e) => {
+                const newUnit = e.target.value;
+                setDensityVolumeUnit(newUnit);
+                if (formData.densityGramsPerMl) {
+                  const mlFactor = VOLUME_UNITS.find(u => u.value === newUnit)?.mlFactor ?? 1;
+                  const newGrams = formData.densityGramsPerMl * mlFactor;
+                  setDensityWeightGrams(String(Math.round(newGrams * 100) / 100));
+                }
+              }}
+            >
+              {VOLUME_UNITS.map(u => (
+                <option key={u.value} value={u.value}>{u.label}</option>
+              ))}
+            </select>
+            <span className="text-sm font-medium">=</span>
+            <input
+              type="number"
+              step="0.01"
+              min="0"
+              className="input input-bordered w-32"
+              value={densityWeightGrams}
+              onChange={(e) => {
+                const grams = e.target.value;
+                setDensityWeightGrams(grams);
+                setHasUnsavedChanges(true);
+                const gramsNum = parseFloat(grams);
+                if (grams === '' || isNaN(gramsNum) || gramsNum <= 0) {
+                  setFormData(prev => ({ ...prev, densityGramsPerMl: null }));
+                } else {
+                  const mlFactor = VOLUME_UNITS.find(u => u.value === densityVolumeUnit)?.mlFactor ?? 1;
+                  setFormData(prev => ({ ...prev, densityGramsPerMl: gramsNum / mlFactor }));
+                }
+              }}
+              placeholder="e.g., 128"
+            />
+            <span className="text-sm font-medium">grams</span>
+          </div>
+          <label className="label">
+            <span className="label-text-alt">
+              Optional. Enables accurate cost and weight calculations when recipes use different units than inventory.
+            </span>
+          </label>
+        </fieldset>
       </div>
 
       {ingredient && (

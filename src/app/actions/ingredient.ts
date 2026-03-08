@@ -96,6 +96,7 @@ export async function createIngredient(data: CreateIngredientInput) {
         bakeryId: validatedData.bakeryId,
         name: validatedData.name,
         unit: validatedData.unit,
+        densityGramsPerMl: validatedData.densityGramsPerMl ?? null,
       },
       include: {
         vendors: {

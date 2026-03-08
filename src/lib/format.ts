@@ -27,3 +27,15 @@ export function formatQuantity(value: number, maxDecimals: number = 3): string {
 export function formatCurrency(value: number, decimals: number = 2): string {
   return `$${value.toFixed(decimals)}`;
 }
+
+/**
+ * Format a weight in grams to a human-readable string.
+ * Uses g for values under 1000, kg for 1000+.
+ */
+export function formatWeight(grams: number): string {
+  if (grams >= 1000) {
+    const kg = grams / 1000;
+    return `${formatQuantity(kg, 2)} kg`;
+  }
+  return `${formatQuantity(grams, 1)} g`;
+}

@@ -150,6 +150,20 @@ export function getUnitCategory(unit: string): string | null {
 }
 
 /**
+ * Check if a unit is a mass unit (g, kg, lb, oz, mg)
+ */
+function isMassUnit(unit: string): boolean {
+  return getUnitCategory(unit) === 'mass';
+}
+
+/**
+ * Check if a unit is a volume unit (ml, l, cup, tbsp, tsp, etc.)
+ */
+function isVolumeUnit(unit: string): boolean {
+  return getUnitCategory(unit) === 'volume';
+}
+
+/**
  * Check if two units can be converted between each other
  * Units must be in the same category (both mass or both volume)
  */
@@ -194,7 +208,8 @@ export function canConvertUnits(fromUnit: string, toUnit: string): boolean {
 export function convertQuantity(
   quantity: number,
   fromUnit: string,
-  toUnit: string
+  toUnit: string,
+  densityGramsPerMl?: number | null
 ): number | null {
   // Same unit - no conversion needed
   if (fromUnit === toUnit) return quantity;
@@ -220,6 +235,38 @@ export function convertQuantity(
 
   // Check if units are in the same category
   if (!canConvertUnits(fromUnit, toUnit)) {
+    // Attempt density-based bridging (mass↔volume) if density is provided
+    if (densityGramsPerMl && densityGramsPerMl > 0) {
+      try {
+        type ConvertUnit = Parameters<ReturnType<typeof convert>['from']>[0];
+
+        if (isMassUnit(fromUnit) && isVolumeUnit(toUnit)) {
+          // mass→volume: convert to grams, divide by density to get mL, convert to target volume unit
+          const grams = convert(quantity)
+            .from(fromNormalized as ConvertUnit)
+            .to('g' as ConvertUnit);
+          const ml = grams / densityGramsPerMl;
+          return convert(ml)
+            .from('ml' as ConvertUnit)
+            .to(toNormalized as ConvertUnit);
+        }
+
+        if (isVolumeUnit(fromUnit) && isMassUnit(toUnit)) {
+          // volume→mass: convert to mL, multiply by density to get grams, convert to target mass unit
+          const ml = convert(quantity)
+            .from(fromNormalized as ConvertUnit)
+            .to('ml' as ConvertUnit);
+          const grams = ml * densityGramsPerMl;
+          return convert(grams)
+            .from('g' as ConvertUnit)
+            .to(toNormalized as ConvertUnit);
+        }
+      } catch (error) {
+        console.warn(`Density-based conversion failed from ${fromUnit} to ${toUnit}:`, error);
+        return null;
+      }
+    }
+
     console.warn(`Cannot convert between different categories: ${fromUnit} to ${toUnit}`);
     return null;
   }
@@ -244,12 +291,13 @@ export function convertQuantity(
  */
 export function getConversionFactorSync(
   fromUnit: string,
-  toUnit: string
+  toUnit: string,
+  densityGramsPerMl?: number | null
 ): number | null {
   if (fromUnit === toUnit) return 1;
 
   // Get the factor by converting 1 unit
-  const result = convertQuantity(1, fromUnit, toUnit);
+  const result = convertQuantity(1, fromUnit, toUnit, densityGramsPerMl);
   return result;
 }
 
@@ -270,10 +318,11 @@ export function calculateIngredientCost(
   recipeQuantity: number,
   recipeUnit: string,
   costPerUnit: number,
-  ingredientUnit: string
+  ingredientUnit: string,
+  densityGramsPerMl?: number | null
 ): number | null {
   // Convert recipe quantity to ingredient's unit
-  const convertedQuantity = convertQuantity(recipeQuantity, recipeUnit, ingredientUnit);
+  const convertedQuantity = convertQuantity(recipeQuantity, recipeUnit, ingredientUnit, densityGramsPerMl);
 
   if (convertedQuantity === null) {
     return null;

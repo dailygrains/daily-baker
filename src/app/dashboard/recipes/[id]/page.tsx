@@ -4,7 +4,7 @@ import { SetPageHeader } from '@/components/layout/SetPageHeader';
 import { getRecipeById } from '@/app/actions/recipe';
 import { getTagsForEntity } from '@/app/actions/tag';
 import Link from 'next/link';
-import { calculateIngredientCost } from '@/lib/unitConvert';
+import { calculateIngredientCost, convertQuantity } from '@/lib/unitConvert';
 import { RecipeDetailContent } from '@/components/recipes/RecipeDetailContent';
 import { RecipeDetailSidebar } from '@/components/recipes/RecipeDetailSidebar';
 
@@ -39,7 +39,8 @@ export default async function RecipeDetailPage({
         Number(ing.quantity),
         ing.unit,
         Number(ing.ingredient.costPerUnit),
-        ing.ingredient.unit
+        ing.ingredient.unit,
+        ing.ingredient.densityGramsPerMl ?? undefined
       );
       return ingSum + (cost ?? 0);
     }, 0);
@@ -52,6 +53,28 @@ export default async function RecipeDetailPage({
   const totalIngredients = recipe.sections.reduce(
     (sum, section) => sum + section.ingredients.length,
     0
+  );
+
+  // Calculate total weight
+  const { totalWeightGrams, unconvertedCount } = recipe.sections.reduce(
+    (acc, section) => {
+      for (const ing of section.ingredients) {
+        const qty = Number(ing.quantity);
+        const weightInGrams = convertQuantity(
+          qty,
+          ing.unit,
+          'g',
+          ing.ingredient.densityGramsPerMl ?? undefined
+        );
+        if (weightInGrams !== null) {
+          acc.totalWeightGrams += weightInGrams;
+        } else {
+          acc.unconvertedCount++;
+        }
+      }
+      return acc;
+    },
+    { totalWeightGrams: 0, unconvertedCount: 0 }
   );
 
   // Fetch tags for this recipe
@@ -94,6 +117,8 @@ export default async function RecipeDetailPage({
             totalCost={totalCost}
             costPerUnit={costPerUnit}
             totalIngredients={totalIngredients}
+            totalWeightGrams={totalWeightGrams}
+            unconvertedCount={unconvertedCount}
             tags={tags}
           />
         </div>

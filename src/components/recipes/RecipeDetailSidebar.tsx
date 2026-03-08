@@ -1,5 +1,5 @@
 import { formatDistanceToNow } from 'date-fns';
-import { formatCurrency } from '@/lib/format';
+import { formatCurrency, formatWeight } from '@/lib/format';
 import { SnapshotSummary } from '@/components/snapshot/SnapshotSummary';
 import { TagBadges } from '@/components/tags';
 
@@ -24,6 +24,8 @@ interface RecipeDetailSidebarProps {
   totalCost: number;
   costPerUnit: number;
   totalIngredients: number;
+  totalWeightGrams: number;
+  unconvertedCount: number;
   tags?: Tag[];
 }
 
@@ -32,6 +34,8 @@ export function RecipeDetailSidebar({
   totalCost,
   costPerUnit,
   totalIngredients,
+  totalWeightGrams,
+  unconvertedCount,
   tags = [],
 }: RecipeDetailSidebarProps) {
   return (
@@ -62,6 +66,23 @@ export function RecipeDetailSidebar({
                 {formatCurrency(costPerUnit)}
               </span>
             </div>
+
+            {totalWeightGrams > 0 && (
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-base-content/70">Total Weight</span>
+                <span className="font-semibold">
+                  {formatWeight(totalWeightGrams)}
+                  {unconvertedCount > 0 && (
+                    <span className="text-xs text-base-content/50 ml-1">*</span>
+                  )}
+                </span>
+              </div>
+            )}
+            {unconvertedCount > 0 && totalWeightGrams > 0 && (
+              <p className="text-xs text-base-content/50">
+                * Excludes {unconvertedCount} ingredient{unconvertedCount > 1 ? 's' : ''} without density data
+              </p>
+            )}
 
             <div className="divider my-2" />
 

@@ -625,6 +625,9 @@ export async function getRecipeById(id: string) {
               name: ing.ingredient.name,
               unit: ing.ingredient.inventory?.displayUnit ?? ing.ingredient.unit,
               costPerUnit: costPerUnit,
+              densityGramsPerMl: ing.ingredient.densityGramsPerMl
+                ? Number(ing.ingredient.densityGramsPerMl)
+                : null,
             },
           };
         }),

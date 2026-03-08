@@ -8,6 +8,7 @@ export const createIngredientSchema = z.object({
   bakeryId: z.string().cuid(),
   name: z.string().min(1, 'Ingredient name is required').max(100),
   unit: z.string().min(1, 'Unit is required').max(20), // Reference unit for recipes
+  densityGramsPerMl: z.number().positive().nullable().optional(),
 });
 
 /**
@@ -18,6 +19,7 @@ export const updateIngredientSchema = z.object({
   name: z.string().min(1, 'Ingredient name is required').max(100).optional(),
   unit: z.string().min(1, 'Unit is required').max(20).optional(),
   lowStockThreshold: z.number().min(0).nullable().optional(), // null = no alert, 0 = disabled
+  densityGramsPerMl: z.number().positive().nullable().optional(),
 });
 
 /**
