@@ -29,6 +29,8 @@ interface RecipeDetailContentProps {
     id: string;
     name: string;
     description?: string | null;
+    yieldQty: number;
+    yieldUnit: string;
     sections: RecipeSection[];
   };
 }
@@ -79,6 +81,7 @@ export function RecipeDetailContent({
                       )}
                       <th className="w-[12%] whitespace-nowrap">Unit Cost</th>
                       <th className="w-[10%] whitespace-nowrap">Total Cost</th>
+                      <th className="w-[10%] whitespace-nowrap">Cost/{recipe.yieldUnit}</th>
                     </tr>
                   </thead>
                   <tbody className="text-base">
@@ -137,6 +140,11 @@ export function RecipeDetailContent({
                           <td className="font-semibold whitespace-nowrap">
                             {totalIngredientCost !== null
                               ? formatCurrency(totalIngredientCost)
+                              : 'N/A'}
+                          </td>
+                          <td className="whitespace-nowrap">
+                            {totalIngredientCost !== null && recipe.yieldQty > 0
+                              ? formatCurrency(totalIngredientCost / recipe.yieldQty)
                               : 'N/A'}
                           </td>
                         </tr>
