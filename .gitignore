@@ -2,6 +2,7 @@
 
 # Claude Code local notes
 .claude.local.md
+.claude/worktrees/
 
 # dependencies
 /node_modules
