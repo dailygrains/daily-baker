@@ -17,15 +17,12 @@ export interface ApiAuthContext {
  */
 export async function resolveApiAuth(req: NextRequest): Promise<ApiAuthContext | null> {
   const authHeader = req.headers.get('authorization');
-  console.warn('[API Auth] authHeader:', authHeader ? `${authHeader.slice(0, 20)}...` : 'none');
 
   if (!authHeader?.startsWith('Bearer ')) {
-    console.warn('[API Auth] No Bearer header, falling back to Clerk');
     return resolveClerkAuth();
   }
 
   const token = authHeader.slice(7);
-  console.warn('[API Auth] Token prefix:', token.slice(0, 12));
 
   if (token.startsWith('dbk_')) {
     return resolveApiKeyAuth(token);
@@ -39,35 +36,18 @@ async function resolveApiKeyAuth(token: string): Promise<ApiAuthContext | null> 
   // Find by prefix (first 12 chars: "dbk_" + 8 char id)
   const prefix = token.slice(0, 12);
 
-  let apiKey;
-  try {
-    // Debug: count all keys to verify DB connectivity
-    const count = await db.apiKey.count();
-    console.warn('[API Auth] Total keys in DB:', count);
+  const apiKey = await db.apiKey.findFirst({
+    where: {
+      prefix,
+      revokedAt: null,
+    },
+  });
 
-    apiKey = await db.apiKey.findFirst({
-      where: {
-        prefix,
-        revokedAt: null,
-      },
-    });
-    console.warn('[API Auth] findFirst result:', apiKey ? apiKey.name : 'null');
-  } catch (err) {
-    console.error('[API Auth] DB query failed:', err);
-    return null;
-  }
-
-  if (!apiKey) {
-    console.warn('[API Auth] No key found for prefix:', prefix);
-    return null;
-  }
+  if (!apiKey) return null;
 
   // Verify full key hash
   const valid = await bcrypt.compare(token, apiKey.keyHash);
-  if (!valid) {
-    console.warn('[API Auth] Hash mismatch for key:', apiKey.name);
-    return null;
-  }
+  if (!valid) return null;
 
   // Check expiration
   if (apiKey.expiresAt && apiKey.expiresAt < new Date()) return null;
