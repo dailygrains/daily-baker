@@ -57,6 +57,10 @@ async function calculateRecipeCost(
       });
 
       if (ingredient) {
+        const density = ingredient.densityGramsPerMl
+          ? Number(ingredient.densityGramsPerMl)
+          : null;
+
         // Get weighted average cost from inventory
         let costPerUnit = 0;
         let displayUnit = ingredient.unit;
@@ -78,7 +82,7 @@ async function calculateRecipeCost(
             })),
           };
 
-          costPerUnit = getWeightedAverageCost(inventoryForCalc);
+          costPerUnit = getWeightedAverageCost(inventoryForCalc, density);
           displayUnit = ingredient.inventory.displayUnit;
         }
 
@@ -88,16 +92,18 @@ async function calculateRecipeCost(
           const converted = convertQuantity(
             ing.quantity,
             ing.unit,
-            displayUnit
+            displayUnit,
+            density
           );
 
           if (converted !== null) {
             adjustedQuantity = converted;
           } else {
-            // If conversion fails, log warning and use original quantity
+            // If conversion fails, skip this ingredient's cost
             console.warn(
               `Cannot convert from ${ing.unit} to ${displayUnit} for ingredient cost calculation`
             );
+            continue;
           }
         }
 
