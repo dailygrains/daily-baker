@@ -4,21 +4,23 @@ import { UserButton } from '@clerk/nextjs';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  LayoutDashboard,
-  Briefcase,
-  BookOpen,
-  Package,
-  ShoppingCart,
-  Users,
-  Settings,
-  Wheat,
-  Mail,
   Activity,
   BarChart3,
-  Wrench,
+  BookOpen,
+  Boxes,
+  Briefcase,
+  FolderTree,
+  LayoutDashboard,
+  Mail,
+  Package,
+  Settings,
   Shield,
+  ShoppingBag,
+  ShoppingCart,
   Tags,
-  FolderTree
+  Users,
+  Wheat,
+  Wrench
 } from 'lucide-react';
 import { BakerySelector } from './BakerySelector';
 
@@ -161,12 +163,40 @@ export function DashboardSidebar({
           </li>
           <li>
             <Link
+              href="/dashboard/supplies"
+              className={getLinkClass('/dashboard/supplies')}
+              data-tip="Supplies"
+            >
+              <Boxes className="h-5 w-5 shrink-0" />
+              <span className="is-drawer-close:hidden">Supplies</span>
+            </Link>
+          </li>
+          <li>
+            <Link
               href="/dashboard/vendors"
               className={getLinkClass('/dashboard/vendors')}
               data-tip="Vendors"
             >
               <ShoppingCart className="h-5 w-5 shrink-0" />
               <span className="is-drawer-close:hidden">Vendors</span>
+            </Link>
+          </li>
+
+          {/* Products */}
+          <li className="menu-title mt-4 is-drawer-close:hidden">
+            <span>Products</span>
+          </li>
+          <li className="is-drawer-open:hidden mt-2">
+            <div className="divider my-0"></div>
+          </li>
+          <li>
+            <Link
+              href="/dashboard/products"
+              className={getLinkClass('/dashboard/products')}
+              data-tip="Products"
+            >
+              <ShoppingBag className="h-5 w-5 shrink-0" />
+              <span className="is-drawer-close:hidden">Products</span>
             </Link>
           </li>
 
