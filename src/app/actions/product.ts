@@ -329,11 +329,19 @@ export async function getProductById(id: string) {
  */
 export async function recalculateProductCost(productId: string) {
   try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) {
+      return { success: false, error: 'Unauthorized: You must be logged in' };
+    }
+
     const product = await db.product.findUnique({
       where: { id: productId },
-      select: { recipeId: true, recipeScale: true, batchYieldQty: true, laborCost: true, overheadCost: true },
+      select: { bakeryId: true, recipeId: true, recipeScale: true, batchYieldQty: true, laborCost: true, overheadCost: true },
     });
     if (!product) return { success: false, error: 'Product not found' };
+    if (currentUser.bakeryId !== product.bakeryId) {
+      return { success: false, error: 'Unauthorized: You can only recalculate products for your bakery' };
+    }
 
     const costs = await computeProductCosts(
       product.recipeId,
