@@ -46,6 +46,8 @@ model Bakery {
   tagTypes     TagType[]
   tags         Tag[]
   apiKeys      ApiKey[]
+  supplies     Supply[]
+  products     Product[]
 
   @@index([isActive])
   @@map("bakeries")
@@ -161,6 +163,7 @@ model Recipe {
   // Relations
   sections              RecipeSection[]
   productionSheetRecipes ProductionSheetRecipe[]
+  products                  Product[]
 
   @@index([bakeryId])
   @@index([name])
@@ -334,6 +337,7 @@ model Vendor {
   ingredients   IngredientVendor[]
   equipment     Equipment[]
   inventoryLots InventoryLot[]
+  supplies      SupplyVendor[]
 
   @@index([bakeryId])
   @@index([name])
@@ -406,6 +410,126 @@ enum EquipmentStatus {
   MAINTENANCE
   RETIRED
 
+  @@schema("baker")
+}
+
+// ============================================================================
+// SUPPLY SYSTEM (Non-Ingredient Materials)
+// ============================================================================
+
+enum SupplyCategory {
+  PACKAGING
+  DISPOSABLE
+  LABEL
+  CLEANING
+  OTHER
+
+  @@schema("baker")
+}
+
+model Supply {
+  id                String         @id @default(cuid())
+  bakeryId          String
+  bakery            Bakery         @relation(fields: [bakeryId], references: [id], onDelete: Cascade)
+  name              String
+  sku               String?        @db.VarChar(100)
+  category          SupplyCategory @default(OTHER)
+  description       String?        @db.Text
+  unit              String         // Reference unit: "each", "roll", "case", "sheet"
+  unitsPerCase      Int?           // How many individual units per purchase case
+  costPerUnit       Decimal        @default(0) @db.Decimal(10, 4)
+  quantityOnHand    Decimal        @default(0) @db.Decimal(10, 3)
+  lowStockThreshold Decimal?       @db.Decimal(10, 3)
+  isActive          Boolean        @default(true)
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  // Relations
+  vendors         SupplyVendor[]
+  productSupplies ProductSupply[]
+
+  @@index([bakeryId])
+  @@index([name])
+  @@index([category])
+  @@index([isActive])
+  @@map("supplies")
+  @@schema("baker")
+}
+
+model SupplyVendor {
+  id        String   @id @default(cuid())
+  supplyId  String
+  supply    Supply   @relation(fields: [supplyId], references: [id], onDelete: Cascade)
+  vendorId  String
+  vendor    Vendor   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([supplyId, vendorId])
+  @@index([supplyId])
+  @@index([vendorId])
+  @@map("supply_vendors")
+  @@schema("baker")
+}
+
+// ============================================================================
+// PRODUCT SYSTEM (Recipe + Supplies = Sellable SKU)
+// ============================================================================
+
+model Product {
+  id              String   @id @default(cuid())
+  bakeryId        String
+  bakery          Bakery   @relation(fields: [bakeryId], references: [id], onDelete: Cascade)
+  name            String
+  sku             String?  @db.VarChar(100)
+  description     String?  @db.Text
+  recipeId        String
+  recipe          Recipe   @relation(fields: [recipeId], references: [id], onDelete: Restrict)
+  recipeScale     Decimal  @default(1) @db.Decimal(5, 2) // Batch multiplier
+  batchYieldQty   Int      // Sellable units per scaled batch
+
+  // Computed cost fields (updated by server action)
+  ingredientCost  Decimal  @default(0) @db.Decimal(10, 2) // recipe.totalCost * scale / yield
+  supplyCost      Decimal  @default(0) @db.Decimal(10, 2) // sum of BOM lines
+  laborCost       Decimal  @default(0) @db.Decimal(10, 2)
+  overheadCost    Decimal  @default(0) @db.Decimal(10, 2)
+  totalCost       Decimal  @default(0) @db.Decimal(10, 2) // sum of all costs
+
+  // Pricing
+  retailPrice     Decimal? @db.Decimal(10, 2)
+  wholesalePrice  Decimal? @db.Decimal(10, 2)
+  targetMarginPct Decimal? @db.Decimal(5, 2) // e.g., 65.00 for 65%
+
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  productSupplies ProductSupply[]
+
+  @@index([bakeryId])
+  @@index([name])
+  @@index([recipeId])
+  @@index([isActive])
+  @@map("products")
+  @@schema("baker")
+}
+
+model ProductSupply {
+  id           String  @id @default(cuid())
+  productId    String
+  product      Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  supplyId     String
+  supply       Supply  @relation(fields: [supplyId], references: [id], onDelete: Restrict)
+  quantity     Decimal @db.Decimal(10, 3) // Units of supply per product unit
+  unit         String  // Usually "each"
+  wasteFactor  Decimal @default(1) @db.Decimal(5, 3) // 1.05 = 5% waste
+  costOverride Decimal? @db.Decimal(10, 4) // Optional override of supply.costPerUnit
+  notes        String? @db.VarChar(500)
+
+  @@unique([productId, supplyId])
+  @@index([productId])
+  @@index([supplyId])
+  @@map("product_supplies")
   @@schema("baker")
 }
 

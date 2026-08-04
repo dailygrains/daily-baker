@@ -32,6 +32,14 @@ import {
   createUnitConversionSchema,
   updateUnitConversionSchema,
 } from '@/lib/validations/unitConversion';
+import {
+  createSupplySchema,
+  updateSupplySchema,
+} from '@/lib/validations/supply';
+import {
+  createProductSchema,
+  updateProductSchema,
+} from '@/lib/validations/product';
 
 export interface RouteRegistryEntry {
   /** URL path segment (e.g., 'equipment', 'recipes') */
@@ -60,6 +68,22 @@ export const routeRegistry: RouteRegistryEntry[] = [
     updateSchema: updateEquipmentSchema,
     allowedIncludes: ['vendor'],
     searchFields: ['name'],
+  },
+  {
+    path: 'supplies',
+    name: 'Supplies',
+    createSchema: createSupplySchema,
+    updateSchema: updateSupplySchema,
+    allowedIncludes: ['vendors'],
+    searchFields: ['name', 'sku'],
+  },
+  {
+    path: 'products',
+    name: 'Products',
+    createSchema: createProductSchema,
+    updateSchema: updateProductSchema,
+    allowedIncludes: ['recipe', 'productSupplies'],
+    searchFields: ['name', 'sku'],
   },
   {
     path: 'ingredients',
