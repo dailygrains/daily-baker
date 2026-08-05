@@ -1,0 +1,471 @@
+<title>Entity Map — Daily Grains Systems</title>
+
+<style>
+  :root {
+    --paper:      #F1F3EF;
+    --panel:      #FBFCFA;
+    --ink:        #171B18;
+    --ink-soft:   #4C554E;
+    --ink-faint:  #7C857E;
+    --rule:       #D3D8D0;
+    --accent:     #1D4E52;
+    --accent-soft:#DCE7E5;
+    --build:      #8A6A12;
+    --build-soft: #F0E6C8;
+    --freeze:     #7A3038;
+    --freeze-soft:#EEDBDC;
+
+    --serif: ui-serif, "Iowan Old Style", Charter, "Palatino Linotype", Georgia, serif;
+    --sans: ui-sans-serif, -apple-system, "Helvetica Neue", "Segoe UI", Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+
+    --measure: 68ch;
+    --pad: clamp(1.25rem, 4vw, 3.5rem);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper:      #101311;
+      --panel:      #171B18;
+      --ink:        #E8EDE8;
+      --ink-soft:   #A8B2AA;
+      --ink-faint:  #79837B;
+      --rule:       #2A302C;
+      --accent:     #6FBDB4;
+      --accent-soft:#17302F;
+      --build:      #D3AE49;
+      --build-soft: #302811;
+      --freeze:     #D98B93;
+      --freeze-soft:#301A1D;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper:#101311; --panel:#171B18; --ink:#E8EDE8; --ink-soft:#A8B2AA;
+    --ink-faint:#79837B; --rule:#2A302C; --accent:#6FBDB4; --accent-soft:#17302F;
+    --build:#D3AE49; --build-soft:#302811; --freeze:#D98B93; --freeze-soft:#301A1D;
+  }
+  :root[data-theme="light"] {
+    --paper:#F1F3EF; --panel:#FBFCFA; --ink:#171B18; --ink-soft:#4C554E;
+    --ink-faint:#7C857E; --rule:#D3D8D0; --accent:#1D4E52; --accent-soft:#DCE7E5;
+    --build:#8A6A12; --build-soft:#F0E6C8; --freeze:#7A3038; --freeze-soft:#EEDBDC;
+  }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--serif);
+    font-size: 17px;
+    line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .sheet {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: var(--pad) var(--pad) 5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 3.25rem;
+  }
+
+  .prose { max-width: var(--measure); display: flex; flex-direction: column; gap: 1rem; }
+  p { margin: 0; }
+  strong { font-weight: 600; }
+  code {
+    font-family: var(--mono);
+    font-size: 0.86em;
+    background: var(--accent-soft);
+    color: var(--accent);
+    padding: 0.1em 0.36em;
+    border-radius: 2px;
+  }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0;
+  }
+
+  /* ---- masthead ---- */
+  .masthead { display: flex; flex-direction: column; gap: 1.1rem; border-bottom: 2px solid var(--ink); padding-bottom: 1.5rem; }
+  .masthead h1 {
+    font-family: var(--sans);
+    font-weight: 650;
+    font-size: clamp(2.1rem, 5.5vw, 3.1rem);
+    letter-spacing: -0.025em;
+    line-height: 1.05;
+    text-wrap: balance;
+    margin: 0;
+  }
+  .masthead .lede { font-size: 1.16rem; color: var(--ink-soft); max-width: var(--measure); }
+  .meta-row {
+    display: flex; flex-wrap: wrap; gap: 0.5rem 1.75rem;
+    font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.09em;
+    text-transform: uppercase; color: var(--ink-faint);
+  }
+
+  /* ---- sections ---- */
+  section { display: flex; flex-direction: column; gap: 1.4rem; }
+  h2 {
+    font-family: var(--sans);
+    font-weight: 640;
+    font-size: clamp(1.35rem, 3vw, 1.7rem);
+    letter-spacing: -0.015em;
+    line-height: 1.2;
+    text-wrap: balance;
+    margin: 0;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--rule);
+  }
+  h3 {
+    font-family: var(--sans); font-weight: 620; font-size: 1.02rem;
+    letter-spacing: -0.005em; margin: 0; text-wrap: balance;
+  }
+
+  /* ---- verdict ---- */
+  .verdict {
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--accent);
+    padding: 1.5rem 1.75rem;
+    display: flex; flex-direction: column; gap: 0.85rem;
+  }
+  .verdict p { max-width: var(--measure); }
+
+  /* ---- roles ---- */
+  .roles { display: grid; grid-template-columns: repeat(auto-fit, minmax(215px, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); }
+  .role { background: var(--panel); padding: 1.15rem 1.25rem; display: flex; flex-direction: column; gap: 0.5rem; }
+  .role-name { font-family: var(--mono); font-size: 0.78rem; letter-spacing: 0.04em; color: var(--accent); font-weight: 600; }
+  .role-job { font-family: var(--sans); font-size: 1.02rem; font-weight: 600; line-height: 1.3; }
+  .role-note { font-size: 0.9rem; color: var(--ink-soft); line-height: 1.45; }
+  .role.is-frozen .role-name { color: var(--freeze); }
+
+  /* ---- stats ---- */
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); }
+  .stat { background: var(--panel); padding: 1rem 1.1rem; display: flex; flex-direction: column; gap: 0.15rem; }
+  .stat-n { font-family: var(--sans); font-size: 1.85rem; font-weight: 650; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; line-height: 1; }
+  .stat-l { font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.11em; text-transform: uppercase; color: var(--ink-faint); }
+  .stat.is-zero .stat-n { color: var(--build); }
+  .stat-src { font-size: 0.78rem; color: var(--ink-faint); font-family: var(--sans); }
+
+  /* ---- diagram ---- */
+  .figure { display: flex; flex-direction: column; gap: 0.75rem; }
+  .figure-frame { overflow-x: auto; border: 1px solid var(--rule); background: var(--panel); padding: 1.5rem 1rem; }
+  .figure svg { display: block; min-width: 720px; margin: 0 auto; }
+  .caption { font-size: 0.86rem; color: var(--ink-faint); font-family: var(--sans); max-width: var(--measure); }
+
+  /* ---- table ---- */
+  .table-frame { overflow-x: auto; border: 1px solid var(--rule); }
+  table { border-collapse: collapse; width: 100%; min-width: 780px; background: var(--panel); }
+  thead th {
+    font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.11em; text-transform: uppercase;
+    color: var(--ink-faint); text-align: left; font-weight: 500;
+    padding: 0.7rem 0.9rem; border-bottom: 1px solid var(--ink);
+    white-space: nowrap;
+  }
+  tbody td { padding: 0.72rem 0.9rem; border-bottom: 1px solid var(--rule); vertical-align: top; font-size: 0.93rem; line-height: 1.45; }
+  tbody tr:last-child td { border-bottom: none; }
+  td.entity { font-family: var(--sans); font-weight: 600; white-space: nowrap; }
+  td.where, td.owner { font-family: var(--mono); font-size: 0.8rem; color: var(--ink-soft); }
+  td.owner { color: var(--ink); }
+  .n { font-variant-numeric: tabular-nums; color: var(--ink-faint); }
+
+  .pill {
+    display: inline-block; font-family: var(--mono); font-size: 0.66rem;
+    letter-spacing: 0.09em; text-transform: uppercase; font-weight: 600;
+    padding: 0.2rem 0.5rem; border-radius: 2px; white-space: nowrap;
+  }
+  .pill.keep   { background: var(--accent-soft); color: var(--accent); }
+  .pill.build  { background: var(--build-soft);  color: var(--build); }
+  .pill.freeze { background: var(--freeze-soft); color: var(--freeze); }
+
+  /* ---- findings ---- */
+  .findings { display: flex; flex-direction: column; gap: 1px; background: var(--rule); border: 1px solid var(--rule); }
+  .finding { background: var(--panel); padding: 1.3rem 1.5rem; display: grid; grid-template-columns: 2.5rem 1fr; gap: 0 1rem; }
+  .finding-n { font-family: var(--mono); font-size: 0.78rem; color: var(--build); font-weight: 600; padding-top: 0.15rem; }
+  .finding-body { display: flex; flex-direction: column; gap: 0.6rem; max-width: var(--measure); }
+  .finding-body p { font-size: 0.95rem; color: var(--ink-soft); }
+  .finding-body h3 { color: var(--ink); }
+
+  /* ---- steps ---- */
+  ol.steps { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 1px; background: var(--rule); border: 1px solid var(--rule); counter-reset: s; }
+  ol.steps li { background: var(--panel); padding: 1.05rem 1.4rem; display: grid; grid-template-columns: 2.5rem 1fr auto; gap: 0 1rem; align-items: baseline; counter-increment: s; }
+  ol.steps li::before {
+    content: counter(s, decimal-leading-zero);
+    font-family: var(--mono); font-size: 0.76rem; color: var(--accent); font-weight: 600;
+  }
+  .step-text { max-width: var(--measure); }
+  .step-text .step-h { font-family: var(--sans); font-weight: 600; font-size: 0.99rem; }
+  .step-text .step-d { font-size: 0.9rem; color: var(--ink-soft); line-height: 1.45; }
+  .step-when { font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.09em; text-transform: uppercase; color: var(--ink-faint); white-space: nowrap; }
+  @media (max-width: 640px) {
+    ol.steps li { grid-template-columns: 2rem 1fr; }
+    .step-when { grid-column: 2; }
+    .finding { grid-template-columns: 1fr; gap: 0.5rem; }
+  }
+
+  .notdoing { border: 1px dashed var(--rule); padding: 1.35rem 1.5rem; display: flex; flex-direction: column; gap: 0.7rem; }
+  .notdoing ul { margin: 0; padding-left: 1.1rem; display: flex; flex-direction: column; gap: 0.45rem; }
+  .notdoing li { font-size: 0.95rem; color: var(--ink-soft); max-width: var(--measure); }
+
+  footer { border-top: 1px solid var(--rule); padding-top: 1.25rem; font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-faint); line-height: 1.9; }
+</style>
+
+<div class="sheet">
+
+  <header class="masthead">
+    <p class="eyebrow">Systems review</p>
+    <h1>Entity Map: what owns what</h1>
+    <p class="lede">Four systems, one business. This fixes the canonical owner for every noun so the bakery can open without three copies of the truth.</p>
+    <div class="meta-row">
+      <span>4 Aug 2026</span>
+      <span>Priority: bakery opens</span>
+      <span>Counts pulled from live prod</span>
+    </div>
+  </header>
+
+  <section>
+    <h2>The verdict</h2>
+    <div class="verdict">
+      <p>You do not have four apps that should become one. You have <strong>one coordination layer, two engines, and one publishing platform that is no longer on the critical path.</strong></p>
+      <p>The problem worth fixing is not the number of systems. It is that <strong>Organization and Person exist three times</strong>, and <strong>Product — the actual business object — exists canonically nowhere.</strong> Everything else is working.</p>
+    </div>
+
+    <div class="roles">
+      <div class="role">
+        <span class="role-name">square</span>
+        <span class="role-job">What you sell, and for how much</span>
+        <span class="role-note">System of record for catalog, price, and every sale. Never duplicate a price out of it.</span>
+      </div>
+      <div class="role">
+        <span class="role-name">daily-baker</span>
+        <span class="role-job">What things cost to make</span>
+        <span class="role-note">Recipes, ingredients, FIFO inventory, production, margin. The cost twin of the Square catalog.</span>
+      </div>
+      <div class="role">
+        <span class="role-name">neemee</span>
+        <span class="role-job">Who you deal with, what you owe</span>
+        <span class="role-note">Projects, tasks, notes, organizations, people. Already the system you actually run the buildout from.</span>
+      </div>
+      <div class="role is-frozen">
+        <span class="role-name">grain-exchange</span>
+        <span class="role-job">Public content and directory</span>
+        <span class="role-note">Multi-tenant publishing platform. Real, but not on the path to opening. Freeze it.</span>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>What's actually in there</h2>
+    <div class="stats">
+      <div class="stat"><span class="stat-n">46</span><span class="stat-l">Recipes</span></div>
+      <div class="stat"><span class="stat-n">93</span><span class="stat-l">Ingredients</span></div>
+      <div class="stat"><span class="stat-n">88</span><span class="stat-l">Inventory</span></div>
+      <div class="stat"><span class="stat-n">7</span><span class="stat-l">Vendors</span></div>
+      <div class="stat is-zero"><span class="stat-n">0</span><span class="stat-l">Products</span></div>
+      <div class="stat is-zero"><span class="stat-n">0</span><span class="stat-l">Supplies</span></div>
+    </div>
+    <p class="stat-src">Daily Baker production, via <code>/api/v1</code>.</p>
+
+    <div class="stats">
+      <div class="stat"><span class="stat-n">70</span><span class="stat-l">Square items</span></div>
+      <div class="stat"><span class="stat-n">99</span><span class="stat-l">Variations</span></div>
+      <div class="stat"><span class="stat-n">83</span><span class="stat-l">Have a SKU</span></div>
+      <div class="stat"><span class="stat-n">14</span><span class="stat-l">Neemee orgs</span></div>
+      <div class="stat"><span class="stat-n">28</span><span class="stat-l">Neemee people</span></div>
+      <div class="stat"><span class="stat-n">80</span><span class="stat-l">Open tasks</span></div>
+    </div>
+    <p class="stat-src">Square catalog and Neemee production.</p>
+
+    <div class="prose">
+      <p>The gap that matters: <strong>Square sells 99 variations. Daily Baker has 46 recipes and zero products.</strong> There is no line connecting what you bake to what you ring up, so there is no per-item margin for anything you sell today.</p>
+    </div>
+  </section>
+
+  <section class="figure">
+    <h2>How the pieces sit</h2>
+    <div class="figure-frame">
+      <svg viewBox="0 0 860 400" role="img" aria-label="Diagram: Square, Daily Baker and Neemee connected by two seams, with grain-exchange platform frozen and disconnected.">
+        <defs>
+          <marker id="arw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--accent)"/>
+          </marker>
+        </defs>
+
+        <text x="12" y="26" font-family="ui-monospace, Menlo, monospace" font-size="11" letter-spacing="1.6" fill="var(--ink-faint)">COMMERCE</text>
+        <text x="12" y="176" font-family="ui-monospace, Menlo, monospace" font-size="11" letter-spacing="1.6" fill="var(--ink-faint)">OPERATIONS</text>
+        <text x="12" y="306" font-family="ui-monospace, Menlo, monospace" font-size="11" letter-spacing="1.6" fill="var(--ink-faint)">COORDINATION</text>
+
+        <!-- Square -->
+        <rect x="130" y="34" width="290" height="76" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+        <text x="148" y="62" font-family="ui-sans-serif, system-ui" font-size="15" font-weight="650" fill="var(--ink)">Square</text>
+        <text x="148" y="83" font-family="ui-monospace, Menlo, monospace" font-size="11" fill="var(--ink-soft)">catalog · price · orders</text>
+        <text x="148" y="99" font-family="ui-monospace, Menlo, monospace" font-size="11" fill="var(--ink-soft)">99 variations</text>
+
+        <!-- Daily Baker -->
+        <rect x="130" y="184" width="290" height="76" fill="var(--panel)" stroke="var(--accent)" stroke-width="1.5"/>
+        <text x="148" y="212" font-family="ui-sans-serif, system-ui" font-size="15" font-weight="650" fill="var(--ink)">Daily Baker</text>
+        <text x="148" y="233" font-family="ui-monospace, Menlo, monospace" font-size="11" fill="var(--ink-soft)">recipe · inventory · cost</text>
+        <text x="148" y="249" font-family="ui-monospace, Menlo, monospace" font-size="11" fill="var(--ink-soft)">46 recipes · 93 ingredients</text>
+
+        <!-- Neemee -->
+        <rect x="130" y="314" width="290" height="70" fill="var(--panel)" stroke="var(--accent)" stroke-width="1.5"/>
+        <text x="148" y="342" font-family="ui-sans-serif, system-ui" font-size="15" font-weight="650" fill="var(--ink)">Neemee</text>
+        <text x="148" y="363" font-family="ui-monospace, Menlo, monospace" font-size="11" fill="var(--ink-soft)">org · person · project · task</text>
+
+        <!-- seam 1: square <-> baker -->
+        <line x1="275" y1="110" x2="275" y2="184" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#arw)" marker-start="url(#arw)"/>
+        <rect x="291" y="130" width="152" height="34" fill="var(--paper)"/>
+        <text x="299" y="143" font-family="ui-monospace, Menlo, monospace" font-size="10.5" font-weight="600" fill="var(--accent)">SEAM 1 · missing</text>
+        <text x="299" y="158" font-family="ui-monospace, Menlo, monospace" font-size="10.5" fill="var(--ink-soft)">squareVariationId</text>
+
+        <!-- seam 2: baker -> neemee -->
+        <line x1="205" y1="260" x2="205" y2="314" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#arw)"/>
+        <rect x="221" y="270" width="150" height="34" fill="var(--paper)"/>
+        <text x="229" y="283" font-family="ui-monospace, Menlo, monospace" font-size="10.5" font-weight="600" fill="var(--accent)">SEAM 2 · missing</text>
+        <text x="229" y="298" font-family="ui-monospace, Menlo, monospace" font-size="10.5" fill="var(--ink-soft)">vendor → neemeeOrgId</text>
+
+        <!-- grain exchange, frozen -->
+        <rect x="580" y="150" width="250" height="110" fill="none" stroke="var(--freeze)" stroke-width="1.5" stroke-dasharray="5 4"/>
+        <text x="598" y="182" font-family="ui-sans-serif, system-ui" font-size="15" font-weight="650" fill="var(--freeze)">grain-exchange</text>
+        <text x="598" y="203" font-family="ui-monospace, Menlo, monospace" font-size="11" fill="var(--ink-soft)">sites · posts · newsletters</text>
+        <text x="598" y="219" font-family="ui-monospace, Menlo, monospace" font-size="11" fill="var(--ink-soft)">directory · Slow Food</text>
+        <text x="598" y="243" font-family="ui-monospace, Menlo, monospace" font-size="11" font-weight="600" letter-spacing="1.2" fill="var(--freeze)">FROZEN — NO SEAM</text>
+
+        <line x1="420" y1="205" x2="580" y2="205" stroke="var(--freeze)" stroke-width="1.2" stroke-dasharray="3 5" opacity="0.65"/>
+        <line x1="490" y1="192" x2="510" y2="218" stroke="var(--freeze)" stroke-width="1.6"/>
+        <line x1="510" y1="192" x2="490" y2="218" stroke="var(--freeze)" stroke-width="1.6"/>
+      </svg>
+    </div>
+    <p class="caption">Two seams carry the whole integration. Neither exists yet, and both are a single foreign-key column. The temptation is to draw a third line to grain-exchange; don't.</p>
+  </section>
+
+  <section>
+    <h2>The map</h2>
+    <div class="table-frame">
+      <table>
+        <thead>
+          <tr>
+            <th>Entity</th>
+            <th>Where it lives today</th>
+            <th>Canonical owner</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="entity">Recipe</td><td class="where">daily-baker <span class="n">(46)</span></td><td class="owner">daily-baker</td><td><span class="pill keep">Keep</span></td></tr>
+          <tr><td class="entity">Ingredient</td><td class="where">daily-baker <span class="n">(93)</span></td><td class="owner">daily-baker</td><td><span class="pill keep">Keep</span></td></tr>
+          <tr><td class="entity">Inventory lot / usage</td><td class="where">daily-baker <span class="n">(88)</span></td><td class="owner">daily-baker</td><td><span class="pill keep">Keep</span></td></tr>
+          <tr><td class="entity">Production sheet</td><td class="where">daily-baker <span class="n">(3)</span></td><td class="owner">daily-baker</td><td><span class="pill keep">Keep</span></td></tr>
+          <tr><td class="entity">Product (sellable)</td><td class="where">Square <span class="n">(99)</span> · daily-baker <span class="n">(0)</span> · grain-exchange</td><td class="owner">Square for identity + price<br>daily-baker for cost</td><td><span class="pill build">Build seam</span></td></tr>
+          <tr><td class="entity">Price</td><td class="where">Square</td><td class="owner">Square</td><td><span class="pill keep">Never copy</span></td></tr>
+          <tr><td class="entity">Order / sale</td><td class="where">Square</td><td class="owner">Square</td><td><span class="pill build">Read-only in</span></td></tr>
+          <tr><td class="entity">Supply / packaging</td><td class="where">daily-baker <span class="n">(0)</span></td><td class="owner">daily-baker</td><td><span class="pill build">Populate</span></td></tr>
+          <tr><td class="entity">Vendor / supplier</td><td class="where">daily-baker <span class="n">(7)</span></td><td class="owner">Neemee Organization</td><td><span class="pill build">Point</span></td></tr>
+          <tr><td class="entity">Organization</td><td class="where">Neemee <span class="n">(14)</span> · daily-baker · grain-exchange</td><td class="owner">Neemee</td><td><span class="pill build">Consolidate</span></td></tr>
+          <tr><td class="entity">Person / contact</td><td class="where">Neemee <span class="n">(28)</span> · daily-baker VendorContact · grain-exchange</td><td class="owner">Neemee</td><td><span class="pill build">Consolidate</span></td></tr>
+          <tr><td class="entity">Project / Task</td><td class="where">Neemee <span class="n">(10 / 80)</span></td><td class="owner">Neemee</td><td><span class="pill keep">Keep</span></td></tr>
+          <tr><td class="entity">Note / document</td><td class="where">Neemee <span class="n">(16 notebooks)</span></td><td class="owner">Neemee</td><td><span class="pill keep">Keep</span></td></tr>
+          <tr><td class="entity">Building / property</td><td class="where">Neemee project + notes</td><td class="owner">Neemee</td><td><span class="pill keep">Keep</span></td></tr>
+          <tr><td class="entity">Equipment</td><td class="where">daily-baker <span class="n">(6)</span> · DG Equipment Sheet</td><td class="owner">daily-baker, after opening</td><td><span class="pill keep">Defer</span></td></tr>
+          <tr><td class="entity">Tag</td><td class="where">daily-baker <span class="n">(17)</span> · grain-exchange</td><td class="owner">separate on purpose</td><td><span class="pill keep">Leave</span></td></tr>
+          <tr><td class="entity">Directory organization</td><td class="where">grain-exchange</td><td class="owner">grain-exchange</td><td><span class="pill freeze">Freeze</span></td></tr>
+          <tr><td class="entity">Post / newsletter / feed</td><td class="where">grain-exchange</td><td class="owner">grain-exchange</td><td><span class="pill freeze">Freeze</span></td></tr>
+          <tr><td class="entity">Map / event / member</td><td class="where">grain-exchange</td><td class="owner">grain-exchange</td><td><span class="pill freeze">Freeze</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="caption">Tags stay split deliberately: recipe tags and public directory taxonomy have nothing to say to each other, and unifying them buys a migration for no benefit.</p>
+  </section>
+
+  <section>
+    <h2>Two things to fix before Product gets any rows</h2>
+    <div class="findings">
+      <div class="finding">
+        <span class="finding-n">A</span>
+        <div class="finding-body">
+          <h3>Product is modeled at the wrong grain</h3>
+          <p>Square has 70 items but <strong>99 variations</strong>, and the variation is what carries SKU and price. A large loaf and a small loaf have different yields, different costs, and different packaging. Modeling Product against the item collapses that.</p>
+          <p>Point <code>Product</code> at the Square <em>variation</em>, and join on <code>squareVariationId</code> — the catalog object ID, not SKU. SKU covers only 83 of 99 variations and you can edit it by hand in the Square dashboard, which makes it a bad key.</p>
+        </div>
+      </div>
+      <div class="finding">
+        <span class="finding-n">B</span>
+        <div class="finding-body">
+          <h3><code>Product.recipeId</code> is required, but you resell flour</h3>
+          <p>The schema declares <code>recipeId String</code> with a <code>Restrict</code> relation, so every product must have a recipe. Square is already selling Rouge de Bordeaux, Yecora Rojo, and Turkey Red stone ground whole wheat flour, none of which is a recipe.</p>
+          <p>Make <code>recipeId</code> nullable and add a kind — made versus resold. Resold products cost what you paid, and their margin comes from the purchase price, not a bill of materials.</p>
+        </div>
+      </div>
+    </div>
+    <p class="caption">Both are free to change right now: the products table is empty. After the first import they become migrations.</p>
+  </section>
+
+  <section>
+    <h2>Sequence</h2>
+    <ol class="steps">
+      <li>
+        <div class="step-text">
+          <div class="step-h">Fix the Product schema</div>
+          <div class="step-d">Variation grain, nullable recipe, made/resold kind, <code>squareVariationId</code> unique.</div>
+        </div>
+        <span class="step-when">Before any data</span>
+      </li>
+      <li>
+        <div class="step-text">
+          <div class="step-h">Import 99 Square variations as product shells</div>
+          <div class="step-d">Name, SKU, price, category, and the Square ID. No costs yet.</div>
+        </div>
+        <span class="step-when">Same session</span>
+      </li>
+      <li>
+        <div class="step-text">
+          <div class="step-h">Attach recipes to what you bake</div>
+          <div class="step-d">46 recipes against ~70 made variations. The unmatched ones are the honest gap list.</div>
+        </div>
+        <span class="step-when">Next</span>
+      </li>
+      <li>
+        <div class="step-text">
+          <div class="step-h">Populate supplies and packaging</div>
+          <div class="step-d">Currently zero, so <code>supplyCost</code> is structurally zero and every margin reads high.</div>
+        </div>
+        <span class="step-when">Before opening</span>
+      </li>
+      <li>
+        <div class="step-text">
+          <div class="step-h">Add <code>neemeeOrgId</code> to Vendor</div>
+          <div class="step-d">7 vendors against 14 organizations. Reconcile by hand once; it never gets cheaper than this.</div>
+        </div>
+        <span class="step-when">Any time</span>
+      </li>
+      <li>
+        <div class="step-text">
+          <div class="step-h">Freeze grain-exchange</div>
+          <div class="step-d">No new features. Farmers-market vendor management is a future product, not a dependency of opening.</div>
+        </div>
+        <span class="step-when">Decision, not work</span>
+      </li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>Deliberately not doing</h2>
+    <div class="notdoing">
+      <ul>
+        <li><strong>Not merging databases.</strong> Three Postgres instances with different owners and lifecycles is correct. Foreign keys across the boundary are enough.</li>
+        <li><strong>Not building a unifying app.</strong> The reliable outcome of that move is four systems instead of three.</li>
+        <li><strong>Not integrating grain-exchange.</strong> Its 140 tables encode a publishing platform. Wiring it to bakery operations imports a decade of accumulated complexity to solve a problem you don't have.</li>
+        <li><strong>Not pruning grain-exchange yet.</strong> Nearly every model has a controller, so dead code can't be identified statically — it needs production row counts and traffic. Worth doing once the bakery is open, not before.</li>
+      </ul>
+    </div>
+  </section>
+
+  <footer>
+    Daily Grains systems review · Entity map v1 · Counts verified against Daily Baker prod, Square catalog, and Neemee prod on 4 Aug 2026
+  </footer>
+
+</div>
