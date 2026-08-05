@@ -446,7 +446,7 @@ model Supply {
 
   // Relations
   vendors         SupplyVendor[]
-  productSupplies ProductSupply[]
+  productSupplies ProductVariationSupply[]
 
   @@index([bakeryId])
   @@index([name])
@@ -475,36 +475,28 @@ model SupplyVendor {
 // PRODUCT SYSTEM (Recipe + Supplies = Sellable SKU)
 // ============================================================================
 
+/// A sellable product, mapping to a Square catalog ITEM.
+/// Sizes/options live in ProductVariation (a Square ITEM_VARIATION).
 model Product {
   id              String   @id @default(cuid())
   bakeryId        String
   bakery          Bakery   @relation(fields: [bakeryId], references: [id], onDelete: Cascade)
   name            String
-  sku             String?  @db.VarChar(100)
   description     String?  @db.Text
+
+  /// Square catalog ITEM id, when this product is synced from Square.
+  squareItemId    String?  @unique @db.VarChar(100)
+
   recipeId        String
   recipe          Recipe   @relation(fields: [recipeId], references: [id], onDelete: Restrict)
   recipeScale     Decimal  @default(1) @db.Decimal(5, 2) // Batch multiplier
-  batchYieldQty   Int      // Sellable units per scaled batch
-
-  // Computed cost fields (updated by server action)
-  ingredientCost  Decimal  @default(0) @db.Decimal(10, 2) // recipe.totalCost * scale / yield
-  supplyCost      Decimal  @default(0) @db.Decimal(10, 2) // sum of BOM lines
-  laborCost       Decimal  @default(0) @db.Decimal(10, 2)
-  overheadCost    Decimal  @default(0) @db.Decimal(10, 2)
-  totalCost       Decimal  @default(0) @db.Decimal(10, 2) // sum of all costs
-
-  // Pricing
-  retailPrice     Decimal? @db.Decimal(10, 2)
-  wholesalePrice  Decimal? @db.Decimal(10, 2)
-  targetMarginPct Decimal? @db.Decimal(5, 2) // e.g., 65.00 for 65%
 
   isActive        Boolean  @default(true)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
   // Relations
-  productSupplies ProductSupply[]
+  variations      ProductVariation[]
 
   @@index([bakeryId])
   @@index([name])
@@ -514,22 +506,73 @@ model Product {
   @@schema("baker")
 }
 
-model ProductSupply {
+/// A sellable size/option of a Product, mapping to a Square ITEM_VARIATION.
+/// Ingredient cost is allocated across a product's variations either by dough
+/// weight (when unitWeightG is set) or by explicit batchYieldQty.
+model ProductVariation {
+  id                String   @id @default(cuid())
+  productId         String
+  product           Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  name              String   @db.VarChar(200) // "Small", "Large", "Regular"
+  sku               String?  @db.VarChar(100)
+
+  /// Square ITEM_VARIATION id, when synced from Square.
+  squareVariationId String?  @unique @db.VarChar(100)
+
+  /// Finished unit weight in grams (e.g. 500 or 1000). When set, ingredient
+  /// cost is allocated by this variation's share of total batch dough weight.
+  unitWeightG       Decimal? @db.Decimal(10, 2)
+
+  /// Units of this variation produced per scaled batch. Used to allocate
+  /// ingredient cost when unitWeightG is not set (e.g. cookies sold by count).
+  batchYieldQty     Int?
+
+  // Computed cost fields (updated by server action)
+  ingredientCost    Decimal  @default(0) @db.Decimal(10, 2)
+  supplyCost        Decimal  @default(0) @db.Decimal(10, 2) // sum of BOM lines
+  laborCost         Decimal  @default(0) @db.Decimal(10, 2)
+  overheadCost      Decimal  @default(0) @db.Decimal(10, 2)
+  totalCost         Decimal  @default(0) @db.Decimal(10, 2) // sum of all costs
+
+  // Pricing
+  retailPrice       Decimal? @db.Decimal(10, 2)
+  wholesalePrice    Decimal? @db.Decimal(10, 2)
+  targetMarginPct   Decimal? @db.Decimal(5, 2) // e.g., 65.00 for 65%
+
+  isActive          Boolean  @default(true)
+  sortOrder         Int      @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  variationSupplies ProductVariationSupply[]
+
+  @@index([productId])
+  @@index([name])
+  @@index([isActive])
+  @@map("product_variations")
+  @@schema("baker")
+}
+
+/// Packaging/supply BOM line for a single product variation. Packaging differs
+/// by size (a 500g loaf bag is not a 1000g loaf bag), so this hangs off the
+/// variation rather than the parent product.
+model ProductVariationSupply {
   id           String  @id @default(cuid())
-  productId    String
-  product      Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  variationId  String
+  variation    ProductVariation @relation(fields: [variationId], references: [id], onDelete: Cascade)
   supplyId     String
   supply       Supply  @relation(fields: [supplyId], references: [id], onDelete: Restrict)
-  quantity     Decimal @db.Decimal(10, 3) // Units of supply per product unit
+  quantity     Decimal @db.Decimal(10, 3) // Units of supply per variation unit
   unit         String  // Usually "each"
   wasteFactor  Decimal @default(1) @db.Decimal(5, 3) // 1.05 = 5% waste
   costOverride Decimal? @db.Decimal(10, 4) // Optional override of supply.costPerUnit
   notes        String? @db.VarChar(500)
 
-  @@unique([productId, supplyId])
-  @@index([productId])
+  @@unique([variationId, supplyId])
+  @@index([variationId])
   @@index([supplyId])
-  @@map("product_supplies")
+  @@map("product_variation_supplies")
   @@schema("baker")
 }
 

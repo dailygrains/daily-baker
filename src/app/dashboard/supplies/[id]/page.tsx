@@ -213,13 +213,14 @@ export default async function SupplyDetailPage({
             <h2 className="text-xl font-semibold">Used in Products</h2>
             <ul className="list-disc list-inside space-y-1">
               {supply.productSupplies.map((ps) => (
-                <li key={ps.product.id}>
+                <li key={ps.id}>
                   <Link
-                    href={`/dashboard/products/${ps.product.id}`}
+                    href={`/dashboard/products/${ps.variation.product.id}`}
                     className="link link-hover"
                   >
-                    {ps.product.name}
+                    {ps.variation.product.name}
                   </Link>
+                  <span className="text-base-content/60"> &mdash; {ps.variation.name}</span>
                 </li>
               ))}
             </ul>
