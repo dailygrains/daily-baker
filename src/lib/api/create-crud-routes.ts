@@ -20,6 +20,7 @@ export interface CrudRouteConfig {
   readOnly?: boolean;
   adminOnly?: boolean;
   beforeCreate?: (data: Record<string, unknown>, auth: ApiAuthContext) => Record<string, unknown> | Promise<Record<string, unknown>>;
+  beforeUpdate?: (id: string, data: Record<string, unknown>, auth: ApiAuthContext) => Record<string, unknown> | Promise<Record<string, unknown>>;
   afterCreate?: (record: unknown, auth: ApiAuthContext) => void | Promise<void>;
   beforeDelete?: (id: string, auth: ApiAuthContext) => void | Promise<void>;
 }
@@ -208,7 +209,13 @@ export function createCrudRoutes(config: CrudRouteConfig) {
 
     // Remove id from update data
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { id: _id, ...updateData } = body;
+    const { id: _id, ...rest } = body;
+    let updateData: Record<string, unknown> = rest;
+
+    if (config.beforeUpdate) {
+      updateData = await config.beforeUpdate(id, updateData, auth);
+    }
+
     const record = await prismaModel.update({ where: { id }, data: updateData });
 
     return apiSuccess(record);
