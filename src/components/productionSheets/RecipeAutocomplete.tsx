@@ -30,7 +30,9 @@ export function RecipeAutocomplete({
   placeholder = 'Search recipes...',
 }: RecipeAutocompleteProps) {
   const selectedRecipe = recipes.find((r) => r.id === selectedRecipeId);
-  const [query, setQuery] = useState(selectedRecipe?.name || '');
+  const selectedName = selectedRecipe?.name || '';
+  const [query, setQuery] = useState(selectedName);
+  const [prevSelectedName, setPrevSelectedName] = useState(selectedName);
   const [isOpen, setIsOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -46,11 +48,12 @@ export function RecipeAutocomplete({
     return recipe.name.toLowerCase().includes(query.toLowerCase());
   });
 
-  // Update query when selectedRecipeId changes externally
-  useEffect(() => {
-    const recipe = recipes.find((r) => r.id === selectedRecipeId);
-    setQuery(recipe?.name || '');
-  }, [selectedRecipeId, recipes]);
+  // Update query when the selection changes externally
+  // (https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes)
+  if (selectedName !== prevSelectedName) {
+    setPrevSelectedName(selectedName);
+    setQuery(selectedName);
+  }
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {

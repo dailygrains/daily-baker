@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useCallback, useSyncExternalStore } from 'react';
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100, 'all'] as const;
 type PageSize = (typeof PAGE_SIZE_OPTIONS)[number];
@@ -24,23 +24,32 @@ function getStoredPageSize(): number {
   return isNaN(parsed) ? 10 : parsed;
 }
 
+// The 'storage' event only fires in other tabs, so same-tab writes notify listeners directly
+const pageSizeListeners = new Set<() => void>();
+
+function subscribeToPageSize(listener: () => void): () => void {
+  pageSizeListeners.add(listener);
+  window.addEventListener('storage', listener);
+  return () => {
+    pageSizeListeners.delete(listener);
+    window.removeEventListener('storage', listener);
+  };
+}
+
 function storePageSize(size: number | 'all'): void {
   if (typeof window === 'undefined') return;
   localStorage.setItem(STORAGE_KEY, String(size));
+  pageSizeListeners.forEach((listener) => listener());
 }
 
-export function usePageSize() {
-  const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [isInitialized, setIsInitialized] = useState(false);
+const subscribeNoop = () => () => {};
 
-  useEffect(() => {
-    const stored = getStoredPageSize();
-    setItemsPerPage(stored);
-    setIsInitialized(true);
-  }, []);
+export function usePageSize() {
+  // Server and hydration render use the default; the client then switches to the stored value
+  const itemsPerPage = useSyncExternalStore(subscribeToPageSize, getStoredPageSize, () => 10);
+  const isInitialized = useSyncExternalStore(subscribeNoop, () => true, () => false);
 
   const updateItemsPerPage = useCallback((size: number) => {
-    setItemsPerPage(size);
     storePageSize(size === Infinity ? 'all' : size);
   }, []);
 
