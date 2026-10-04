@@ -107,7 +107,7 @@ interface ImportStats {
 function parseQuantity(str: string): number | null {
   if (!str || !str.trim()) return null;
 
-  let text = str.trim();
+  const text = str.trim();
 
   // Replace Unicode fractions with decimal equivalents
   const fractionMap: Record<string, number> = {
@@ -214,7 +214,7 @@ function parseIngredientLine(html: string): ParsedIngredient {
   // Extract quantity from <strong> tag
   const quantityStr = strongText;
   let quantity: number | null = parseQuantity(quantityStr);
-  let remainingText = $.text().replace(strongText, '').trim();
+  const remainingText = $.text().replace(strongText, '').trim();
 
   // Parse unit and ingredient name
   let unit = 'each';

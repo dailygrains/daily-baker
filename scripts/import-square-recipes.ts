@@ -180,7 +180,7 @@ function cleanIngredient(ing: string): string {
 // Parse ingredients from description
 function parseIngredients(description: string): string[] {
   // Remove parenthetical content that's not part of ingredient names
-  let cleaned = description
+  const cleaned = description
     .replace(/\(for searing\)/gi, '(for searing)')
     .replace(/sourdough culture \([^)]+\)/gi, 'sourdough culture')
     .replace(/dried herb blend \([^)]+\)/gi, 'dried herb blend');

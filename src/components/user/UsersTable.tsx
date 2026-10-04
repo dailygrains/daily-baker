@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Pagination, usePageSize } from '@/components/ui/Pagination';
@@ -29,8 +28,8 @@ interface UsersTableProps {
 
 export function UsersTable({ users, currentUserId }: UsersTableProps) {
   const router = useRouter();
-  const [currentPage, setCurrentPage] = useState(1);
-  const { itemsPerPage, setItemsPerPage, isInitialized } = usePageSize();
+  const { itemsPerPage, setItemsPerPage, currentPage, setCurrentPage, isInitialized } =
+    usePageSize();
 
   const effectiveItemsPerPage = itemsPerPage === Infinity ? users.length : itemsPerPage;
   const startIndex = (currentPage - 1) * effectiveItemsPerPage;

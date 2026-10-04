@@ -25,7 +25,9 @@ import {
   type MDXEditorMethods,
 } from '@mdxeditor/editor';
 import '@mdxeditor/editor/style.css';
-import { forwardRef, useState, useEffect } from 'react';
+import { forwardRef, useSyncExternalStore } from 'react';
+
+const subscribeNoop = () => () => {};
 
 type MDXEditorProps = {
   markdown: string;
@@ -37,11 +39,8 @@ type MDXEditorProps = {
 
 export const MDXEditor = forwardRef<MDXEditorMethods, MDXEditorProps>(
   ({ markdown, onChange, placeholder, readOnly = false, className = '' }, ref) => {
-    const [isMounted, setIsMounted] = useState(false);
-
-    useEffect(() => {
-      setIsMounted(true);
-    }, []);
+    // false during SSR and hydration, true once running on the client
+    const isMounted = useSyncExternalStore(subscribeNoop, () => true, () => false);
 
     // Don't render on server to avoid hydration mismatch from platform detection
     if (!isMounted) {

@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { AlertTriangle } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 import { formatQuantity, formatCurrency } from '@/lib/format';
+import { getLotExpiryStatus } from '@/lib/lotExpiry';
 
 export default async function LotDetailPage({
   params,
@@ -32,10 +33,7 @@ export default async function LotDetailPage({
   const lot = lotResult.data;
 
   const isDepleted = lot.remainingQty <= 0;
-  const isExpired = lot.expiresAt && new Date(lot.expiresAt) < new Date();
-  const isExpiringSoon = lot.expiresAt &&
-    !isExpired &&
-    new Date(lot.expiresAt).getTime() - Date.now() < 7 * 24 * 60 * 60 * 1000;
+  const { isExpired, isExpiringSoon } = getLotExpiryStatus(lot.expiresAt);
 
   const totalValue = lot.remainingQty * lot.costPerUnit;
   const percentRemaining = ((lot.remainingQty / lot.purchaseQty) * 100).toFixed(0);
