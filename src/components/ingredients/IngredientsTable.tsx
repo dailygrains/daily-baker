@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Pagination, usePageSize } from '@/components/ui/Pagination';
 import { TagBadges } from '@/components/tags';
@@ -34,8 +33,8 @@ interface IngredientsTableProps {
 
 export function IngredientsTable({ ingredients }: IngredientsTableProps) {
   const router = useRouter();
-  const [currentPage, setCurrentPage] = useState(1);
-  const { itemsPerPage, setItemsPerPage, isInitialized } = usePageSize();
+  const { itemsPerPage, setItemsPerPage, currentPage, setCurrentPage, isInitialized } =
+    usePageSize();
 
   const effectiveItemsPerPage = itemsPerPage === Infinity ? ingredients.length : itemsPerPage;
   const startIndex = (currentPage - 1) * effectiveItemsPerPage;

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useSyncExternalStore } from 'react';
+import { useCallback, useState, useSyncExternalStore } from 'react';
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100, 'all'] as const;
 
@@ -65,11 +65,26 @@ export function usePageSize() {
   );
   const isInitialized = useSyncExternalStore(subscribeNoop, () => true, () => false);
 
+  // The page size is shared across tables and tabs, so it can change underneath this table.
+  // Return to the first page whenever it does, so the current page never points past the end.
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSizeForCurrentPage, setPageSizeForCurrentPage] = useState(itemsPerPage);
+  if (itemsPerPage !== pageSizeForCurrentPage) {
+    setPageSizeForCurrentPage(itemsPerPage);
+    setCurrentPage(1);
+  }
+
   const updateItemsPerPage = useCallback((size: number) => {
     storePageSize(size);
   }, []);
 
-  return { itemsPerPage, setItemsPerPage: updateItemsPerPage, isInitialized };
+  return {
+    itemsPerPage,
+    setItemsPerPage: updateItemsPerPage,
+    currentPage,
+    setCurrentPage,
+    isInitialized,
+  };
 }
 
 export function Pagination({
