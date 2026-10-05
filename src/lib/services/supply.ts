@@ -72,8 +72,11 @@ export async function updateSupply(ctx: ServiceContext, id: string, input: unkno
       unitsPerCase: fields.unitsPerCase,
       costPerUnit: fields.costPerUnit != null ? new Decimal(fields.costPerUnit) : undefined,
       quantityOnHand: fields.quantityOnHand != null ? new Decimal(fields.quantityOnHand) : undefined,
+      // null clears the threshold; undefined leaves it unchanged.
       lowStockThreshold:
-        fields.lowStockThreshold != null ? new Decimal(fields.lowStockThreshold) : undefined,
+        fields.lowStockThreshold == null
+          ? fields.lowStockThreshold
+          : new Decimal(fields.lowStockThreshold),
       // The submitted list is authoritative; omit it to leave links alone.
       ...(vendorIds !== undefined && {
         vendors: { deleteMany: {}, create: vendorLinks(vendorIds) },

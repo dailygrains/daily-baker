@@ -4,13 +4,32 @@
     {
       "name": "next-dev",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
-      "port": 3000
+      "runtimeArgs": [
+        "run",
+        "dev"
+      ],
+      "port": 3030
+    },
+    {
+      "name": "api-test",
+      "runtimeExecutable": "env",
+      "runtimeArgs": [
+        "AWS_S3_BUCKET_NAME=",
+        "npx",
+        "next",
+        "dev",
+        "--port",
+        "3031"
+      ],
+      "port": 3031
     },
     {
       "name": "prisma-studio",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["prisma", "studio"],
+      "runtimeArgs": [
+        "prisma",
+        "studio"
+      ],
       "port": 5555
     }
   ]

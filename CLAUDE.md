@@ -20,7 +20,7 @@ Production URL: https://baker.dailygrains.co
 ## Common Commands
 - `npm run dev` — starts local Postgres Docker + Next.js dev server
 - `npm run check` — type-check + lint (run before committing)
-- `npm run test:api`: REST API integration tests (`tests/api/`). Needs a dev server on port 3031 against the local DB (`npx next dev --port 3031`); global setup creates and deletes throwaway bakeries and refuses non-localhost databases
+- `npm run test:api`: all tests. `tests/api/` calls a dev server on port 3031 against the local DB, started with the S3 bucket blanked (`AWS_S3_BUCKET_NAME= npx next dev --port 3031`, or the `api-test` launch config) so recipe snapshots aren't uploaded; global setup creates and deletes throwaway bakeries and refuses non-localhost databases. `tests/actions/` calls the server actions directly with UI-shaped payloads (Clerk, `next/cache`, SES and S3 mocked) and needs no server
 - `npm run build` — production build
 - `npx prisma migrate dev` — run DB migrations
 - `npx prisma studio` — visual DB browser
@@ -124,6 +124,7 @@ Public REST API for programmatic access to bakery data. All bakery-scoped endpoi
 - Local Postgres runs via Docker on port 5434
 - `.env` has local-only values — never matches production
 - Clerk keys in `.env` are blank — auth features won't work locally without them
+- Local `.env` points `AWS_S3_BUCKET_NAME` at the production uploads bucket, so local saves upload real snapshots and files there
 - Package manager: pnpm (specified in `packageManager` field), but scripts use `npm run`
 
 ## Gotchas
