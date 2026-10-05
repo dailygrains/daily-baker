@@ -84,20 +84,29 @@ export async function getRecipeBatchBasis(recipeId: string, recipeScale: number)
 }
 
 /**
- * Load unit costs for every supply referenced across a set of variations.
+ * Load unit costs for every supply referenced across a set of variations,
+ * scoped to the bakery. Returns null if any referenced supply is missing or
+ * belongs to another bakery, so callers can reject the write.
  */
-async function loadSupplyCosts(variations: ProductVariationInput[]): Promise<Map<string, number>> {
+async function loadSupplyCosts(
+  variations: ProductVariationInput[],
+  bakeryId: string
+): Promise<Map<string, number> | null> {
   const supplyIds = [
     ...new Set(variations.flatMap((v) => (v.variationSupplies ?? []).map((s) => s.supplyId))),
   ];
   if (supplyIds.length === 0) return new Map();
 
   const supplies = await db.supply.findMany({
-    where: { id: { in: supplyIds } },
+    where: { id: { in: supplyIds }, bakeryId },
     select: { id: true, costPerUnit: true },
   });
+  if (supplies.length !== supplyIds.length) return null;
+
   return new Map(supplies.map((s) => [s.id, Number(s.costPerUnit)]));
 }
+
+const SUPPLY_SCOPE_ERROR = 'Supply not found or belongs to another bakery';
 
 /**
  * Build the Prisma payload for a variation, with all cost fields resolved.
@@ -173,7 +182,10 @@ export async function createProduct(data: CreateProductInput) {
     if (!ctx) {
       return { success: false, error: 'Recipe not found' };
     }
-    const costMap = await loadSupplyCosts(variations);
+    const costMap = await loadSupplyCosts(variations, productData.bakeryId);
+    if (!costMap) {
+      return { success: false, error: SUPPLY_SCOPE_ERROR };
+    }
 
     const built = variations.map((v) => ({ variation: v, ...buildVariationData(v, ctx, costMap) }));
 
@@ -264,6 +276,14 @@ export async function updateProduct(data: UpdateProductInput) {
       return { success: false, error: 'Recipe not found' };
     }
 
+    // Resolve supply costs up front so a foreign supply rejects before any write.
+    const costMap = variations
+      ? await loadSupplyCosts(variations, existing.bakeryId)
+      : new Map<string, number>();
+    if (!costMap) {
+      return { success: false, error: SUPPLY_SCOPE_ERROR };
+    }
+
     const warnings: string[] = [...ctx.warnings];
 
     await db.$transaction(async (tx) => {
@@ -314,7 +334,6 @@ export async function updateProduct(data: UpdateProductInput) {
         return;
       }
 
-      const costMap = await loadSupplyCosts(variations);
       const keptIds = variations.map((v) => v.id).filter((id): id is string => Boolean(id));
 
       // Variations absent from the submitted list are removed.
