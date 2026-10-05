@@ -2,10 +2,13 @@
 
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { createProduct, updateProduct } from '@/app/actions/product';
+import { createProduct, updateProduct, getRecipeBatchBasis } from '@/app/actions/product';
 import { useFormSubmit } from '@/hooks/useFormSubmit';
-import { ProductSupplyLineItems, type BomLine } from '@/components/product/ProductSupplyLineItems';
-import { DollarSign } from 'lucide-react';
+import {
+  ProductVariationEditor,
+  emptyVariation,
+  type VariationDraft,
+} from '@/components/product/ProductVariationEditor';
 
 interface RecipeOption {
   id: string;
@@ -21,22 +24,28 @@ interface SupplyOption {
   category: string;
 }
 
-interface ProductFormProps {
-  bakeryId: string;
-  product?: {
+export interface ProductFormProduct {
+  id: string;
+  name: string;
+  description: string | null;
+  squareItemId: string | null;
+  recipeId: string;
+  recipeScale: number;
+  isActive: boolean;
+  variations: Array<{
     id: string;
     name: string;
     sku: string | null;
-    description: string | null;
-    recipeId: string;
-    recipeScale: number;
-    batchYieldQty: number;
+    squareVariationId: string | null;
+    unitWeightG: number | null;
+    batchYieldQty: number | null;
     laborCost: number;
     overheadCost: number;
     retailPrice: number | null;
     wholesalePrice: number | null;
     targetMarginPct: number | null;
-    productSupplies: Array<{
+    isActive: boolean;
+    variationSupplies: Array<{
       supply: { id: string; name: string; unit: string; costPerUnit: number; category: string };
       quantity: number;
       unit: string;
@@ -44,13 +53,44 @@ interface ProductFormProps {
       costOverride: number | null;
       notes: string | null;
     }>;
-  };
+  }>;
+}
+
+interface ProductFormProps {
+  bakeryId: string;
+  product?: ProductFormProduct;
   recipes: RecipeOption[];
   supplies: SupplyOption[];
   onFormRefChange?: (ref: HTMLFormElement | null) => void;
   onSavingChange?: (isSaving: boolean) => void;
   onUnsavedChangesChange?: (hasChanges: boolean) => void;
   showBottomActions?: boolean;
+}
+
+function toDrafts(product?: ProductFormProduct): VariationDraft[] {
+  if (!product) return [emptyVariation('Regular')];
+  return product.variations.map((v) => ({
+    id: v.id,
+    name: v.name,
+    sku: v.sku ?? '',
+    squareVariationId: v.squareVariationId ?? '',
+    unitWeightG: v.unitWeightG,
+    batchYieldQty: v.batchYieldQty,
+    laborCost: v.laborCost,
+    overheadCost: v.overheadCost,
+    retailPrice: v.retailPrice,
+    wholesalePrice: v.wholesalePrice,
+    targetMarginPct: v.targetMarginPct,
+    isActive: v.isActive,
+    supplies: v.variationSupplies.map((ps) => ({
+      supplyId: ps.supply.id,
+      quantity: ps.quantity,
+      unit: ps.unit,
+      wasteFactor: ps.wasteFactor,
+      costOverride: ps.costOverride,
+      notes: ps.notes ?? '',
+    })),
+  }));
 }
 
 export function ProductForm({
@@ -76,90 +116,94 @@ export function ProductForm({
 
   const [formData, setFormData] = useState({
     name: product?.name ?? '',
-    sku: product?.sku ?? '',
     description: product?.description ?? '',
+    squareItemId: product?.squareItemId ?? '',
     recipeId: product?.recipeId ?? '',
     recipeScale: product?.recipeScale ?? 1,
-    batchYieldQty: product?.batchYieldQty ?? 1,
-    laborCost: product?.laborCost ?? 0,
-    overheadCost: product?.overheadCost ?? 0,
-    retailPrice: product?.retailPrice ?? '',
-    wholesalePrice: product?.wholesalePrice ?? '',
-    targetMarginPct: product?.targetMarginPct ?? '',
+    isActive: product?.isActive ?? true,
   });
 
-  const [productSupplies, setProductSupplies] = useState<BomLine[]>(
-    product?.productSupplies.map((ps) => ({
-      supplyId: ps.supply.id,
-      quantity: ps.quantity,
-      unit: ps.unit,
-      wasteFactor: ps.wasteFactor,
-      costOverride: ps.costOverride,
-      notes: ps.notes ?? '',
-    })) ?? []
-  );
+  const [variations, setVariations] = useState<VariationDraft[]>(() => toDrafts(product));
 
-  // Notify parent of form ref changes
+  /**
+   * Batch weight comes from the recipe's ingredients, which only the server can
+   * resolve (it needs unit conversions and ingredient densities), so it is
+   * fetched whenever the recipe or scale changes.
+   */
+  const [basis, setBasis] = useState<{
+    recipeId: string;
+    recipeScale: number;
+    batchWeightG: number | null;
+    warnings: string[];
+  } | null>(null);
+
+  useEffect(() => {
+    const recipeId = formData.recipeId;
+    const recipeScale = formData.recipeScale;
+    if (!recipeId) return;
+    let cancelled = false;
+    getRecipeBatchBasis(recipeId, recipeScale).then((result) => {
+      if (cancelled) return;
+      setBasis({
+        recipeId,
+        recipeScale,
+        batchWeightG: result.success && result.data ? result.data.batchWeightG : null,
+        warnings: result.success && result.data ? result.data.warnings : [],
+      });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [formData.recipeId, formData.recipeScale]);
+
+  // Only trust the fetched basis while it still matches the selected recipe and
+  // scale, so a stale figure never drives the cost preview mid-fetch.
+  const basisIsCurrent =
+    basis !== null &&
+    basis.recipeId === formData.recipeId &&
+    basis.recipeScale === formData.recipeScale;
+  const batchWeightG = basisIsCurrent ? basis.batchWeightG : null;
+  const weightWarnings = basisIsCurrent ? basis.warnings : [];
+
   useEffect(() => {
     if (onFormRefChange && formRef.current) {
       onFormRefChange(formRef.current);
     }
   }, [onFormRefChange]);
 
-  // Notify parent of saving state changes
   useEffect(() => {
     if (onSavingChange) onSavingChange(isSubmitting);
   }, [isSubmitting, onSavingChange]);
 
-  // Notify parent of unsaved changes state
   useEffect(() => {
     if (onUnsavedChangesChange) onUnsavedChangesChange(hasUnsavedChanges);
   }, [hasUnsavedChanges, onUnsavedChangesChange]);
 
-  // Computed costs
   const selectedRecipe = useMemo(
     () => recipes.find((r) => r.id === formData.recipeId),
     [recipes, formData.recipeId]
   );
 
-  const ingredientCost = useMemo(() => {
-    if (!selectedRecipe || formData.batchYieldQty <= 0) return 0;
-    return (selectedRecipe.totalCost * formData.recipeScale) / formData.batchYieldQty;
-  }, [selectedRecipe, formData.recipeScale, formData.batchYieldQty]);
-
-  const supplyCostTotal = useMemo(() => {
-    return productSupplies.reduce((sum, line) => {
-      if (!line.supplyId) return sum;
-      const supply = supplies.find((s) => s.id === line.supplyId);
-      const unitCost = line.costOverride ?? supply?.costPerUnit ?? 0;
-      return sum + unitCost * line.quantity * line.wasteFactor;
-    }, 0);
-  }, [productSupplies, supplies]);
-
-  const totalCost = ingredientCost + supplyCostTotal + formData.laborCost + formData.overheadCost;
-
-  const computedMargin = useMemo(() => {
-    const retail = typeof formData.retailPrice === 'number' ? formData.retailPrice : parseFloat(formData.retailPrice as string);
-    if (!retail || retail <= 0) return null;
-    return ((retail - totalCost) / retail) * 100;
-  }, [formData.retailPrice, totalCost]);
+  const batchCost = (selectedRecipe?.totalCost ?? 0) * formData.recipeScale;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const payload = {
-      name: formData.name,
-      sku: formData.sku || null,
-      description: formData.description || null,
-      recipeId: formData.recipeId,
-      recipeScale: formData.recipeScale,
-      batchYieldQty: formData.batchYieldQty,
-      laborCost: formData.laborCost,
-      overheadCost: formData.overheadCost,
-      retailPrice: formData.retailPrice !== '' ? Number(formData.retailPrice) : null,
-      wholesalePrice: formData.wholesalePrice !== '' ? Number(formData.wholesalePrice) : null,
-      targetMarginPct: formData.targetMarginPct !== '' ? Number(formData.targetMarginPct) : null,
-      productSupplies: productSupplies
+    const payloadVariations = variations.map((v, index) => ({
+      ...(v.id ? { id: v.id } : {}),
+      name: v.name,
+      sku: v.sku || null,
+      squareVariationId: v.squareVariationId || null,
+      unitWeightG: v.unitWeightG,
+      batchYieldQty: v.batchYieldQty,
+      laborCost: v.laborCost,
+      overheadCost: v.overheadCost,
+      retailPrice: v.retailPrice,
+      wholesalePrice: v.wholesalePrice,
+      targetMarginPct: v.targetMarginPct,
+      isActive: v.isActive,
+      sortOrder: index,
+      variationSupplies: v.supplies
         .filter((ps) => ps.supplyId)
         .map((ps) => ({
           supplyId: ps.supplyId,
@@ -169,6 +213,16 @@ export function ProductForm({
           costOverride: ps.costOverride,
           notes: ps.notes || null,
         })),
+    }));
+
+    const payload = {
+      name: formData.name,
+      description: formData.description || null,
+      squareItemId: formData.squareItemId || null,
+      recipeId: formData.recipeId,
+      recipeScale: formData.recipeScale,
+      isActive: formData.isActive,
+      variations: payloadVariations,
     };
 
     await submit(
@@ -180,13 +234,13 @@ export function ProductForm({
     );
   };
 
-  const updateField = (field: string, value: string | number) => {
+  const updateField = (field: string, value: string | number | boolean) => {
     setFormData({ ...formData, [field]: value });
     setHasUnsavedChanges(true);
   };
 
-  const handleSuppliesChange = (lines: BomLine[]) => {
-    setProductSupplies(lines);
+  const handleVariationsChange = (next: VariationDraft[]) => {
+    setVariations(next);
     setHasUnsavedChanges(true);
   };
 
@@ -216,18 +270,6 @@ export function ProductForm({
         </fieldset>
 
         <fieldset className="fieldset">
-          <legend className="fieldset-legend">SKU</legend>
-          <input
-            type="text"
-            className="input input-bordered w-full"
-            value={formData.sku}
-            onChange={(e) => updateField('sku', e.target.value)}
-            maxLength={100}
-            placeholder="Internal or retail SKU"
-          />
-        </fieldset>
-
-        <fieldset className="fieldset">
           <legend className="fieldset-legend">Description</legend>
           <textarea
             className="textarea textarea-bordered w-full h-24"
@@ -237,11 +279,38 @@ export function ProductForm({
             placeholder="Product description..."
           />
         </fieldset>
+
+        <fieldset className="fieldset">
+          <legend className="fieldset-legend">Square Item ID</legend>
+          <input
+            type="text"
+            className="input input-bordered w-full font-mono text-sm"
+            value={formData.squareItemId}
+            onChange={(e) => updateField('squareItemId', e.target.value)}
+            maxLength={100}
+            placeholder="Set by Square sync"
+          />
+          <label className="label">
+            <span className="label-text-alt">
+              Links this product to a Square catalog item so syncs stay matched
+            </span>
+          </label>
+        </fieldset>
+
+        <label className="label cursor-pointer justify-start gap-3">
+          <input
+            type="checkbox"
+            className="checkbox"
+            checked={formData.isActive}
+            onChange={(e) => updateField('isActive', e.target.checked)}
+          />
+          <span className="label-text">Active</span>
+        </label>
       </div>
 
-      {/* Recipe & Yield */}
+      {/* Recipe */}
       <div className="space-y-0">
-        <h2 className="text-xl font-semibold">Recipe & Yield</h2>
+        <h2 className="text-xl font-semibold">Recipe</h2>
 
         <fieldset className="fieldset">
           <legend className="fieldset-legend">Recipe *</legend>
@@ -260,171 +329,65 @@ export function ProductForm({
           </select>
         </fieldset>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-          <fieldset className="fieldset">
-            <legend className="fieldset-legend">Recipe Scale</legend>
-            <input
-              type="number"
-              step="0.01"
-              min="0.01"
-              className="input input-bordered w-full"
-              value={formData.recipeScale}
-              onChange={(e) => updateField('recipeScale', parseFloat(e.target.value) || 1)}
-            />
-            <label className="label">
-              <span className="label-text-alt">Multiplier for recipe batch (1 = single batch)</span>
-            </label>
-          </fieldset>
-
-          <fieldset className="fieldset">
-            <legend className="fieldset-legend">Batch Yield Qty *</legend>
-            <input
-              type="number"
-              min="1"
-              step="1"
-              className="input input-bordered w-full"
-              value={formData.batchYieldQty}
-              onChange={(e) => updateField('batchYieldQty', parseInt(e.target.value) || 1)}
-              required
-            />
-            <label className="label">
-              <span className="label-text-alt">How many sellable units per batch</span>
-            </label>
-          </fieldset>
-        </div>
+        <fieldset className="fieldset">
+          <legend className="fieldset-legend">Recipe Scale</legend>
+          <input
+            type="number"
+            step="0.01"
+            min="0.01"
+            className="input input-bordered w-full"
+            value={formData.recipeScale}
+            onChange={(e) => updateField('recipeScale', parseFloat(e.target.value) || 1)}
+          />
+          <label className="label">
+            <span className="label-text-alt">Multiplier for recipe batch (1 = single batch)</span>
+          </label>
+        </fieldset>
 
         {selectedRecipe && (
           <div className="text-sm text-base-content/60 mt-2">
-            Ingredient cost per unit: <strong>${ingredientCost.toFixed(4)}</strong>
-            <span className="ml-2">
-              (recipe cost ${selectedRecipe.totalCost.toFixed(2)} x {formData.recipeScale} scale / {formData.batchYieldQty} units)
-            </span>
-          </div>
-        )}
-      </div>
-
-      {/* Packaging & Supplies */}
-      <div className="space-y-0">
-        <h2 className="text-xl font-semibold">Packaging & Supplies</h2>
-
-        <ProductSupplyLineItems
-          lines={productSupplies}
-          supplies={supplies}
-          onChange={handleSuppliesChange}
-        />
-
-        {supplyCostTotal > 0 && (
-          <div className="text-sm text-base-content/60 mt-2">
-            Total supply cost per unit: <strong>${supplyCostTotal.toFixed(4)}</strong>
-          </div>
-        )}
-      </div>
-
-      {/* Additional Costs */}
-      <div className="space-y-0">
-        <h2 className="text-xl font-semibold">Additional Costs</h2>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-          <fieldset className="fieldset">
-            <legend className="fieldset-legend">Labor Cost Per Unit</legend>
-            <label className="input input-bordered w-full">
-              <DollarSign className="h-4 w-4 opacity-50" />
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                className="grow"
-                value={formData.laborCost}
-                onChange={(e) => updateField('laborCost', parseFloat(e.target.value) || 0)}
-                placeholder="0.00"
-              />
-            </label>
-          </fieldset>
-
-          <fieldset className="fieldset">
-            <legend className="fieldset-legend">Overhead Cost Per Unit</legend>
-            <label className="input input-bordered w-full">
-              <DollarSign className="h-4 w-4 opacity-50" />
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                className="grow"
-                value={formData.overheadCost}
-                onChange={(e) => updateField('overheadCost', parseFloat(e.target.value) || 0)}
-                placeholder="0.00"
-              />
-            </label>
-          </fieldset>
-        </div>
-      </div>
-
-      {/* Pricing */}
-      <div className="space-y-0">
-        <h2 className="text-xl font-semibold">Pricing</h2>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-          <fieldset className="fieldset">
-            <legend className="fieldset-legend">Retail Price</legend>
-            <label className="input input-bordered w-full">
-              <DollarSign className="h-4 w-4 opacity-50" />
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                className="grow"
-                value={formData.retailPrice}
-                onChange={(e) => updateField('retailPrice', e.target.value === '' ? '' as unknown as number : parseFloat(e.target.value))}
-                placeholder="0.00"
-              />
-            </label>
-          </fieldset>
-
-          <fieldset className="fieldset">
-            <legend className="fieldset-legend">Wholesale Price</legend>
-            <label className="input input-bordered w-full">
-              <DollarSign className="h-4 w-4 opacity-50" />
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                className="grow"
-                value={formData.wholesalePrice}
-                onChange={(e) => updateField('wholesalePrice', e.target.value === '' ? '' as unknown as number : parseFloat(e.target.value))}
-                placeholder="0.00"
-              />
-            </label>
-          </fieldset>
-        </div>
-
-        <fieldset className="fieldset">
-          <legend className="fieldset-legend">Target Margin %</legend>
-          <input
-            type="number"
-            step="0.1"
-            min="0"
-            max="100"
-            className="input input-bordered w-full"
-            value={formData.targetMarginPct}
-            onChange={(e) => updateField('targetMarginPct', e.target.value === '' ? '' as unknown as number : parseFloat(e.target.value))}
-            placeholder="e.g., 65"
-          />
-        </fieldset>
-
-        <div className="card bg-base-200 p-4 mt-2">
-          <div className="grid grid-cols-2 gap-2 text-sm">
-            <div>Total Cost Per Unit:</div>
-            <div className="font-semibold">${totalCost.toFixed(4)}</div>
-            {computedMargin !== null && (
-              <>
-                <div>Computed Margin:</div>
-                <div className={`font-semibold ${computedMargin < 0 ? 'text-error' : 'text-success'}`}>
-                  {computedMargin.toFixed(1)}%
-                </div>
-              </>
+            Batch ingredient cost: <strong>${batchCost.toFixed(2)}</strong>
+            {batchWeightG != null ? (
+              <span className="ml-2">
+                over <strong>{batchWeightG.toFixed(0)}g</strong> of batch weight
+              </span>
+            ) : (
+              <span className="ml-2">
+                (batch weight unavailable, so variations need a batch yield)
+              </span>
             )}
           </div>
-        </div>
+        )}
+
+        {weightWarnings.length > 0 && (
+          <div className="alert alert-warning mt-2">
+            <div className="text-sm">
+              <div className="font-medium">Some ingredients could not be weighed:</div>
+              <ul className="list-disc list-inside">
+                {weightWarnings.slice(0, 5).map((w, i) => (
+                  <li key={i}>{w}</li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Variations */}
+      <div className="space-y-0">
+        <h2 className="text-xl font-semibold">Variations</h2>
+        <p className="text-sm text-base-content/60 mb-3">
+          Each variation is a size or option sold in Square. Sizes of the same recipe split the
+          batch cost by weight.
+        </p>
+
+        <ProductVariationEditor
+          variations={variations}
+          supplies={supplies}
+          batchCost={batchCost}
+          batchWeightG={batchWeightG}
+          onChange={handleVariationsChange}
+        />
       </div>
 
       {showBottomActions && (

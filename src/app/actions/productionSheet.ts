@@ -1286,8 +1286,7 @@ export async function backfillProductionSheetSnapshots() {
 
     for (const sheet of sheetsToBackfill) {
       // Build recipe entries for snapshot creation
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const recipeEntries: ProductionSheetRecipeEntry[] = (sheet as any).recipes.map((r: any) => ({
+      const recipeEntries: ProductionSheetRecipeEntry[] = sheet.recipes.map((r) => ({
         id: r.id,
         scale: r.scale,
         order: r.order,
@@ -1297,11 +1296,11 @@ export async function backfillProductionSheetSnapshots() {
           yieldQty: r.recipe.yieldQty,
           yieldUnit: r.recipe.yieldUnit,
           totalCost: r.recipe.totalCost,
-          sections: r.recipe.sections.map((s: any) => ({
+          sections: r.recipe.sections.map((s) => ({
             id: s.id,
             name: s.name,
             order: s.order,
-            ingredients: s.ingredients.map((i: any) => ({
+            ingredients: s.ingredients.map((i) => ({
               id: i.id,
               quantity: i.quantity,
               unit: i.unit,

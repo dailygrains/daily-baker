@@ -82,8 +82,8 @@ export const routeRegistry: RouteRegistryEntry[] = [
     name: 'Products',
     createSchema: createProductSchema,
     updateSchema: updateProductSchema,
-    allowedIncludes: ['recipe', 'productSupplies'],
-    searchFields: ['name', 'sku'],
+    allowedIncludes: ['recipe', 'variations', 'variations.variationSupplies'],
+    searchFields: ['name'],
   },
   {
     path: 'ingredients',

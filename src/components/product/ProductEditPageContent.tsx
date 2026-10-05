@@ -3,35 +3,14 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { SetPageHeader } from '@/components/layout/SetPageHeader';
-import { ProductForm } from '@/components/product/ProductForm';
+import { ProductForm, type ProductFormProduct } from '@/components/product/ProductForm';
 import { deleteProduct } from '@/app/actions/product';
 import { useToast } from '@/contexts/ToastContext';
 import { Trash2, Save } from 'lucide-react';
 
 interface ProductEditPageContentProps {
   bakeryId: string;
-  product: {
-    id: string;
-    name: string;
-    sku: string | null;
-    description: string | null;
-    recipeId: string;
-    recipeScale: number;
-    batchYieldQty: number;
-    laborCost: number;
-    overheadCost: number;
-    retailPrice: number | null;
-    wholesalePrice: number | null;
-    targetMarginPct: number | null;
-    productSupplies: Array<{
-      supply: { id: string; name: string; unit: string; costPerUnit: number; category: string };
-      quantity: number;
-      unit: string;
-      wasteFactor: number;
-      costOverride: number | null;
-      notes: string | null;
-    }>;
-  };
+  product: ProductFormProduct;
   recipes: Array<{ id: string; name: string; totalCost: number }>;
   supplies: Array<{ id: string; name: string; unit: string; costPerUnit: number; category: string }>;
 }

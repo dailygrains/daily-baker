@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { formatPhoneNumber } from '@/lib/utils/phone';
 import { Pagination, usePageSize } from '@/components/ui/Pagination';
@@ -25,8 +24,8 @@ interface BakeriesTableProps {
 
 export function BakeriesTable({ bakeries }: BakeriesTableProps) {
   const router = useRouter();
-  const [currentPage, setCurrentPage] = useState(1);
-  const { itemsPerPage, setItemsPerPage, isInitialized } = usePageSize();
+  const { itemsPerPage, setItemsPerPage, currentPage, setCurrentPage, isInitialized } =
+    usePageSize();
 
   const effectiveItemsPerPage = itemsPerPage === Infinity ? bakeries.length : itemsPerPage;
   const startIndex = (currentPage - 1) * effectiveItemsPerPage;

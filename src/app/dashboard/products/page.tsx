@@ -29,26 +29,29 @@ export default async function ProductsPage() {
   const products = productsResult.data || [];
   const totalProducts = products.length;
 
+  // Stats are variation-level: a variation is the thing that carries a cost
+  // and a price, so a two-size product contributes two data points.
+  const allVariations = products.flatMap((p) => p.variations);
+
   const avgCost =
-    totalProducts > 0
-      ? products.reduce((sum, p) => sum + Number(p.totalCost), 0) / totalProducts
+    allVariations.length > 0
+      ? allVariations.reduce((sum, v) => sum + Number(v.totalCost), 0) / allVariations.length
       : 0;
 
-  // Products with retail price for margin/revenue calcs
-  const withRetail = products.filter((p) => p.retailPrice !== null);
+  const withRetail = allVariations.filter((v) => v.retailPrice !== null);
 
   const avgMargin =
     withRetail.length > 0
-      ? withRetail.reduce((sum, p) => {
-          const retail = Number(p.retailPrice);
-          const cost = Number(p.totalCost);
+      ? withRetail.reduce((sum, v) => {
+          const retail = Number(v.retailPrice);
+          const cost = Number(v.totalCost);
           return sum + ((retail - cost) / retail) * 100;
         }, 0) / withRetail.length
       : null;
 
-  const totalRevenuePotential = products
-    .filter((p) => p.retailPrice !== null && p.isActive)
-    .reduce((sum, p) => sum + Number(p.retailPrice), 0);
+  const totalRevenuePotential = allVariations
+    .filter((v) => v.retailPrice !== null && v.isActive)
+    .reduce((sum, v) => sum + Number(v.retailPrice), 0);
 
   return (
     <div className="space-y-6">
@@ -108,23 +111,38 @@ export default async function ProductsPage() {
               <tr>
                 <th>Name</th>
                 <th>Recipe</th>
+                <th>Variations</th>
                 <th>Total Cost</th>
                 <th>Retail Price</th>
                 <th>Margin %</th>
-                <th>Supply Count</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {products.map((product) => {
-                const totalCost = Number(product.totalCost);
-                const retailPrice = product.retailPrice
-                  ? Number(product.retailPrice)
-                  : null;
-                const margin =
-                  retailPrice && retailPrice > 0
-                    ? ((retailPrice - totalCost) / retailPrice) * 100
-                    : null;
+                // A product spans several variations, so show the range its
+                // sizes cover rather than a single number.
+                const costs = product.variations.map((v) => Number(v.totalCost));
+                const retails = product.variations
+                  .filter((v) => v.retailPrice !== null)
+                  .map((v) => Number(v.retailPrice));
+
+                const formatRange = (values: number[], prefix = '$') => {
+                  if (values.length === 0) return '-';
+                  const min = Math.min(...values);
+                  const max = Math.max(...values);
+                  return min === max
+                    ? `${prefix}${min.toFixed(2)}`
+                    : `${prefix}${min.toFixed(2)} - ${prefix}${max.toFixed(2)}`;
+                };
+
+                const margins = product.variations
+                  .filter((v) => v.retailPrice !== null && Number(v.retailPrice) > 0)
+                  .map((v) => {
+                    const retail = Number(v.retailPrice);
+                    return ((retail - Number(v.totalCost)) / retail) * 100;
+                  });
+                const minMargin = margins.length > 0 ? Math.min(...margins) : null;
 
                 return (
                   <tr key={product.id}>
@@ -135,10 +153,8 @@ export default async function ProductsPage() {
                       >
                         {product.name}
                       </Link>
-                      {product.sku && (
-                        <p className="text-sm text-base-content/50">
-                          SKU: {product.sku}
-                        </p>
+                      {!product.isActive && (
+                        <span className="badge badge-ghost badge-sm ml-2">Inactive</span>
                       )}
                     </td>
                     <td>
@@ -154,31 +170,30 @@ export default async function ProductsPage() {
                       )}
                     </td>
                     <td>
-                      <span className="font-semibold">
-                        ${totalCost.toFixed(2)}
+                      <span className="badge badge-outline">
+                        {product._count.variations}
                       </span>
+                      <p className="text-sm text-base-content/50">
+                        {product.variations.map((v) => v.name).join(', ')}
+                      </p>
                     </td>
                     <td>
-                      {retailPrice !== null ? (
-                        <span className="font-semibold">
-                          ${retailPrice.toFixed(2)}
-                        </span>
-                      ) : (
-                        '-'
-                      )}
+                      <span className="font-semibold">{formatRange(costs)}</span>
                     </td>
                     <td>
-                      {margin !== null ? (
+                      <span className="font-semibold">{formatRange(retails)}</span>
+                    </td>
+                    <td>
+                      {minMargin !== null ? (
                         <span
-                          className={`font-semibold ${margin < 0 ? 'text-error' : 'text-success'}`}
+                          className={`font-semibold ${minMargin < 0 ? 'text-error' : 'text-success'}`}
                         >
-                          {margin.toFixed(1)}%
+                          {minMargin.toFixed(1)}%
                         </span>
                       ) : (
                         '-'
                       )}
                     </td>
-                    <td>{product._count.productSupplies}</td>
                     <td>
                       <Link
                         href={`/dashboard/products/${product.id}/edit`}

@@ -215,7 +215,13 @@ export async function getSupplyById(id: string) {
         },
         productSupplies: {
           include: {
-            product: { select: { id: true, name: true } },
+            variation: {
+              select: {
+                id: true,
+                name: true,
+                product: { select: { id: true, name: true } },
+              },
+            },
           },
         },
       },

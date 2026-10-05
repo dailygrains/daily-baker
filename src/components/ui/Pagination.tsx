@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useCallback, useState, useSyncExternalStore } from 'react';
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100, 'all'] as const;
-type PageSize = (typeof PAGE_SIZE_OPTIONS)[number];
 
 const STORAGE_KEY = 'pagination-page-size';
+const DEFAULT_PAGE_SIZE = 10;
 
 interface PaginationProps {
   totalItems: number;
@@ -15,36 +15,76 @@ interface PaginationProps {
   onItemsPerPageChange: (itemsPerPage: number) => void;
 }
 
+// Holds the page size in memory when localStorage is unavailable (private mode, blocked storage)
+let inMemoryPageSize: number | null = null;
+
 function getStoredPageSize(): number {
-  if (typeof window === 'undefined') return 10;
-  const stored = localStorage.getItem(STORAGE_KEY);
-  if (!stored) return 10;
-  if (stored === 'all') return Infinity;
-  const parsed = parseInt(stored, 10);
-  return isNaN(parsed) ? 10 : parsed;
+  if (inMemoryPageSize !== null) return inMemoryPageSize;
+  if (typeof window === 'undefined') return DEFAULT_PAGE_SIZE;
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (!stored) return DEFAULT_PAGE_SIZE;
+    if (stored === 'all') return Infinity;
+    const parsed = parseInt(stored, 10);
+    return isNaN(parsed) ? DEFAULT_PAGE_SIZE : parsed;
+  } catch {
+    return DEFAULT_PAGE_SIZE;
+  }
 }
 
-function storePageSize(size: number | 'all'): void {
-  if (typeof window === 'undefined') return;
-  localStorage.setItem(STORAGE_KEY, String(size));
+// The 'storage' event only fires in other tabs, so same-tab writes notify listeners directly
+const pageSizeListeners = new Set<() => void>();
+
+function subscribeToPageSize(listener: () => void): () => void {
+  pageSizeListeners.add(listener);
+  window.addEventListener('storage', listener);
+  return () => {
+    pageSizeListeners.delete(listener);
+    window.removeEventListener('storage', listener);
+  };
 }
+
+function storePageSize(size: number): void {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(STORAGE_KEY, size === Infinity ? 'all' : String(size));
+  } catch {
+    inMemoryPageSize = size;
+  }
+  pageSizeListeners.forEach((listener) => listener());
+}
+
+const subscribeNoop = () => () => {};
 
 export function usePageSize() {
-  const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [isInitialized, setIsInitialized] = useState(false);
+  // Server and hydration render use the default; the client then switches to the stored value
+  const itemsPerPage = useSyncExternalStore(
+    subscribeToPageSize,
+    getStoredPageSize,
+    () => DEFAULT_PAGE_SIZE
+  );
+  const isInitialized = useSyncExternalStore(subscribeNoop, () => true, () => false);
 
-  useEffect(() => {
-    const stored = getStoredPageSize();
-    setItemsPerPage(stored);
-    setIsInitialized(true);
-  }, []);
+  // The page size is shared across tables and tabs, so it can change underneath this table.
+  // Return to the first page whenever it does, so the current page never points past the end.
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSizeForCurrentPage, setPageSizeForCurrentPage] = useState(itemsPerPage);
+  if (itemsPerPage !== pageSizeForCurrentPage) {
+    setPageSizeForCurrentPage(itemsPerPage);
+    setCurrentPage(1);
+  }
 
   const updateItemsPerPage = useCallback((size: number) => {
-    setItemsPerPage(size);
-    storePageSize(size === Infinity ? 'all' : size);
+    storePageSize(size);
   }, []);
 
-  return { itemsPerPage, setItemsPerPage: updateItemsPerPage, isInitialized };
+  return {
+    itemsPerPage,
+    setItemsPerPage: updateItemsPerPage,
+    currentPage,
+    setCurrentPage,
+    isInitialized,
+  };
 }
 
 export function Pagination({
@@ -59,7 +99,6 @@ export function Pagination({
   const handlePageSizeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
     const newSize = value === 'all' ? Infinity : parseInt(value, 10);
-    storePageSize(value as PageSize);
     onItemsPerPageChange(newSize);
     onPageChange(1); // Reset to first page when changing page size
   };

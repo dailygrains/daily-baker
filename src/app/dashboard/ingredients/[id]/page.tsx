@@ -6,6 +6,7 @@ import { TagBadges } from '@/components/tags';
 import Link from 'next/link';
 import { Edit, Boxes, AlertTriangle, TrendingDown, Plus, AlertCircle, Pencil } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { getLotExpiryStatus } from '@/lib/lotExpiry';
 
 export default async function IngredientDetailPage({
   params,
@@ -197,9 +198,7 @@ export default async function IngredientDetailPage({
                 <tbody>
                   {lots.map((lot) => {
                     const isDepleted = lot.remainingQty <= 0;
-                    const isExpiringSoon = lot.expiresAt &&
-                      new Date(lot.expiresAt).getTime() - Date.now() < 7 * 24 * 60 * 60 * 1000;
-                    const isExpired = lot.expiresAt && new Date(lot.expiresAt) < new Date();
+                    const { isExpired, isExpiringSoon } = getLotExpiryStatus(lot.expiresAt);
 
                     return (
                       <tr key={lot.id} className={`hover cursor-pointer ${isDepleted ? 'opacity-50' : ''}`}>
