@@ -94,7 +94,9 @@ export async function logActivity(
     await db.activityLog.create({
       data: {
         userId: ctx.userId,
-        bakeryId: entry.bakeryId ?? ctx.bakeryId,
+        // An explicit null means a platform-level event with no bakery; only
+        // an omitted bakeryId falls back to the caller's bakery.
+        bakeryId: 'bakeryId' in entry ? (entry.bakeryId ?? null) : ctx.bakeryId,
         action: entry.action,
         entityType: entry.entityType,
         entityId: entry.entityId,

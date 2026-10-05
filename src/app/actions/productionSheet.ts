@@ -52,9 +52,9 @@ export async function createProductionSheet(
 ): Promise<Omit<ActionResult<Sheet>, 'warnings'> & { warnings?: InventoryWarning[] }> {
   // Warnings here are structured inventory shortfalls, not strings.
   const failure = ({ error }: ActionResult) => ({ success: false, error });
-  const ctx = await actionContext();
-  if (!ctx) return failure(UNAUTHORIZED);
   try {
+    const ctx = await actionContext();
+    if (!ctx) return failure(UNAUTHORIZED);
     const { sheet, warnings } = await sheets.createProductionSheet(ctx, data);
     revalidateSheet();
     return { success: true, data: sheet, warnings: warnings.length > 0 ? warnings : undefined };
@@ -233,9 +233,9 @@ export async function getProductionSheetById(id: string) {
 export async function updateProductionSheet(
   data: UpdateProductionSheetInput
 ): Promise<ActionResult<Sheet>> {
-  const ctx = await actionContext();
-  if (!ctx) return UNAUTHORIZED;
   try {
+    const ctx = await actionContext();
+    if (!ctx) return UNAUTHORIZED;
     const sheet = await sheets.updateProductionSheet(ctx, data.id, data);
     revalidateSheet(data.id);
     return { success: true, data: sheet };
@@ -250,9 +250,9 @@ export async function updateProductionSheet(
 export async function addRecipeToSheet(
   data: AddRecipeToSheetInput
 ): Promise<ActionResult<SheetRecipe>> {
-  const ctx = await actionContext();
-  if (!ctx) return UNAUTHORIZED;
   try {
+    const ctx = await actionContext();
+    if (!ctx) return UNAUTHORIZED;
     const entry = await sheets.addRecipeToSheet(ctx, data.productionSheetId, data);
     revalidateSheet(data.productionSheetId);
     return { success: true, data: entry };
@@ -267,9 +267,9 @@ export async function addRecipeToSheet(
 export async function updateRecipeOnSheet(
   data: UpdateRecipeOnSheetInput
 ): Promise<ActionResult<SheetRecipe>> {
-  const ctx = await actionContext();
-  if (!ctx) return UNAUTHORIZED;
   try {
+    const ctx = await actionContext();
+    if (!ctx) return UNAUTHORIZED;
     const entry = await sheets.updateRecipeOnSheet(ctx, data.productionSheetId, data.recipeId, data);
     revalidateSheet(data.productionSheetId);
     return { success: true, data: entry };
@@ -282,9 +282,9 @@ export async function updateRecipeOnSheet(
  * Remove a recipe from a production sheet
  */
 export async function removeRecipeFromSheet(data: RemoveRecipeFromSheetInput): Promise<ActionResult> {
-  const ctx = await actionContext();
-  if (!ctx) return UNAUTHORIZED;
   try {
+    const ctx = await actionContext();
+    if (!ctx) return UNAUTHORIZED;
     await sheets.removeRecipeFromSheet(ctx, data.productionSheetId, data.recipeId);
     revalidateSheet(data.productionSheetId);
     return { success: true };
@@ -799,9 +799,9 @@ export async function backfillProductionSheetSnapshots() {
  * Delete a production sheet
  */
 export async function deleteProductionSheet(id: string): Promise<ActionResult> {
-  const ctx = await actionContext();
-  if (!ctx) return UNAUTHORIZED;
   try {
+    const ctx = await actionContext();
+    if (!ctx) return UNAUTHORIZED;
     await sheets.deleteProductionSheet(ctx, id);
     revalidateSheet();
     return { success: true };

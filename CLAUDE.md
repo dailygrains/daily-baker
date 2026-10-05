@@ -20,6 +20,7 @@ Production URL: https://baker.dailygrains.co
 ## Common Commands
 - `npm run dev` — starts local Postgres Docker + Next.js dev server
 - `npm run check` — type-check + lint (run before committing)
+- `npm run test:api`: REST API integration tests (`tests/api/`). Needs a dev server on port 3031 against the local DB (`npx next dev --port 3031`); global setup creates and deletes throwaway bakeries and refuses non-localhost databases
 - `npm run build` — production build
 - `npx prisma migrate dev` — run DB migrations
 - `npx prisma studio` — visual DB browser
@@ -36,12 +37,12 @@ Production URL: https://baker.dailygrains.co
 - `/api/v1/*` — public REST API (see REST API section below)
 
 ### Data Flow Pattern
-Server actions (`src/app/actions/*.ts`) are the primary mutation layer. They follow this pattern:
-1. `getCurrentUser()` for auth
-2. Zod schema validation (schemas in `src/lib/validations/`)
-3. Prisma DB operations via `db` (re-exported from `src/lib/prisma.ts`)
-4. `revalidatePath()` for cache invalidation
-5. Activity logging via `createActivityLog()`
+Every mutation lives in a shared service (`src/lib/services/*.ts`) that both the dashboard and the REST API call, so the two can't diverge. Anything the dashboard can do must also be possible through `/api/v1`.
+
+- **Services** take a `ServiceContext` (`{ bakeryId, userId, isPlatformAdmin }`) plus raw input. They parse with the Zod schema (forcing `bakeryId` from the context), load existing rows with `findFirst({ where: { id, bakeryId } })`, reject other tenants' foreign keys with `assertAllOwned()`, apply the delete guards, and log with `logActivity()`. They throw `ServiceError` (404 missing, 409 guard, 422 invalid, 403 permission) and must not import Next or Clerk.
+- **Server actions** (`src/app/actions/*.ts`) are thin wrappers: `actionContext()` → service → `revalidatePath()` → `{ success, data?, error? }` via `actionError()`.
+- **API routes** pass the service to `createCrudRoutes({ service })`, or use `serviceHandler()` for action endpoints (e.g. `POST /products/:id/recalculate`).
+- Activity logs need a user, so API-key writes aren't logged yet (keys have no user).
 
 ### Auth & Multi-Tenancy
 - `src/lib/clerk.ts` → `getCurrentUser()` is the central auth function. It syncs Clerk users to the DB, auto-accepts pending invitations, handles bakery selection via cookie, and returns an enriched user object with `bakeryId`, `bakery`, and `allBakeries`.
@@ -97,16 +98,16 @@ Public REST API for programmatic access to bakery data. All bakery-scoped endpoi
 - **API keys**: `Authorization: Bearer dbk_...` — keys are bcrypt-hashed in the `ApiKey` model, matched by prefix lookup. Scopes: `read`, `write`.
 - **Clerk JWT**: `Authorization: Bearer <clerk-session-token>` — validated via Clerk's `verifyToken()`.
 
-**Route factory** — `createCrudRoutes()` in `src/lib/api/create-crud-routes.ts` generates GET (list + single), POST, PUT, DELETE handlers for a Prisma model. Config options: `bakeryScoped`, `searchFields`, `allowedIncludes`, `validators`, `readOnly`, `adminOnly`, lifecycle hooks (`beforeCreate`, `afterCreate`, `beforeDelete`).
+**Route factory** — `createCrudRoutes()` in `src/lib/api/create-crud-routes.ts` generates GET (list + single), POST, PUT, DELETE handlers for a Prisma model. Config options: `bakeryScoped`, `searchFields`, `allowedIncludes`, `validators`, `readOnly`, `adminOnly`, `service` (`{ create, update, remove }` shared service functions that replace the generic Prisma write). Bakery-scoped routes return 403 when the caller has no bakery. Each resource's config lives in `src/lib/api/resources/` and both route files import it.
 
-**Route files** — `src/app/api/v1/{model}/route.ts` (collection) and `src/app/api/v1/{model}/[id]/route.ts` (single record). 14 models: equipment, ingredients, inventory, inventory-lots, production-sheets, production-sheet-items, recipes, recipe-sections, recipe-section-ingredients, roles, tags, users, user-bakeries, vendors.
+**Route files** — `src/app/api/v1/{resource}/route.ts` (collection) and `src/app/api/v1/{resource}/[id]/route.ts` (single record), plus action subroutes. Resources: activity-logs, bakeries, equipment, ingredients (+ `/:id/vendors`), inventory (settings only), inventory-lots, invitations (+ `/:id/revoke`, `/:id/resend`), production-sheets (+ `/:id/recipes`), products (+ `/:id/recalculate`), recipes, roles, supplies, tag-types, tags (+ `/:id/assignments`, `/entity-tags/:type/:id`), unit-conversions, users (+ `/:id/bakeries/:bakeryId`), vendors. Nested children (recipe sections, product variations, sheet recipes) are written through their parent.
 
 **Response shape**: `{ success: boolean, data?: T, meta?: { page, limit, total, totalPages }, error?: string }`
 
 **Pagination**: `?page=&limit=&search=&sort=&order=&include=` — parsed by `src/lib/api/pagination.ts`.
 
 **API documentation**:
-- OpenAPI 3.1 spec: `GET /api/v1/openapi.json` — auto-generated from route registry (`src/lib/api/route-registry.ts`) + Zod schemas via `toJSONSchema()`.
+- OpenAPI 3.1 spec: `GET /api/v1/openapi.json` — auto-generated from route registry (`src/lib/api/route-registry.ts`) + Zod schemas via `toJSONSchema()`. Registry entries read schemas/includes/search from each resource's route config; add action endpoints to the entry's `actions`. `tests/api/openapi.test.ts` fails if the spec and the route files disagree.
 - Swagger UI: `/api/v1/docs` — interactive API explorer using `swagger-ui-react`.
 
 **API key management UI**: `/dashboard/settings/api-keys/` — create keys (with name, scopes, optional expiration), copy on reveal, revoke. Component: `src/components/settings/ApiKeyManager.tsx`, server actions: `src/app/actions/apiKey.ts`.

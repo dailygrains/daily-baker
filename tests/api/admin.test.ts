@@ -400,3 +400,27 @@ describe('service: users', () => {
     expect(await db.user.findUnique({ where: { id: plain.id } })).toBeNull();
   });
 });
+
+describe('activity log attribution for platform events', () => {
+  it('keeps platform-level entries out of the admin selected bakery', async () => {
+    const selected = await makeBakery();
+    const ctx: ServiceContext = { ...admin, bakeryId: selected.id };
+    const loner = await makeUser('no-bakery');
+
+    // Renaming a user who has no bakery is a platform-level event.
+    await users.updateUser(ctx, loner.id, { name: 'Renamed' });
+    const log = await db.activityLog.findFirst({
+      where: { entityId: loner.id, action: 'UPDATE' },
+      orderBy: { createdAt: 'desc' },
+    });
+    expect(log?.bakeryId).toBeNull();
+  });
+
+  it('logs the deletion of the bakery the admin has selected', async () => {
+    const doomed = await makeBakery();
+    await bakeries.deleteBakery({ ...admin, bakeryId: doomed.id }, doomed.id);
+    const log = await db.activityLog.findFirst({ where: { entityId: doomed.id, action: 'DELETE' } });
+    expect(log).not.toBeNull();
+    expect(log?.bakeryId).toBeNull();
+  });
+});

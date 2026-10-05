@@ -111,6 +111,7 @@ export async function deleteBakery(ctx: ServiceContext, id: string) {
     entityName: bakery.name,
     description: `Deleted bakery "${bakery.name}"`,
     metadata: { bakeryId: bakery.id },
+    bakeryId: null,
   });
 
   return bakery;
