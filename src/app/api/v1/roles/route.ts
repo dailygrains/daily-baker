@@ -1,9 +1,3 @@
-import { createCrudRoutes } from '@/lib/api/create-crud-routes';
+import { roleRoutes } from '@/lib/api/resources/roles';
 
-const routes = createCrudRoutes({
-  model: 'role',
-  bakeryScoped: true,
-  searchFields: ['name'],
-});
-
-export const { GET, POST } = routes.collection;
+export const { GET, POST } = roleRoutes.collection;

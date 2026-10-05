@@ -69,3 +69,15 @@ describe('recipes API', () => {
     expect((await asA().get(`/recipes/${recipe.id}`)).status).toBe(404);
   });
 });
+
+describe('recipe delete', () => {
+  it('removes the recipe tag assignments', async () => {
+    const { recipe } = await makeRecipe();
+    const type = ok(await asA().post('/tag-types', { name: `Type ${recipe.id}` }));
+    const tag = ok(await asA().post('/tags', { name: `Tag ${recipe.id}`, tagTypeId: type.id }));
+    ok(await asA().post(`/tags/${tag.id}/assignments`, { entityType: 'recipe', entityId: recipe.id }));
+
+    ok(await asA().del(`/recipes/${recipe.id}`));
+    expect(ok(await asA().get(`/tags/${tag.id}/assignments`))).toHaveLength(0);
+  });
+});

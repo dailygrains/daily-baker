@@ -1,12 +1,3 @@
-import { createCrudRoutes } from '@/lib/api/create-crud-routes';
-import { createEquipmentSchema, updateEquipmentSchema } from '@/lib/validations/equipment';
+import { equipmentRoutes } from '@/lib/api/resources/equipment';
 
-const routes = createCrudRoutes({
-  model: 'equipment',
-  bakeryScoped: true,
-  searchFields: ['name'],
-  allowedIncludes: ['vendor'],
-  validators: { create: createEquipmentSchema, update: updateEquipmentSchema },
-});
-
-export const { GET, PUT, DELETE } = routes.single;
+export const { GET, PUT, DELETE } = equipmentRoutes.single;

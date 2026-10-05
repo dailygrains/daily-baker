@@ -2,216 +2,65 @@
 
 import { db } from '@/lib/db';
 import { getCurrentUser } from '@/lib/clerk';
-import { createActivityLog } from './activity';
-import {
-  createVendorSchema,
-  updateVendorSchema,
-  type CreateVendorInput,
-  type UpdateVendorInput,
-} from '@/lib/validations/vendor';
+import type { CreateVendorInput, UpdateVendorInput } from '@/lib/validations/vendor';
 import { revalidatePath } from 'next/cache';
+import { actionContext, actionError, UNAUTHORIZED, type ActionResult } from '@/lib/services/action';
+import * as vendorService from '@/lib/services/vendor';
+
+type VendorResult = ActionResult<Awaited<ReturnType<typeof vendorService.createVendor>>>;
 
 /**
  * Create a new vendor
  */
-export async function createVendor(data: CreateVendorInput) {
+export async function createVendor(data: CreateVendorInput): Promise<VendorResult> {
   try {
-    const currentUser = await getCurrentUser();
-
-    if (!currentUser) {
-      return { success: false, error: 'Unauthorized: You must be logged in' };
+    const ctx = await actionContext();
+    if (!ctx) return UNAUTHORIZED;
+    if (ctx.bakeryId !== data.bakeryId) {
+      return { success: false, error: 'Unauthorized: You can only create vendors for your bakery' };
     }
 
-    // Verify user belongs to the bakery
-    if (currentUser.bakeryId !== data.bakeryId) {
-      return {
-        success: false,
-        error: 'Unauthorized: You can only create vendors for your bakery',
-      };
-    }
-
-    // Validate input
-    const validatedData = createVendorSchema.parse(data);
-
-    // Create vendor
-    const vendor = await db.vendor.create({
-      data: {
-        bakeryId: validatedData.bakeryId,
-        name: validatedData.name,
-        email: validatedData.email || null,
-        phone: validatedData.phone || null,
-        website: validatedData.website || null,
-        notes: validatedData.notes || null,
-      },
-    });
-
-    // Log activity
-    await createActivityLog({
-      userId: currentUser.id!,
-      action: 'CREATE',
-      entityType: 'vendor',
-      entityId: vendor.id,
-      entityName: vendor.name,
-      description: `Created vendor "${vendor.name}"`,
-      metadata: {
-        vendorId: vendor.id,
-      },
-      bakeryId: vendor.bakeryId,
-    });
+    const vendor = await vendorService.createVendor(ctx, data);
 
     revalidatePath('/dashboard/vendors');
     return { success: true, data: vendor };
   } catch (error) {
-    console.error('Failed to create vendor:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to create vendor',
-    };
+    return actionError(error, 'Failed to create vendor');
   }
 }
 
 /**
  * Update an existing vendor
  */
-export async function updateVendor(data: UpdateVendorInput) {
+export async function updateVendor(data: UpdateVendorInput): Promise<VendorResult> {
   try {
-    const currentUser = await getCurrentUser();
+    const ctx = await actionContext();
+    if (!ctx) return UNAUTHORIZED;
 
-    if (!currentUser) {
-      return { success: false, error: 'Unauthorized: You must be logged in' };
-    }
-
-    // Validate input
-    const validatedData = updateVendorSchema.parse(data);
-
-    // Fetch existing vendor to verify ownership
-    const existingVendor = await db.vendor.findUnique({
-      where: { id: validatedData.id },
-      select: { bakeryId: true, name: true },
-    });
-
-    if (!existingVendor) {
-      return { success: false, error: 'Vendor not found' };
-    }
-
-    // Verify user belongs to the same bakery
-    if (currentUser.bakeryId !== existingVendor.bakeryId) {
-      return {
-        success: false,
-        error: 'Unauthorized: You can only update vendors for your bakery',
-      };
-    }
-
-    // Update vendor
-    const vendor = await db.vendor.update({
-      where: { id: validatedData.id },
-      data: {
-        name: validatedData.name,
-        email: validatedData.email,
-        phone: validatedData.phone,
-        website: validatedData.website,
-        notes: validatedData.notes,
-      },
-    });
-
-    // Log activity
-    await createActivityLog({
-      userId: currentUser.id!,
-      action: 'UPDATE',
-      entityType: 'vendor',
-      entityId: vendor.id,
-      entityName: vendor.name,
-      description: `Updated vendor "${vendor.name}"`,
-      metadata: {
-        vendorId: vendor.id,
-        changes: validatedData,
-      },
-      bakeryId: vendor.bakeryId,
-    });
+    const vendor = await vendorService.updateVendor(ctx, data.id, data);
 
     revalidatePath('/dashboard/vendors');
     revalidatePath(`/dashboard/vendors/${vendor.id}`);
     return { success: true, data: vendor };
   } catch (error) {
-    console.error('Failed to update vendor:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to update vendor',
-    };
+    return actionError(error, 'Failed to update vendor');
   }
 }
 
 /**
  * Delete a vendor
  */
-export async function deleteVendor(id: string) {
+export async function deleteVendor(id: string): Promise<ActionResult> {
   try {
-    const currentUser = await getCurrentUser();
+    const ctx = await actionContext();
+    if (!ctx) return UNAUTHORIZED;
 
-    if (!currentUser) {
-      return { success: false, error: 'Unauthorized: You must be logged in' };
-    }
-
-    // Fetch vendor with counts to verify ownership and check dependencies
-    const vendor = await db.vendor.findUnique({
-      where: { id },
-      include: {
-        _count: {
-          select: {
-            ingredients: true,
-            equipment: true,
-          },
-        },
-      },
-    });
-
-    if (!vendor) {
-      return { success: false, error: 'Vendor not found' };
-    }
-
-    // Verify user belongs to the same bakery
-    if (currentUser.bakeryId !== vendor.bakeryId) {
-      return {
-        success: false,
-        error: 'Unauthorized: You can only delete vendors for your bakery',
-      };
-    }
-
-    // Check if vendor has linked ingredients or equipment
-    if (vendor._count.ingredients > 0 || vendor._count.equipment > 0) {
-      return {
-        success: false,
-        error: `Cannot delete vendor with ${vendor._count.ingredients} linked ingredient(s) and ${vendor._count.equipment} linked equipment item(s). Please unlink them first.`,
-      };
-    }
-
-    // Delete vendor
-    await db.vendor.delete({
-      where: { id },
-    });
-
-    // Log activity
-    await createActivityLog({
-      userId: currentUser.id!,
-      action: 'DELETE',
-      entityType: 'vendor',
-      entityId: vendor.id,
-      entityName: vendor.name,
-      description: `Deleted vendor "${vendor.name}"`,
-      metadata: {
-        vendorId: vendor.id,
-      },
-      bakeryId: vendor.bakeryId,
-    });
+    await vendorService.deleteVendor(ctx, id);
 
     revalidatePath('/dashboard/vendors');
     return { success: true };
   } catch (error) {
-    console.error('Failed to delete vendor:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to delete vendor',
-    };
+    return actionError(error, 'Failed to delete vendor');
   }
 }
 

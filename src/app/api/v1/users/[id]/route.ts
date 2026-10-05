@@ -1,10 +1,3 @@
-import { createCrudRoutes } from '@/lib/api/create-crud-routes';
+import { userRoutes } from '@/lib/api/resources/users';
 
-const routes = createCrudRoutes({
-  model: 'user',
-  bakeryScoped: false,
-  adminOnly: true,
-  searchFields: ['email', 'name'],
-});
-
-export const { GET, PUT, DELETE } = routes.single;
+export const { GET, PUT, DELETE } = userRoutes.single;

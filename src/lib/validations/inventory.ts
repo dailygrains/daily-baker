@@ -58,3 +58,15 @@ export const updateInventoryLotSchema = z.object({
 });
 
 export type UpdateInventoryLotInput = z.infer<typeof updateInventoryLotSchema>;
+
+/**
+ * Schema for the per-ingredient inventory settings the API may change.
+ * Strict: bakeryId, ingredientId and displayUnit are not writable.
+ */
+export const updateInventorySettingsSchema = z
+  .object({
+    lowStockThreshold: z.number().min(0).nullable().optional(), // null = no alert, 0 = disabled
+  })
+  .strict();
+
+export type UpdateInventorySettingsInput = z.infer<typeof updateInventorySettingsSchema>;

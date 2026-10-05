@@ -3,15 +3,18 @@
 import { db } from '@/lib/db';
 import { getCurrentUser } from '@/lib/clerk';
 import { revalidatePath } from 'next/cache';
-import { Decimal } from '@prisma/client/runtime/library';
+import { actionContext, actionError, UNAUTHORIZED, type ActionResult } from '@/lib/services/action';
+import * as unitConversionService from '@/lib/services/unitConversion';
 import {
-  createUnitConversionSchema,
-  updateUnitConversionSchema,
   deleteUnitConversionSchema,
   type CreateUnitConversionInput,
   type UpdateUnitConversionInput,
   type DeleteUnitConversionInput,
 } from '@/lib/validations/unitConversion';
+
+type ConversionResult = ActionResult<
+  Awaited<ReturnType<typeof unitConversionService.createUnitConversion>>
+>;
 
 /**
  * Get all unit conversions
@@ -45,156 +48,51 @@ export async function getUnitConversions() {
 /**
  * Create a new unit conversion
  */
-export async function createUnitConversion(data: CreateUnitConversionInput) {
+export async function createUnitConversion(data: CreateUnitConversionInput): Promise<ConversionResult> {
   try {
-    const currentUser = await getCurrentUser();
-    if (!currentUser) {
-      return { success: false, error: 'Unauthorized' };
-    }
+    const ctx = await actionContext();
+    if (!ctx) return UNAUTHORIZED;
 
-    // Only platform admins can create unit conversions
-    if (!currentUser.isPlatformAdmin) {
-      return { success: false, error: 'Insufficient permissions' };
-    }
-
-    // Validate input
-    const validatedData = createUnitConversionSchema.parse(data);
-
-    // Check if conversion already exists
-    const existing = await db.unitConversion.findUnique({
-      where: {
-        fromUnit_toUnit: {
-          fromUnit: validatedData.fromUnit,
-          toUnit: validatedData.toUnit,
-        },
-      },
-    });
-
-    if (existing) {
-      return {
-        success: false,
-        error: `Conversion from ${validatedData.fromUnit} to ${validatedData.toUnit} already exists`,
-      };
-    }
-
-    // Create the unit conversion
-    const conversion = await db.unitConversion.create({
-      data: {
-        fromUnit: validatedData.fromUnit,
-        toUnit: validatedData.toUnit,
-        factor: new Decimal(validatedData.factor),
-        category: validatedData.category,
-      },
-    });
+    const conversion = await unitConversionService.createUnitConversion(ctx, data);
 
     revalidatePath('/dashboard/platform/unit-conversions');
-
     return { success: true, data: conversion };
   } catch (error) {
-    console.error('Failed to create unit conversion:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to create unit conversion',
-    };
+    return actionError(error, 'Failed to create unit conversion');
   }
 }
 
 /**
  * Update an existing unit conversion
  */
-export async function updateUnitConversion(data: UpdateUnitConversionInput) {
+export async function updateUnitConversion(data: UpdateUnitConversionInput): Promise<ConversionResult> {
   try {
-    const currentUser = await getCurrentUser();
-    if (!currentUser) {
-      return { success: false, error: 'Unauthorized' };
-    }
+    const ctx = await actionContext();
+    if (!ctx) return UNAUTHORIZED;
 
-    // Only platform admins can update unit conversions
-    if (!currentUser.isPlatformAdmin) {
-      return { success: false, error: 'Insufficient permissions' };
-    }
-
-    // Validate input
-    const validatedData = updateUnitConversionSchema.parse(data);
-
-    // Check if conversion exists
-    const existing = await db.unitConversion.findUnique({
-      where: { id: validatedData.id },
-    });
-
-    if (!existing) {
-      return { success: false, error: 'Unit conversion not found' };
-    }
-
-    // Update the unit conversion
-    const updateData: {
-      factor?: Decimal;
-      category?: string;
-    } = {};
-    if (validatedData.factor !== undefined) {
-      updateData.factor = new Decimal(validatedData.factor);
-    }
-    if (validatedData.category !== undefined && validatedData.category !== null) {
-      updateData.category = validatedData.category;
-    }
-
-    const conversion = await db.unitConversion.update({
-      where: { id: validatedData.id },
-      data: updateData,
-    });
+    const conversion = await unitConversionService.updateUnitConversion(ctx, data.id, data);
 
     revalidatePath('/dashboard/platform/unit-conversions');
-
     return { success: true, data: conversion };
   } catch (error) {
-    console.error('Failed to update unit conversion:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to update unit conversion',
-    };
+    return actionError(error, 'Failed to update unit conversion');
   }
 }
 
 /**
  * Delete a unit conversion
  */
-export async function deleteUnitConversion(data: DeleteUnitConversionInput) {
+export async function deleteUnitConversion(data: DeleteUnitConversionInput): Promise<ActionResult> {
   try {
-    const currentUser = await getCurrentUser();
-    if (!currentUser) {
-      return { success: false, error: 'Unauthorized' };
-    }
+    const ctx = await actionContext();
+    if (!ctx) return UNAUTHORIZED;
 
-    // Only platform admins can delete unit conversions
-    if (!currentUser.isPlatformAdmin) {
-      return { success: false, error: 'Insufficient permissions' };
-    }
-
-    // Validate input
-    const validatedData = deleteUnitConversionSchema.parse(data);
-
-    // Check if conversion exists
-    const existing = await db.unitConversion.findUnique({
-      where: { id: validatedData.id },
-    });
-
-    if (!existing) {
-      return { success: false, error: 'Unit conversion not found' };
-    }
-
-    // Delete the unit conversion
-    await db.unitConversion.delete({
-      where: { id: validatedData.id },
-    });
+    const { id } = deleteUnitConversionSchema.parse(data);
+    await unitConversionService.deleteUnitConversion(ctx, id);
 
     revalidatePath('/dashboard/platform/unit-conversions');
-
     return { success: true };
   } catch (error) {
-    console.error('Failed to delete unit conversion:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to delete unit conversion',
-    };
+    return actionError(error, 'Failed to delete unit conversion');
   }
 }

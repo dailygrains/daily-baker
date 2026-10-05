@@ -1,9 +1,3 @@
-import { createCrudRoutes } from '@/lib/api/create-crud-routes';
+import { invitationRoutes } from '@/lib/api/resources/invitations';
 
-const routes = createCrudRoutes({
-  model: 'invitation',
-  bakeryScoped: true,
-  searchFields: ['email'],
-});
-
-export const { GET, POST } = routes.collection;
+export const { GET, POST } = invitationRoutes.collection;

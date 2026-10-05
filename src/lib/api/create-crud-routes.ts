@@ -77,7 +77,8 @@ function buildInclude(
       for (let i = 0; i < parts.length; i++) {
         const part = parts[i];
         if (i === parts.length - 1) {
-          current[part] = true;
+          // Don't let a plain "a" overwrite a nested include built from "a.b".
+          if (!current[part]) current[part] = true;
         } else {
           if (!current[part] || typeof current[part] !== 'object') {
             current[part] = { include: {} };
@@ -289,6 +290,8 @@ export function createCrudRoutes(config: CrudRouteConfig) {
   // --- Return handlers for collection and single-record routes ---
 
   return {
+    /** The route's configuration, for the OpenAPI generator. */
+    config,
     // For /api/v1/{model}/route.ts
     collection: {
       GET: async (req: NextRequest) => {

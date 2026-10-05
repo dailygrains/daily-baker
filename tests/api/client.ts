@@ -20,7 +20,9 @@ export function client(key: string) {
       },
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
-    return { status: res.status, body: await res.json() };
+    // Some responses (e.g. Next's 405 for an unexported method) have no body.
+    const text = await res.text();
+    return { status: res.status, body: text ? JSON.parse(text) : { success: false } };
   }
 
   return {

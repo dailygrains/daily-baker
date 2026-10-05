@@ -1,11 +1,3 @@
-import { createCrudRoutes } from '@/lib/api/create-crud-routes';
-import { createUnitConversionSchema, updateUnitConversionSchema } from '@/lib/validations/unitConversion';
+import { unitConversionRoutes } from '@/lib/api/resources/unitConversions';
 
-const routes = createCrudRoutes({
-  model: 'unitConversion',
-  bakeryScoped: true,
-  searchFields: [],
-  validators: { create: createUnitConversionSchema, update: updateUnitConversionSchema },
-});
-
-export const { GET, POST } = routes.collection;
+export const { GET, POST } = unitConversionRoutes.collection;

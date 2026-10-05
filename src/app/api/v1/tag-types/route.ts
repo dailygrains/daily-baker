@@ -1,11 +1,3 @@
-import { createCrudRoutes } from '@/lib/api/create-crud-routes';
-import { createTagTypeSchema, updateTagTypeSchema } from '@/lib/validations/tag';
+import { tagTypeRoutes } from '@/lib/api/resources/tagTypes';
 
-const routes = createCrudRoutes({
-  model: 'tagType',
-  bakeryScoped: true,
-  searchFields: ['name'],
-  validators: { create: createTagTypeSchema, update: updateTagTypeSchema },
-});
-
-export const { GET, POST } = routes.collection;
+export const { GET, POST } = tagTypeRoutes.collection;

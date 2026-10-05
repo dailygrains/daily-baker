@@ -1,12 +1,3 @@
-import { createCrudRoutes } from '@/lib/api/create-crud-routes';
-import { createProductionSheetSchema, updateProductionSheetSchema } from '@/lib/validations/productionSheet';
+import { productionSheetRoutes } from '@/lib/api/resources/productionSheets';
 
-const routes = createCrudRoutes({
-  model: 'productionSheet',
-  bakeryScoped: true,
-  searchFields: ['name'],
-  allowedIncludes: ['recipes'],
-  validators: { create: createProductionSheetSchema, update: updateProductionSheetSchema },
-});
-
-export const { GET, POST } = routes.collection;
+export const { GET, POST } = productionSheetRoutes.collection;

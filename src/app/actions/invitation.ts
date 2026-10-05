@@ -3,126 +3,26 @@
 import { db } from '@/lib/db';
 import { getCurrentUser } from '@/lib/clerk';
 import { revalidatePath } from 'next/cache';
-import { randomBytes } from 'crypto';
-import { createActivityLog } from './activity-log';
-import { sendUserInvitation } from '@/lib/ses';
+import { actionContext, actionError, UNAUTHORIZED, type ActionResult } from '@/lib/services/action';
+import * as invitationService from '@/lib/services/invitation';
+
+type InvitationResult = ActionResult<Awaited<ReturnType<typeof invitationService.createInvitation>>>;
 
 export async function createInvitation(data: {
   email: string;
   bakeryId?: string | null;
   roleId?: string | null;
-}) {
+}): Promise<InvitationResult> {
   try {
-    const currentUser = await getCurrentUser();
+    const ctx = await actionContext();
+    if (!ctx) return UNAUTHORIZED;
 
-    if (!currentUser?.isPlatformAdmin) {
-      return {
-        success: false,
-        error: 'Unauthorized: Only platform administrators can create invitations',
-      };
-    }
-
-    // Check if user already exists
-    const existingUser = await db.user.findFirst({
-      where: { email: data.email },
-    });
-
-    if (existingUser) {
-      return {
-        success: false,
-        error: 'A user with this email already exists',
-      };
-    }
-
-    // Check if there's already a pending invitation
-    const existingInvitation = await db.invitation.findFirst({
-      where: {
-        email: data.email,
-        status: 'PENDING',
-      },
-    });
-
-    if (existingInvitation) {
-      return {
-        success: false,
-        error: 'An invitation for this email is already pending',
-      };
-    }
-
-    // Generate unique token
-    const token = randomBytes(32).toString('hex');
-
-    // Set expiry to 7 days from now
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7);
-
-    const invitation = await db.invitation.create({
-      data: {
-        email: data.email,
-        bakeryId: data.bakeryId || null,
-        roleId: data.roleId || null,
-        token,
-        expiresAt,
-        createdBy: currentUser.id!,
-      },
-      include: {
-        bakery: true,
-        role: true,
-        creator: {
-          select: {
-            name: true,
-            email: true,
-          },
-        },
-      },
-    });
-
-    // Log the activity
-    await createActivityLog({
-      userId: currentUser.id!,
-      action: 'INVITE',
-      entityType: 'invitation',
-      entityId: invitation.id,
-      entityName: invitation.email,
-      description: invitation.bakery
-        ? `Invited ${invitation.email} to bakery "${invitation.bakery.name}"`
-        : `Invited ${invitation.email} to platform`,
-      metadata: {
-        invitationId: invitation.id,
-        email: invitation.email,
-        bakeryId: invitation.bakeryId,
-        roleId: invitation.roleId,
-      },
-      bakeryId: invitation.bakeryId,
-    });
-
-    // Send invitation email
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://baker.dailygrains.co';
-    const inviteUrl = `${appUrl}/sign-up?token=${token}`;
-
-    try {
-      await sendUserInvitation({
-        toEmail: data.email,
-        toName: data.email.split('@')[0],
-        bakeryName: invitation.bakery?.name || 'Daily Baker',
-        inviteUrl,
-      });
-    } catch (emailError) {
-      console.error('Failed to send invitation email:', emailError);
-    }
+    const invitation = await invitationService.createInvitation(ctx, data);
 
     revalidatePath('/admin/invitations');
-
-    return {
-      success: true,
-      data: invitation,
-    };
+    return { success: true, data: invitation };
   } catch (error) {
-    console.error('Error creating invitation:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to create invitation',
-    };
+    return actionError(error, 'Failed to create invitation');
   }
 }
 
@@ -176,92 +76,31 @@ export async function getAllInvitations() {
   }
 }
 
-export async function revokeInvitation(id: string) {
+export async function revokeInvitation(id: string): Promise<ActionResult> {
   try {
-    const currentUser = await getCurrentUser();
+    const ctx = await actionContext();
+    if (!ctx) return UNAUTHORIZED;
 
-    if (!currentUser?.isPlatformAdmin) {
-      return {
-        success: false,
-        error: 'Unauthorized',
-      };
-    }
-
-    const invitation = await db.invitation.update({
-      where: { id },
-      data: {
-        status: 'REVOKED',
-      },
-      include: {
-        bakery: true,
-      },
-    });
-
-    // Log the activity
-    await createActivityLog({
-      userId: currentUser.id!,
-      action: 'REVOKE',
-      entityType: 'invitation',
-      entityId: invitation.id,
-      entityName: invitation.email,
-      description: `Revoked invitation for ${invitation.email}`,
-      metadata: { invitationId: invitation.id, email: invitation.email },
-      bakeryId: invitation.bakeryId,
-    });
+    await invitationService.revokeInvitation(ctx, id);
 
     revalidatePath('/admin/invitations');
-
-    return {
-      success: true,
-      data: invitation,
-    };
+    return { success: true };
   } catch (error) {
-    console.error('Error revoking invitation:', error);
-    return {
-      success: false,
-      error: 'Failed to revoke invitation',
-    };
+    return actionError(error, 'Failed to revoke invitation');
   }
 }
 
-export async function deleteInvitation(id: string) {
+export async function deleteInvitation(id: string): Promise<ActionResult> {
   try {
-    const currentUser = await getCurrentUser();
+    const ctx = await actionContext();
+    if (!ctx) return UNAUTHORIZED;
 
-    if (!currentUser?.isPlatformAdmin) {
-      return {
-        success: false,
-        error: 'Unauthorized',
-      };
-    }
-
-    const invitation = await db.invitation.delete({
-      where: { id },
-    });
-
-    // Log the activity
-    await createActivityLog({
-      userId: currentUser.id!,
-      action: 'DELETE',
-      entityType: 'invitation',
-      entityId: id,
-      entityName: invitation.email,
-      description: `Deleted invitation for ${invitation.email}`,
-      metadata: { email: invitation.email },
-      bakeryId: invitation.bakeryId,
-    });
+    await invitationService.deleteInvitation(ctx, id);
 
     revalidatePath('/admin/invitations');
-
-    return {
-      success: true,
-    };
+    return { success: true };
   } catch (error) {
-    console.error('Error deleting invitation:', error);
-    return {
-      success: false,
-      error: 'Failed to delete invitation',
-    };
+    return actionError(error, 'Failed to delete invitation');
   }
 }
 
@@ -338,76 +177,16 @@ export async function acceptInvitation(email: string) {
   }
 }
 
-export async function resendInvitation(id: string) {
+export async function resendInvitation(id: string): Promise<ActionResult> {
   try {
-    const currentUser = await getCurrentUser();
+    const ctx = await actionContext();
+    if (!ctx) return UNAUTHORIZED;
 
-    if (!currentUser?.isPlatformAdmin) {
-      return {
-        success: false,
-        error: 'Unauthorized',
-      };
-    }
-
-    const invitation = await db.invitation.findUnique({
-      where: { id },
-    });
-
-    if (!invitation) {
-      return {
-        success: false,
-        error: 'Invitation not found',
-      };
-    }
-
-    if (invitation.status !== 'PENDING') {
-      return {
-        success: false,
-        error: 'Can only resend pending invitations',
-      };
-    }
-
-    // Extend expiry by 7 days
-    const newExpiresAt = new Date();
-    newExpiresAt.setDate(newExpiresAt.getDate() + 7);
-
-    const updatedInvitation = await db.invitation.update({
-      where: { id },
-      data: {
-        expiresAt: newExpiresAt,
-      },
-      include: {
-        bakery: true,
-        role: true,
-      },
-    });
-
-    // Resend invitation email
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://baker.dailygrains.co';
-    const inviteUrl = `${appUrl}/sign-up?token=${invitation.token}`;
-
-    try {
-      await sendUserInvitation({
-        toEmail: invitation.email,
-        toName: invitation.email.split('@')[0],
-        bakeryName: updatedInvitation.bakery?.name || 'Daily Baker',
-        inviteUrl,
-      });
-    } catch (emailError) {
-      console.error('Failed to resend invitation email:', emailError);
-    }
+    await invitationService.resendInvitation(ctx, id);
 
     revalidatePath('/admin/invitations');
-
-    return {
-      success: true,
-      data: updatedInvitation,
-    };
+    return { success: true };
   } catch (error) {
-    console.error('Error resending invitation:', error);
-    return {
-      success: false,
-      error: 'Failed to resend invitation',
-    };
+    return actionError(error, 'Failed to resend invitation');
   }
 }

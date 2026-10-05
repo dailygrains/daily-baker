@@ -1,9 +1,4 @@
-import { createCrudRoutes } from '@/lib/api/create-crud-routes';
+import { invitationRoutes } from '@/lib/api/resources/invitations';
 
-const routes = createCrudRoutes({
-  model: 'invitation',
-  bakeryScoped: true,
-  searchFields: ['email'],
-});
-
-export const { GET, PUT, DELETE } = routes.single;
+// No PUT: invitations change only through /revoke and /resend.
+export const { GET, DELETE } = invitationRoutes.single;

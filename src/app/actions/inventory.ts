@@ -5,10 +5,8 @@ import { getCurrentUser } from '@/lib/clerk';
 import { revalidatePath } from 'next/cache';
 import { createActivityLog } from './activity-log';
 import {
-  addInventoryLotSchema,
   useInventorySchema,
   adjustInventorySchema,
-  updateInventoryLotSchema,
   type AddInventoryLotInput,
   type UseInventoryInput,
   type AdjustInventoryInput,
@@ -23,122 +21,41 @@ import {
   type InventoryWithLots,
 } from '@/lib/inventory';
 import { convertQuantity } from '@/lib/unitConvert';
+import { actionContext, actionError, UNAUTHORIZED, type ActionResult } from '@/lib/services/action';
+import * as inventoryService from '@/lib/services/inventory';
+
+type Lot = Awaited<ReturnType<typeof inventoryService.addInventoryLot>>;
+type SerializedLot = Omit<Lot, 'purchaseQty' | 'remainingQty' | 'costPerUnit'> & {
+  purchaseQty: number;
+  remainingQty: number;
+  costPerUnit: number;
+};
+
+/** Decimal fields become numbers so the lot can cross to client components. */
+function serializeLot(lot: Lot): SerializedLot {
+  return {
+    ...lot,
+    purchaseQty: Number(lot.purchaseQty),
+    remainingQty: Number(lot.remainingQty),
+    costPerUnit: Number(lot.costPerUnit),
+  };
+}
 
 /**
  * Add a new inventory lot (purchase)
  */
-export async function addInventoryLot(data: AddInventoryLotInput) {
+export async function addInventoryLot(data: AddInventoryLotInput): Promise<ActionResult<SerializedLot>> {
   try {
-    const currentUser = await getCurrentUser();
+    const ctx = await actionContext();
+    if (!ctx) return UNAUTHORIZED;
 
-    if (!currentUser) {
-      return { success: false, error: 'Unauthorized: You must be logged in' };
-    }
-
-    // Validate input
-    const validatedData = addInventoryLotSchema.parse(data);
-
-    // Get ingredient and verify ownership
-    const ingredient = await db.ingredient.findUnique({
-      where: { id: validatedData.ingredientId },
-      include: { inventory: true },
-    });
-
-    if (!ingredient) {
-      return { success: false, error: 'Ingredient not found' };
-    }
-
-    if (currentUser.bakeryId !== ingredient.bakeryId) {
-      return {
-        success: false,
-        error: 'Unauthorized: You can only add inventory for your bakery',
-      };
-    }
-
-    // If vendor is provided, verify it belongs to the same bakery
-    if (validatedData.vendorId) {
-      const vendor = await db.vendor.findUnique({
-        where: { id: validatedData.vendorId },
-      });
-      if (!vendor || vendor.bakeryId !== ingredient.bakeryId) {
-        return { success: false, error: 'Invalid vendor' };
-      }
-    }
-
-    const result = await db.$transaction(async (tx) => {
-      // Get or create Inventory record for ingredient
-      let inventory = ingredient.inventory;
-
-      if (!inventory) {
-        inventory = await tx.inventory.create({
-          data: {
-            bakeryId: ingredient.bakeryId,
-            ingredientId: ingredient.id,
-            displayUnit: ingredient.unit, // Default to ingredient's unit
-          },
-        });
-      }
-
-      // Create lot — compute cost per unit from total cost
-      const costPerUnit = validatedData.quantity > 0
-        ? validatedData.totalCost / validatedData.quantity
-        : 0;
-      const lot = await tx.inventoryLot.create({
-        data: {
-          inventoryId: inventory.id,
-          purchaseQty: new Decimal(validatedData.quantity),
-          remainingQty: new Decimal(validatedData.quantity),
-          purchaseUnit: validatedData.unit,
-          costPerUnit: new Decimal(costPerUnit),
-          expiresAt: validatedData.expiresAt,
-          vendorId: validatedData.vendorId,
-          notes: validatedData.notes,
-        },
-        include: {
-          vendor: { select: { id: true, name: true } },
-        },
-      });
-
-      return lot;
-    });
-
-    // Log activity
-    await createActivityLog({
-      userId: currentUser.id!,
-      action: 'CREATE',
-      entityType: 'inventory_lot',
-      entityId: result.id,
-      entityName: `${ingredient.name} - ${validatedData.quantity} ${validatedData.unit}`,
-      description: `Added ${validatedData.quantity} ${validatedData.unit} of "${ingredient.name}" — total cost $${validatedData.totalCost.toFixed(2)}`,
-      metadata: {
-        ingredientId: ingredient.id,
-        lotId: result.id,
-        quantity: validatedData.quantity,
-        unit: validatedData.unit,
-        totalCost: validatedData.totalCost,
-        vendorId: validatedData.vendorId,
-      },
-      bakeryId: ingredient.bakeryId,
-    });
+    const lot = await inventoryService.addInventoryLot(ctx, data);
 
     revalidatePath('/dashboard/ingredients');
-    revalidatePath(`/dashboard/ingredients/${ingredient.id}`);
-
-    return {
-      success: true,
-      data: {
-        ...result,
-        purchaseQty: Number(result.purchaseQty),
-        remainingQty: Number(result.remainingQty),
-        costPerUnit: Number(result.costPerUnit),
-      },
-    };
+    revalidatePath(`/dashboard/ingredients/${data.ingredientId}`);
+    return { success: true, data: serializeLot(lot) };
   } catch (error) {
-    console.error('Failed to add inventory lot:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to add inventory lot',
-    };
+    return actionError(error, 'Failed to add inventory lot');
   }
 }
 
@@ -418,92 +335,20 @@ export async function adjustInventory(data: AdjustInventoryInput) {
 /**
  * Update a lot's metadata (not quantity)
  */
-export async function updateInventoryLot(data: UpdateInventoryLotInput) {
+export async function updateInventoryLot(
+  data: UpdateInventoryLotInput
+): Promise<ActionResult<SerializedLot>> {
   try {
-    const currentUser = await getCurrentUser();
+    const ctx = await actionContext();
+    if (!ctx) return UNAUTHORIZED;
 
-    if (!currentUser) {
-      return { success: false, error: 'Unauthorized: You must be logged in' };
-    }
-
-    // Validate input
-    const validatedData = updateInventoryLotSchema.parse(data);
-
-    // Get lot with inventory
-    const lot = await db.inventoryLot.findUnique({
-      where: { id: validatedData.id },
-      include: {
-        inventory: {
-          include: { ingredient: true },
-        },
-      },
-    });
-
-    if (!lot) {
-      return { success: false, error: 'Lot not found' };
-    }
-
-    if (currentUser.bakeryId !== lot.inventory.bakeryId) {
-      return {
-        success: false,
-        error: 'Unauthorized: You can only update inventory for your bakery',
-      };
-    }
-
-    // If vendor is provided, verify it belongs to the same bakery
-    if (validatedData.vendorId) {
-      const vendor = await db.vendor.findUnique({
-        where: { id: validatedData.vendorId },
-      });
-      if (!vendor || vendor.bakeryId !== lot.inventory.bakeryId) {
-        return { success: false, error: 'Invalid vendor' };
-      }
-    }
-
-    const { id, ...updateData } = validatedData;
-
-    const updatedLot = await db.inventoryLot.update({
-      where: { id },
-      data: updateData,
-      include: {
-        vendor: { select: { id: true, name: true } },
-      },
-    });
-
-    // Log activity
-    await createActivityLog({
-      userId: currentUser.id!,
-      action: 'UPDATE',
-      entityType: 'inventory_lot',
-      entityId: lot.id,
-      entityName: lot.inventory.ingredient.name,
-      description: `Updated lot details for "${lot.inventory.ingredient.name}"`,
-      metadata: {
-        lotId: lot.id,
-        ingredientId: lot.inventory.ingredientId,
-        updatedFields: Object.keys(updateData),
-      },
-      bakeryId: lot.inventory.bakeryId,
-    });
+    const lot = await inventoryService.updateInventoryLot(ctx, data.id, data);
 
     revalidatePath('/dashboard/ingredients');
     revalidatePath(`/dashboard/ingredients/${lot.inventory.ingredientId}`);
-
-    return {
-      success: true,
-      data: {
-        ...updatedLot,
-        purchaseQty: Number(updatedLot.purchaseQty),
-        remainingQty: Number(updatedLot.remainingQty),
-        costPerUnit: Number(updatedLot.costPerUnit),
-      },
-    };
+    return { success: true, data: serializeLot(lot) };
   } catch (error) {
-    console.error('Failed to update inventory lot:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to update inventory lot',
-    };
+    return actionError(error, 'Failed to update inventory lot');
   }
 }
 
@@ -682,76 +527,18 @@ export async function getInventoryForIngredient(ingredientId: string) {
 /**
  * Delete an inventory lot (only if no usages exist)
  */
-export async function deleteInventoryLot(lotId: string) {
+export async function deleteInventoryLot(lotId: string): Promise<ActionResult> {
   try {
-    const currentUser = await getCurrentUser();
+    const ctx = await actionContext();
+    if (!ctx) return UNAUTHORIZED;
 
-    if (!currentUser) {
-      return { success: false, error: 'Unauthorized: You must be logged in' };
-    }
-
-    // Get lot with inventory and usage count
-    const lot = await db.inventoryLot.findUnique({
-      where: { id: lotId },
-      include: {
-        inventory: {
-          include: { ingredient: true },
-        },
-        _count: {
-          select: { usages: true },
-        },
-      },
-    });
-
-    if (!lot) {
-      return { success: false, error: 'Lot not found' };
-    }
-
-    if (currentUser.bakeryId !== lot.inventory.bakeryId) {
-      return {
-        success: false,
-        error: 'Unauthorized: You can only delete inventory for your bakery',
-      };
-    }
-
-    if (lot._count.usages > 0) {
-      return {
-        success: false,
-        error: `Cannot delete lot with ${lot._count.usages} usage record(s). Lot has been partially or fully used.`,
-      };
-    }
-
-    await db.inventoryLot.delete({
-      where: { id: lotId },
-    });
-
-    // Log activity
-    await createActivityLog({
-      userId: currentUser.id!,
-      action: 'DELETE',
-      entityType: 'inventory_lot',
-      entityId: lot.id,
-      entityName: lot.inventory.ingredient.name,
-      description: `Deleted unused lot for "${lot.inventory.ingredient.name}" (${lot.purchaseQty} ${lot.purchaseUnit})`,
-      metadata: {
-        lotId: lot.id,
-        ingredientId: lot.inventory.ingredientId,
-        quantity: Number(lot.purchaseQty),
-        unit: lot.purchaseUnit,
-      },
-      bakeryId: lot.inventory.bakeryId,
-    });
+    const lot = await inventoryService.deleteInventoryLot(ctx, lotId);
 
     revalidatePath('/dashboard/ingredients');
     revalidatePath(`/dashboard/ingredients/${lot.inventory.ingredientId}`);
-
     return { success: true };
   } catch (error) {
-    console.error('Failed to delete inventory lot:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to delete inventory lot',
-    };
+    return actionError(error, 'Failed to delete inventory lot');
   }
 }
 

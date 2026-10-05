@@ -201,7 +201,11 @@ export async function deleteRecipe(ctx: ServiceContext, id: string) {
     );
   }
 
-  await db.recipe.delete({ where: { id } });
+  // Tag assignments have no foreign key to the tagged row, so remove them here.
+  await db.$transaction([
+    db.entityTag.deleteMany({ where: { entityType: 'recipe', entityId: id } }),
+    db.recipe.delete({ where: { id } }),
+  ]);
 
   await logActivity(ctx, {
     action: 'DELETE',

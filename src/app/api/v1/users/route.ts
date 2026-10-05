@@ -1,10 +1,4 @@
-import { createCrudRoutes } from '@/lib/api/create-crud-routes';
+import { userRoutes } from '@/lib/api/resources/users';
 
-const routes = createCrudRoutes({
-  model: 'user',
-  bakeryScoped: false,
-  adminOnly: true,
-  searchFields: ['email', 'name'],
-});
-
-export const { GET, POST } = routes.collection;
+// No POST: users are created by Clerk sign-up.
+export const { GET } = userRoutes.collection;

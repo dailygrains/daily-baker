@@ -31,3 +31,10 @@ export type CreateIngredientInput = z.infer<typeof createIngredientSchema>;
  * Type for updating an ingredient (inferred from schema)
  */
 export type UpdateIngredientInput = z.infer<typeof updateIngredientSchema>;
+
+/**
+ * Validation schema for linking a vendor to an ingredient
+ */
+export const assignIngredientVendorSchema = z.object({
+  vendorId: z.string().cuid('Invalid vendor ID'),
+});

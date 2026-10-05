@@ -1,10 +1,4 @@
-import { createCrudRoutes } from '@/lib/api/create-crud-routes';
+import { inventoryRoutes } from '@/lib/api/resources/inventory';
 
-const routes = createCrudRoutes({
-  model: 'inventory',
-  bakeryScoped: true,
-  searchFields: [],
-  allowedIncludes: ['lots', 'ingredient'],
-});
-
-export const { GET, PUT, DELETE } = routes.single;
+// PUT accepts only { lowStockThreshold }. No DELETE: it would cascade lots and usage history.
+export const { GET, PUT } = inventoryRoutes.single;

@@ -1,10 +1,4 @@
-import { createCrudRoutes } from '@/lib/api/create-crud-routes';
+import { inventoryRoutes } from '@/lib/api/resources/inventory';
 
-const routes = createCrudRoutes({
-  model: 'inventory',
-  bakeryScoped: true,
-  searchFields: [],
-  allowedIncludes: ['lots', 'ingredient'],
-});
-
-export const { GET, POST } = routes.collection;
+// Read-only collection: Inventory rows are created with an ingredient's first lot.
+export const { GET } = inventoryRoutes.collection;

@@ -2,189 +2,55 @@
 
 import { db } from '@/lib/db';
 import { getCurrentUser } from '@/lib/clerk';
-import { createBakerySchema, updateBakerySchema } from '@/lib/validations/bakery';
 import { revalidatePath } from 'next/cache';
-import { createActivityLog } from './activity-log';
+import { actionContext, actionError, UNAUTHORIZED, type ActionResult } from '@/lib/services/action';
+import * as bakeryService from '@/lib/services/bakery';
+import * as userService from '@/lib/services/user';
 
-/**
- * Generate a URL-friendly slug from a string
- */
-function generateSlug(name: string): string {
-  return name
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, '') // Remove special characters
-    .replace(/\s+/g, '-') // Replace spaces with hyphens
-    .replace(/-+/g, '-') // Replace multiple hyphens with single hyphen
-    .replace(/^-+|-+$/g, ''); // Remove leading/trailing hyphens
-}
+type BakeryResult = ActionResult<Awaited<ReturnType<typeof bakeryService.createBakery>>>;
+type UserResult = ActionResult<Awaited<ReturnType<typeof userService.assignUserToBakery>>>;
 
-export async function createBakery(data: unknown) {
+export async function createBakery(data: unknown): Promise<BakeryResult> {
   try {
-    const user = await getCurrentUser();
+    const ctx = await actionContext();
+    if (!ctx) return UNAUTHORIZED;
 
-    // Only platform admins can create bakeries
-    if (!user?.isPlatformAdmin) {
-      return {
-        success: false,
-        error: 'Unauthorized: Only platform administrators can create bakeries',
-      };
-    }
-
-    const validatedData = createBakerySchema.parse(data);
-
-    // Generate slug from bakery name
-    const slug = generateSlug(validatedData.name);
-
-    // Check if slug already exists and append number if needed
-    let slugSuffix = 1;
-    let finalSlug = slug;
-    while (await db.bakery.findUnique({ where: { slug: finalSlug } })) {
-      finalSlug = `${slug}-${slugSuffix}`;
-      slugSuffix++;
-    }
-
-    const bakery = await db.bakery.create({
-      data: {
-        ...validatedData,
-        slug: finalSlug,
-      },
-    });
-
-    // Log the activity (user.id is guaranteed to exist after platform admin check)
-    await createActivityLog({
-      userId: user.id!,
-      action: 'CREATE',
-      entityType: 'bakery',
-      entityId: bakery.id,
-      entityName: bakery.name,
-      description: `Created bakery "${bakery.name}"`,
-      metadata: { bakeryId: bakery.id },
-    });
+    const bakery = await bakeryService.createBakery(ctx, data);
 
     revalidatePath('/admin/bakeries');
-
-    return {
-      success: true,
-      data: bakery,
-    };
+    return { success: true, data: bakery };
   } catch (error) {
-    console.error('Error creating bakery:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to create bakery',
-    };
+    return actionError(error, 'Failed to create bakery');
   }
 }
 
-export async function updateBakery(data: unknown) {
+export async function updateBakery(data: unknown): Promise<BakeryResult> {
   try {
-    const user = await getCurrentUser();
+    const ctx = await actionContext();
+    if (!ctx) return UNAUTHORIZED;
 
-    if (!user?.isPlatformAdmin) {
-      return {
-        success: false,
-        error: 'Unauthorized: Only platform administrators can update bakeries',
-      };
-    }
-
-    const validatedData = updateBakerySchema.parse(data);
-    const { id, ...updateData } = validatedData;
-
-    const bakery = await db.bakery.update({
-      where: { id },
-      data: updateData,
-    });
-
-    // Log the activity
-    await createActivityLog({
-      userId: user.id!,
-      action: 'UPDATE',
-      entityType: 'bakery',
-      entityId: bakery.id,
-      entityName: bakery.name,
-      description: `Updated bakery "${bakery.name}"`,
-      metadata: { bakeryId: bakery.id, updatedFields: Object.keys(updateData) },
-      bakeryId: bakery.id,
-    });
+    const id = (data as { id?: unknown } | null)?.id;
+    const bakery = await bakeryService.updateBakery(ctx, typeof id === 'string' ? id : '', data);
 
     revalidatePath('/admin/bakeries');
-    revalidatePath(`/admin/bakeries/${id}`);
-
-    return {
-      success: true,
-      data: bakery,
-    };
+    revalidatePath(`/admin/bakeries/${bakery.id}`);
+    return { success: true, data: bakery };
   } catch (error) {
-    console.error('Error updating bakery:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to update bakery',
-    };
+    return actionError(error, 'Failed to update bakery');
   }
 }
 
-export async function deleteBakery(id: string) {
+export async function deleteBakery(id: string): Promise<ActionResult> {
   try {
-    const user = await getCurrentUser();
+    const ctx = await actionContext();
+    if (!ctx) return UNAUTHORIZED;
 
-    if (!user?.isPlatformAdmin) {
-      return {
-        success: false,
-        error: 'Unauthorized: Only platform administrators can delete bakeries',
-      };
-    }
-
-    // Check if bakery has any users
-    const bakery = await db.bakery.findUnique({
-      where: { id },
-      include: {
-        _count: {
-          select: { users: true },
-        },
-      },
-    });
-
-    if (!bakery) {
-      return {
-        success: false,
-        error: 'Bakery not found',
-      };
-    }
-
-    if (bakery._count.users > 0) {
-      return {
-        success: false,
-        error: `Cannot delete bakery with ${bakery._count.users} active user(s). Please reassign or remove users first.`,
-      };
-    }
-
-    await db.bakery.delete({
-      where: { id },
-    });
-
-    // Log the activity
-    await createActivityLog({
-      userId: user.id!,
-      action: 'DELETE',
-      entityType: 'bakery',
-      entityId: bakery.id,
-      entityName: bakery.name,
-      description: `Deleted bakery "${bakery.name}"`,
-      metadata: { bakeryId: bakery.id },
-    });
+    await bakeryService.deleteBakery(ctx, id);
 
     revalidatePath('/admin/bakeries');
-
-    return {
-      success: true,
-    };
+    return { success: true };
   } catch (error) {
-    console.error('Error deleting bakery:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to delete bakery',
-    };
+    return actionError(error, 'Failed to delete bakery');
   }
 }
 
@@ -287,199 +153,39 @@ export async function getBakeryById(id: string) {
   }
 }
 
-export async function assignUserToBakery(userId: string, bakeryId: string) {
+function revalidateAssignment(userId: string, bakeryId: string) {
+  revalidatePath('/admin/bakeries');
+  revalidatePath(`/admin/bakeries/${bakeryId}`);
+  revalidatePath(`/admin/bakeries/${bakeryId}/edit`);
+  revalidatePath('/admin/users');
+  revalidatePath(`/admin/users/${userId}`);
+}
+
+/** Same service as the user actions' version; both revalidate both views. */
+export async function assignUserToBakery(userId: string, bakeryId: string): Promise<UserResult> {
   try {
-    const currentUser = await getCurrentUser();
+    const ctx = await actionContext();
+    if (!ctx) return UNAUTHORIZED;
 
-    if (!currentUser?.isPlatformAdmin) {
-      return {
-        success: false,
-        error: 'Unauthorized: Only platform administrators can assign users to bakeries',
-      };
-    }
+    const user = await userService.assignUserToBakery(ctx, userId, bakeryId);
 
-    // Get user info
-    const targetUser = await db.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-      },
-    });
-
-    if (!targetUser) {
-      return {
-        success: false,
-        error: 'User not found',
-      };
-    }
-
-    // Get bakery info
-    const bakery = await db.bakery.findUnique({
-      where: { id: bakeryId },
-      select: {
-        id: true,
-        name: true,
-      },
-    });
-
-    if (!bakery) {
-      return {
-        success: false,
-        error: 'Bakery not found',
-      };
-    }
-
-    // Create bakery assignment using join table
-    await db.userBakery.create({
-      data: {
-        userId,
-        bakeryId,
-      },
-    });
-
-    // Get updated user with bakeries
-    const updatedUser = await db.user.findUnique({
-      where: { id: userId },
-      include: {
-        bakeries: {
-          include: {
-            bakery: true,
-          },
-        },
-        role: true,
-      },
-    });
-
-    // Log the activity
-    await createActivityLog({
-      userId: currentUser.id!,
-      action: 'ASSIGN',
-      entityType: 'user',
-      entityId: targetUser.id,
-      entityName: targetUser.name || targetUser.email,
-      description: `Assigned ${targetUser.name || targetUser.email} to bakery "${bakery.name}"`,
-      metadata: { userId: targetUser.id, bakeryId: bakery.id },
-      bakeryId: bakery.id,
-    });
-
-    revalidatePath('/admin/bakeries');
-    revalidatePath(`/admin/bakeries/${bakeryId}`);
-    revalidatePath(`/admin/bakeries/${bakeryId}/edit`);
-
-    return {
-      success: true,
-      data: updatedUser,
-    };
+    revalidateAssignment(userId, bakeryId);
+    return { success: true, data: user };
   } catch (error) {
-    console.error('Error assigning user to bakery:', error);
-
-    // Simplify error message for users
-    let errorMessage = 'Failed to assign user to bakery';
-    if (error instanceof Error) {
-      if (error.message.includes('Unique constraint')) {
-        errorMessage = 'User is already assigned to this bakery';
-      } else if (error.message.includes('Foreign key constraint')) {
-        errorMessage = 'Invalid user or bakery';
-      }
-    }
-
-    return {
-      success: false,
-      error: errorMessage,
-    };
+    return actionError(error, 'Failed to assign user to bakery');
   }
 }
 
-export async function unassignUserFromBakery(userId: string, bakeryId: string) {
+export async function unassignUserFromBakery(userId: string, bakeryId: string): Promise<UserResult> {
   try {
-    const currentUser = await getCurrentUser();
+    const ctx = await actionContext();
+    if (!ctx) return UNAUTHORIZED;
 
-    if (!currentUser?.isPlatformAdmin) {
-      return {
-        success: false,
-        error: 'Unauthorized: Only platform administrators can unassign users from bakeries',
-      };
-    }
+    const user = await userService.unassignUserFromBakery(ctx, userId, bakeryId);
 
-    // Get user info
-    const targetUser = await db.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-      },
-    });
-
-    if (!targetUser) {
-      return {
-        success: false,
-        error: 'User not found',
-      };
-    }
-
-    // Get bakery info
-    const bakery = await db.bakery.findUnique({
-      where: { id: bakeryId },
-      select: { name: true },
-    });
-
-    // Delete the bakery assignment from join table
-    await db.userBakery.deleteMany({
-      where: {
-        userId,
-        bakeryId,
-      },
-    });
-
-    // Get updated user with bakeries
-    const updatedUser = await db.user.findUnique({
-      where: { id: userId },
-      include: {
-        bakeries: {
-          include: {
-            bakery: true,
-          },
-        },
-        role: true,
-      },
-    });
-
-    // Log the activity
-    await createActivityLog({
-      userId: currentUser.id!,
-      action: 'REVOKE',
-      entityType: 'user',
-      entityId: targetUser.id,
-      entityName: targetUser.name || targetUser.email,
-      description: `Unassigned ${targetUser.name || targetUser.email} from bakery ${bakery?.name ? `"${bakery.name}"` : ''}`,
-      metadata: { userId: targetUser.id, previousBakeryId: bakeryId },
-    });
-
-    revalidatePath('/admin/bakeries');
-    revalidatePath(`/admin/bakeries/${bakeryId}`);
-    revalidatePath(`/admin/bakeries/${bakeryId}/edit`);
-
-    return {
-      success: true,
-      data: updatedUser,
-    };
+    revalidateAssignment(userId, bakeryId);
+    return { success: true, data: user };
   } catch (error) {
-    console.error('Error unassigning user from bakery:', error);
-
-    // Simplify error message for users
-    let errorMessage = 'Failed to unassign user from bakery';
-    if (error instanceof Error) {
-      if (error.message.includes('not found')) {
-        errorMessage = 'User is not assigned to this bakery';
-      }
-    }
-
-    return {
-      success: false,
-      error: errorMessage,
-    };
+    return actionError(error, 'Failed to unassign user from bakery');
   }
 }

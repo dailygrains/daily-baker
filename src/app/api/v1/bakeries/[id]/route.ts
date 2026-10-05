@@ -1,12 +1,3 @@
-import { createCrudRoutes } from '@/lib/api/create-crud-routes';
-import { createBakerySchema, updateBakerySchema } from '@/lib/validations/bakery';
+import { bakeryRoutes } from '@/lib/api/resources/bakeries';
 
-const routes = createCrudRoutes({
-  model: 'bakery',
-  bakeryScoped: false,
-  adminOnly: true,
-  searchFields: ['name'],
-  validators: { create: createBakerySchema, update: updateBakerySchema },
-});
-
-export const { GET, PUT, DELETE } = routes.single;
+export const { GET, PUT, DELETE } = bakeryRoutes.single;

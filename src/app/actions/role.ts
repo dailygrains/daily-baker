@@ -3,58 +3,28 @@
 import { db } from '@/lib/db';
 import { getCurrentUser } from '@/lib/clerk';
 import { revalidatePath } from 'next/cache';
-import { createActivityLog } from './activity-log';
+import { actionContext, actionError, UNAUTHORIZED, type ActionResult } from '@/lib/services/action';
+import * as roleService from '@/lib/services/role';
 import { getAllRoles } from './user';
 
 type PermissionsObject = Record<string, boolean>;
+type RoleResult = ActionResult<Awaited<ReturnType<typeof roleService.createRole>>>;
 
 export async function createRole(data: {
   name: string;
   description?: string;
   permissions: PermissionsObject;
-}) {
+}): Promise<RoleResult> {
   try {
-    const currentUser = await getCurrentUser();
+    const ctx = await actionContext();
+    if (!ctx) return UNAUTHORIZED;
 
-    if (!currentUser?.isPlatformAdmin) {
-      return {
-        success: false,
-        error: 'Unauthorized: Only platform administrators can create roles',
-      };
-    }
-
-    const role = await db.role.create({
-      data: {
-        name: data.name,
-        description: data.description || null,
-        permissions: data.permissions,
-      },
-    });
-
-    // Log the activity
-    await createActivityLog({
-      userId: currentUser.id!,
-      action: 'CREATE',
-      entityType: 'role',
-      entityId: role.id,
-      entityName: role.name,
-      description: `Created platform role "${role.name}"`,
-      metadata: { roleId: role.id },
-      bakeryId: currentUser.bakeryId,
-    });
+    const role = await roleService.createRole(ctx, data);
 
     revalidatePath('/admin/roles');
-
-    return {
-      success: true,
-      data: role,
-    };
+    return { success: true, data: role };
   } catch (error) {
-    console.error('Error creating role:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to create role',
-    };
+    return actionError(error, 'Failed to create role');
   }
 }
 
@@ -63,113 +33,31 @@ export async function updateRole(data: {
   name?: string;
   description?: string;
   permissions?: PermissionsObject;
-}) {
+}): Promise<RoleResult> {
   try {
-    const currentUser = await getCurrentUser();
+    const ctx = await actionContext();
+    if (!ctx) return UNAUTHORIZED;
 
-    if (!currentUser?.isPlatformAdmin) {
-      return {
-        success: false,
-        error: 'Unauthorized: Only platform administrators can update roles',
-      };
-    }
-
-    const { id, ...updateData } = data;
-
-    const role = await db.role.update({
-      where: { id },
-      data: updateData,
-    });
-
-    // Log the activity
-    await createActivityLog({
-      userId: currentUser.id!,
-      action: 'UPDATE',
-      entityType: 'role',
-      entityId: role.id,
-      entityName: role.name,
-      description: `Updated platform role "${role.name}"`,
-      metadata: { roleId: role.id, updatedFields: Object.keys(updateData) },
-      bakeryId: currentUser.bakeryId,
-    });
+    const role = await roleService.updateRole(ctx, data.id, data);
 
     revalidatePath('/admin/roles');
-
-    return {
-      success: true,
-      data: role,
-    };
+    return { success: true, data: role };
   } catch (error) {
-    console.error('Error updating role:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to update role',
-    };
+    return actionError(error, 'Failed to update role');
   }
 }
 
-export async function deleteRole(id: string) {
+export async function deleteRole(id: string): Promise<ActionResult> {
   try {
-    const currentUser = await getCurrentUser();
+    const ctx = await actionContext();
+    if (!ctx) return UNAUTHORIZED;
 
-    if (!currentUser?.isPlatformAdmin) {
-      return {
-        success: false,
-        error: 'Unauthorized: Only platform administrators can delete roles',
-      };
-    }
-
-    // Check if role has users
-    const role = await db.role.findUnique({
-      where: { id },
-      include: {
-        _count: {
-          select: { users: true },
-        },
-      },
-    });
-
-    if (!role) {
-      return {
-        success: false,
-        error: 'Role not found',
-      };
-    }
-
-    if (role._count.users > 0) {
-      return {
-        success: false,
-        error: `Cannot delete role with ${role._count.users} assigned user(s). Please reassign users first.`,
-      };
-    }
-
-    await db.role.delete({
-      where: { id },
-    });
-
-    // Log the activity
-    await createActivityLog({
-      userId: currentUser.id!,
-      action: 'DELETE',
-      entityType: 'role',
-      entityId: role.id,
-      entityName: role.name,
-      description: `Deleted platform role "${role.name}"`,
-      metadata: { roleId: role.id },
-      bakeryId: currentUser.bakeryId,
-    });
+    await roleService.deleteRole(ctx, id);
 
     revalidatePath('/admin/roles');
-
-    return {
-      success: true,
-    };
+    return { success: true };
   } catch (error) {
-    console.error('Error deleting role:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to delete role',
-    };
+    return actionError(error, 'Failed to delete role');
   }
 }
 

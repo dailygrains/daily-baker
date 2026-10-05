@@ -3,169 +3,61 @@
 import { db } from '@/lib/db';
 import { getCurrentUser } from '@/lib/clerk';
 import { revalidatePath } from 'next/cache';
-import { createActivityLog } from './activity-log';
-import {
-  createTagTypeSchema,
-  updateTagTypeSchema,
-  createTagSchema,
-  updateTagSchema,
-  assignTagSchema,
-  unassignTagSchema,
-  type CreateTagTypeInput,
-  type UpdateTagTypeInput,
-  type CreateTagInput,
-  type UpdateTagInput,
-  type AssignTagInput,
-  type UnassignTagInput,
-  type EntityType,
+import { actionContext, actionError, UNAUTHORIZED, type ActionResult } from '@/lib/services/action';
+import * as tagService from '@/lib/services/tag';
+import type {
+  CreateTagTypeInput,
+  UpdateTagTypeInput,
+  CreateTagInput,
+  UpdateTagInput,
+  AssignTagInput,
+  UnassignTagInput,
+  EntityType,
 } from '@/lib/validations/tag';
+
+type TagTypeRecord = Awaited<ReturnType<typeof tagService.createTagType>>;
+type TagRecord = Awaited<ReturnType<typeof tagService.createTag>>;
 
 // ============================================================================
 // Tag Type Actions
 // ============================================================================
 
-export async function createTagType(data: CreateTagTypeInput) {
+export async function createTagType(data: CreateTagTypeInput): Promise<ActionResult<TagTypeRecord>> {
   try {
-    const currentUser = await getCurrentUser();
-
-    if (!currentUser) {
-      return { success: false, error: 'Unauthorized: You must be logged in' };
-    }
-
-    if (currentUser.bakeryId !== data.bakeryId && !currentUser.isPlatformAdmin) {
+    const ctx = await actionContext();
+    if (!ctx) return UNAUTHORIZED;
+    if (ctx.bakeryId !== data.bakeryId) {
       return { success: false, error: 'Unauthorized: You can only create tag types for your bakery' };
     }
 
-    const validatedData = createTagTypeSchema.parse(data);
-
-    const tagType = await db.tagType.create({
-      data: {
-        bakeryId: validatedData.bakeryId,
-        name: validatedData.name,
-        description: validatedData.description,
-        order: validatedData.order ?? 0,
-      },
-    });
-
-    await createActivityLog({
-      userId: currentUser.id!,
-      action: 'CREATE',
-      entityType: 'tagType',
-      entityId: tagType.id,
-      entityName: tagType.name,
-      description: `Created tag type "${tagType.name}"`,
-      metadata: { tagTypeId: tagType.id },
-      bakeryId: tagType.bakeryId,
-    });
-
+    const tagType = await tagService.createTagType(ctx, data);
     return { success: true, data: tagType };
   } catch (error) {
-    console.error('Error creating tag type:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to create tag type',
-    };
+    return actionError(error, 'Failed to create tag type');
   }
 }
 
-export async function updateTagType(data: UpdateTagTypeInput) {
+export async function updateTagType(data: UpdateTagTypeInput): Promise<ActionResult<TagTypeRecord>> {
   try {
-    const currentUser = await getCurrentUser();
+    const ctx = await actionContext();
+    if (!ctx) return UNAUTHORIZED;
 
-    if (!currentUser) {
-      return { success: false, error: 'Unauthorized: You must be logged in' };
-    }
-
-    const validatedData = updateTagTypeSchema.parse(data);
-
-    const existingTagType = await db.tagType.findUnique({
-      where: { id: validatedData.id },
-    });
-
-    if (!existingTagType) {
-      return { success: false, error: 'Tag type not found' };
-    }
-
-    if (currentUser.bakeryId !== existingTagType.bakeryId && !currentUser.isPlatformAdmin) {
-      return { success: false, error: 'Unauthorized: You can only update tag types for your bakery' };
-    }
-
-    const { id, ...updateData } = validatedData;
-
-    const tagType = await db.tagType.update({
-      where: { id },
-      data: updateData,
-    });
-
-    await createActivityLog({
-      userId: currentUser.id!,
-      action: 'UPDATE',
-      entityType: 'tagType',
-      entityId: tagType.id,
-      entityName: tagType.name,
-      description: `Updated tag type "${tagType.name}"`,
-      metadata: { tagTypeId: tagType.id, updatedFields: Object.keys(updateData) },
-      bakeryId: tagType.bakeryId,
-    });
-
+    const tagType = await tagService.updateTagType(ctx, data.id, data);
     return { success: true, data: tagType };
   } catch (error) {
-    console.error('Error updating tag type:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to update tag type',
-    };
+    return actionError(error, 'Failed to update tag type');
   }
 }
 
-export async function deleteTagType(id: string) {
+export async function deleteTagType(id: string): Promise<ActionResult> {
   try {
-    const currentUser = await getCurrentUser();
+    const ctx = await actionContext();
+    if (!ctx) return UNAUTHORIZED;
 
-    if (!currentUser) {
-      return { success: false, error: 'Unauthorized: You must be logged in' };
-    }
-
-    const tagType = await db.tagType.findUnique({
-      where: { id },
-      include: { _count: { select: { tags: true } } },
-    });
-
-    if (!tagType) {
-      return { success: false, error: 'Tag type not found' };
-    }
-
-    if (currentUser.bakeryId !== tagType.bakeryId && !currentUser.isPlatformAdmin) {
-      return { success: false, error: 'Unauthorized: You can only delete tag types for your bakery' };
-    }
-
-    if (tagType._count.tags > 0) {
-      return {
-        success: false,
-        error: `Cannot delete tag type with ${tagType._count.tags} tag(s). Remove all tags first.`,
-      };
-    }
-
-    await db.tagType.delete({ where: { id } });
-
-    await createActivityLog({
-      userId: currentUser.id!,
-      action: 'DELETE',
-      entityType: 'tagType',
-      entityId: tagType.id,
-      entityName: tagType.name,
-      description: `Deleted tag type "${tagType.name}"`,
-      metadata: { tagTypeId: tagType.id },
-      bakeryId: tagType.bakeryId,
-    });
-
+    await tagService.deleteTagType(ctx, id);
     return { success: true };
   } catch (error) {
-    console.error('Error deleting tag type:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to delete tag type',
-    };
+    return actionError(error, 'Failed to delete tag type');
   }
 }
 
@@ -239,159 +131,42 @@ export async function getTagTypeById(id: string) {
 // Tag Actions
 // ============================================================================
 
-export async function createTag(data: CreateTagInput) {
+export async function createTag(data: CreateTagInput): Promise<ActionResult<TagRecord>> {
   try {
-    const currentUser = await getCurrentUser();
-
-    if (!currentUser) {
-      return { success: false, error: 'Unauthorized: You must be logged in' };
-    }
-
-    if (currentUser.bakeryId !== data.bakeryId && !currentUser.isPlatformAdmin) {
+    const ctx = await actionContext();
+    if (!ctx) return UNAUTHORIZED;
+    if (ctx.bakeryId !== data.bakeryId) {
       return { success: false, error: 'Unauthorized: You can only create tags for your bakery' };
     }
 
-    const validatedData = createTagSchema.parse(data);
-
-    // Verify tag type exists and belongs to same bakery
-    const tagType = await db.tagType.findUnique({
-      where: { id: validatedData.tagTypeId },
-    });
-
-    if (!tagType) {
-      return { success: false, error: 'Tag type not found' };
-    }
-
-    if (tagType.bakeryId !== validatedData.bakeryId) {
-      return { success: false, error: 'Tag type does not belong to this bakery' };
-    }
-
-    const tag = await db.tag.create({
-      data: {
-        bakeryId: validatedData.bakeryId,
-        tagTypeId: validatedData.tagTypeId,
-        name: validatedData.name,
-        description: validatedData.description,
-        color: validatedData.color,
-      },
-      include: {
-        tagType: true,
-      },
-    });
-
-    await createActivityLog({
-      userId: currentUser.id!,
-      action: 'CREATE',
-      entityType: 'tag',
-      entityId: tag.id,
-      entityName: tag.name,
-      description: `Created tag "${tag.name}" in type "${tag.tagType.name}"`,
-      metadata: { tagId: tag.id, tagTypeId: tag.tagTypeId },
-      bakeryId: tag.bakeryId,
-    });
-
+    const tag = await tagService.createTag(ctx, data);
     return { success: true, data: tag };
   } catch (error) {
-    console.error('Error creating tag:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to create tag',
-    };
+    return actionError(error, 'Failed to create tag');
   }
 }
 
-export async function updateTag(data: UpdateTagInput) {
+export async function updateTag(data: UpdateTagInput): Promise<ActionResult<TagRecord>> {
   try {
-    const currentUser = await getCurrentUser();
+    const ctx = await actionContext();
+    if (!ctx) return UNAUTHORIZED;
 
-    if (!currentUser) {
-      return { success: false, error: 'Unauthorized: You must be logged in' };
-    }
-
-    const validatedData = updateTagSchema.parse(data);
-
-    const existingTag = await db.tag.findUnique({
-      where: { id: validatedData.id },
-    });
-
-    if (!existingTag) {
-      return { success: false, error: 'Tag not found' };
-    }
-
-    if (currentUser.bakeryId !== existingTag.bakeryId && !currentUser.isPlatformAdmin) {
-      return { success: false, error: 'Unauthorized: You can only update tags for your bakery' };
-    }
-
-    const { id, ...updateData } = validatedData;
-
-    const tag = await db.tag.update({
-      where: { id },
-      data: updateData,
-      include: { tagType: true },
-    });
-
-    await createActivityLog({
-      userId: currentUser.id!,
-      action: 'UPDATE',
-      entityType: 'tag',
-      entityId: tag.id,
-      entityName: tag.name,
-      description: `Updated tag "${tag.name}"`,
-      metadata: { tagId: tag.id, updatedFields: Object.keys(updateData) },
-      bakeryId: tag.bakeryId,
-    });
-
+    const tag = await tagService.updateTag(ctx, data.id, data);
     return { success: true, data: tag };
   } catch (error) {
-    console.error('Error updating tag:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to update tag',
-    };
+    return actionError(error, 'Failed to update tag');
   }
 }
 
-export async function deleteTag(id: string) {
+export async function deleteTag(id: string): Promise<ActionResult> {
   try {
-    const currentUser = await getCurrentUser();
+    const ctx = await actionContext();
+    if (!ctx) return UNAUTHORIZED;
 
-    if (!currentUser) {
-      return { success: false, error: 'Unauthorized: You must be logged in' };
-    }
-
-    const tag = await db.tag.findUnique({
-      where: { id },
-      include: { _count: { select: { entityTags: true } } },
-    });
-
-    if (!tag) {
-      return { success: false, error: 'Tag not found' };
-    }
-
-    if (currentUser.bakeryId !== tag.bakeryId && !currentUser.isPlatformAdmin) {
-      return { success: false, error: 'Unauthorized: You can only delete tags for your bakery' };
-    }
-
-    await db.tag.delete({ where: { id } });
-
-    await createActivityLog({
-      userId: currentUser.id!,
-      action: 'DELETE',
-      entityType: 'tag',
-      entityId: tag.id,
-      entityName: tag.name,
-      description: `Deleted tag "${tag.name}"`,
-      metadata: { tagId: tag.id, entityTagCount: tag._count.entityTags },
-      bakeryId: tag.bakeryId,
-    });
-
+    await tagService.deleteTag(ctx, id);
     return { success: true };
   } catch (error) {
-    console.error('Error deleting tag:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to delete tag',
-    };
+    return actionError(error, 'Failed to delete tag');
   }
 }
 
@@ -507,145 +282,35 @@ export async function searchTags(
 // Entity Tag Actions
 // ============================================================================
 
-export async function assignTagToEntity(data: AssignTagInput) {
+export async function assignTagToEntity(
+  data: AssignTagInput
+): Promise<ActionResult<Awaited<ReturnType<typeof tagService.assignTag>>>> {
   try {
-    const currentUser = await getCurrentUser();
+    const ctx = await actionContext();
+    if (!ctx) return UNAUTHORIZED;
 
-    if (!currentUser) {
-      return { success: false, error: 'Unauthorized: You must be logged in' };
-    }
+    const entityTag = await tagService.assignTag(ctx, data.tagId, data);
 
-    const validatedData = assignTagSchema.parse(data);
-
-    // Verify tag exists and user has access
-    const tag = await db.tag.findUnique({
-      where: { id: validatedData.tagId },
-    });
-
-    if (!tag) {
-      return { success: false, error: 'Tag not found' };
-    }
-
-    if (currentUser.bakeryId !== tag.bakeryId && !currentUser.isPlatformAdmin) {
-      return { success: false, error: 'Unauthorized: You can only assign tags for your bakery' };
-    }
-
-    // Verify entity exists and belongs to same bakery
-    const entityExists = await verifyEntityExists(
-      validatedData.entityType,
-      validatedData.entityId,
-      tag.bakeryId
-    );
-
-    if (!entityExists) {
-      return { success: false, error: `${validatedData.entityType} not found or does not belong to this bakery` };
-    }
-
-    // Check if already assigned
-    const existing = await db.entityTag.findUnique({
-      where: {
-        tagId_entityType_entityId: {
-          tagId: validatedData.tagId,
-          entityType: validatedData.entityType,
-          entityId: validatedData.entityId,
-        },
-      },
-    });
-
-    if (existing) {
-      return { success: false, error: 'Tag is already assigned to this entity' };
-    }
-
-    const entityTag = await db.entityTag.create({
-      data: {
-        tagId: validatedData.tagId,
-        entityType: validatedData.entityType,
-        entityId: validatedData.entityId,
-      },
-      include: {
-        tag: true,
-      },
-    });
-
-    await createActivityLog({
-      userId: currentUser.id!,
-      action: 'ASSIGN',
-      entityType: validatedData.entityType,
-      entityId: validatedData.entityId,
-      entityName: tag.name,
-      description: `Assigned tag "${tag.name}" to ${validatedData.entityType}`,
-      metadata: { tagId: tag.id, entityType: validatedData.entityType, entityId: validatedData.entityId },
-      bakeryId: tag.bakeryId,
-    });
-
-    revalidatePath(`/dashboard/${validatedData.entityType}s`);
-    revalidatePath(`/dashboard/${validatedData.entityType}s/${validatedData.entityId}`);
-
+    revalidatePath(`/dashboard/${data.entityType}s`);
+    revalidatePath(`/dashboard/${data.entityType}s/${data.entityId}`);
     return { success: true, data: entityTag };
   } catch (error) {
-    console.error('Error assigning tag to entity:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to assign tag',
-    };
+    return actionError(error, 'Failed to assign tag');
   }
 }
 
-export async function unassignTagFromEntity(data: UnassignTagInput) {
+export async function unassignTagFromEntity(data: UnassignTagInput): Promise<ActionResult> {
   try {
-    const currentUser = await getCurrentUser();
+    const ctx = await actionContext();
+    if (!ctx) return UNAUTHORIZED;
 
-    if (!currentUser) {
-      return { success: false, error: 'Unauthorized: You must be logged in' };
-    }
+    await tagService.unassignTag(ctx, data.tagId, data);
 
-    const validatedData = unassignTagSchema.parse(data);
-
-    // Verify tag exists and user has access
-    const tag = await db.tag.findUnique({
-      where: { id: validatedData.tagId },
-    });
-
-    if (!tag) {
-      return { success: false, error: 'Tag not found' };
-    }
-
-    if (currentUser.bakeryId !== tag.bakeryId && !currentUser.isPlatformAdmin) {
-      return { success: false, error: 'Unauthorized: You can only unassign tags for your bakery' };
-    }
-
-    // Delete the assignment
-    await db.entityTag.delete({
-      where: {
-        tagId_entityType_entityId: {
-          tagId: validatedData.tagId,
-          entityType: validatedData.entityType,
-          entityId: validatedData.entityId,
-        },
-      },
-    });
-
-    await createActivityLog({
-      userId: currentUser.id!,
-      action: 'REVOKE',
-      entityType: validatedData.entityType,
-      entityId: validatedData.entityId,
-      entityName: tag.name,
-      description: `Removed tag "${tag.name}" from ${validatedData.entityType}`,
-      metadata: { tagId: tag.id, entityType: validatedData.entityType, entityId: validatedData.entityId },
-      bakeryId: tag.bakeryId,
-    });
-
-    revalidatePath(`/dashboard/${validatedData.entityType}s`);
-    revalidatePath(`/dashboard/${validatedData.entityType}s/${validatedData.entityId}`);
-
+    revalidatePath(`/dashboard/${data.entityType}s`);
+    revalidatePath(`/dashboard/${data.entityType}s/${data.entityId}`);
     return { success: true };
   } catch (error) {
-    console.error('Error unassigning tag from entity:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to unassign tag',
-    };
+    return actionError(error, 'Failed to unassign tag');
   }
 }
 
@@ -689,41 +354,5 @@ export async function getTagsForEntity(entityType: EntityType, entityId: string)
   } catch (error) {
     console.error('Error fetching tags for entity:', error);
     return { success: false, error: 'Failed to fetch tags' };
-  }
-}
-
-// ============================================================================
-// Helper Functions
-// ============================================================================
-
-async function verifyEntityExists(
-  entityType: EntityType,
-  entityId: string,
-  bakeryId: string
-): Promise<boolean> {
-  switch (entityType) {
-    case 'ingredient': {
-      const ingredient = await db.ingredient.findUnique({
-        where: { id: entityId },
-        select: { bakeryId: true },
-      });
-      return ingredient?.bakeryId === bakeryId;
-    }
-    case 'recipe': {
-      const recipe = await db.recipe.findUnique({
-        where: { id: entityId },
-        select: { bakeryId: true },
-      });
-      return recipe?.bakeryId === bakeryId;
-    }
-    case 'vendor': {
-      const vendor = await db.vendor.findUnique({
-        where: { id: entityId },
-        select: { bakeryId: true },
-      });
-      return vendor?.bakeryId === bakeryId;
-    }
-    default:
-      return false;
   }
 }

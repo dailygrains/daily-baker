@@ -21,6 +21,11 @@ export function serviceHandler(
       const auth = await resolveApiAuth(req);
       if (!auth) return api401();
       if (!hasScope(auth, scope)) return api403('Insufficient scope');
+      // Services also call requireBakery(); this keeps the handler fail-closed
+      // regardless. Platform admins may act without a selected bakery.
+      if (!auth.bakeryId && !auth.isPlatformAdmin) {
+        return api403('No bakery is associated with this account');
+      }
 
       let body: Record<string, unknown> = {};
       const text = await req.text();

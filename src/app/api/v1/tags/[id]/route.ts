@@ -1,12 +1,3 @@
-import { createCrudRoutes } from '@/lib/api/create-crud-routes';
-import { createTagSchema, updateTagSchema } from '@/lib/validations/tag';
+import { tagRoutes } from '@/lib/api/resources/tags';
 
-const routes = createCrudRoutes({
-  model: 'tag',
-  bakeryScoped: true,
-  searchFields: ['name'],
-  allowedIncludes: ['tagType'],
-  validators: { create: createTagSchema, update: updateTagSchema },
-});
-
-export const { GET, PUT, DELETE } = routes.single;
+export const { GET, PUT, DELETE } = tagRoutes.single;
