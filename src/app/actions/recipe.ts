@@ -2,398 +2,64 @@
 
 import { db } from '@/lib/db';
 import { getCurrentUser } from '@/lib/clerk';
-import { createActivityLog } from './activity';
-import {
-  createRecipeSchema,
-  updateRecipeSchema,
-  type CreateRecipeInput,
-  type UpdateRecipeInput,
-} from '@/lib/validations/recipe';
-import { ZodError } from 'zod';
-
-/**
- * Format Zod validation errors into a user-friendly message
- */
-function formatZodError(error: ZodError): string {
-  return error.issues
-    .map((issue) => issue.message)
-    .join('. ');
-}
+import type { CreateRecipeInput, UpdateRecipeInput } from '@/lib/validations/recipe';
 import { revalidatePath } from 'next/cache';
-import { Decimal } from '@prisma/client/runtime/library';
 import { getWeightedAverageCost, type InventoryWithLots } from '@/lib/inventory';
-import { calculateRecipeCost } from '@/lib/recipeCost';
-import { recipeSnapshotService, type RecipeEntity } from '@/lib/snapshot';
+import { actionContext, actionError, UNAUTHORIZED, type ActionResult } from '@/lib/services/action';
+import * as recipeService from '@/lib/services/recipe';
 
 /**
  * Create a new recipe
  */
-export async function createRecipe(data: CreateRecipeInput) {
+export async function createRecipe(data: CreateRecipeInput): Promise<ActionResult> {
   try {
-    const currentUser = await getCurrentUser();
-
-    if (!currentUser) {
-      return { success: false, error: 'Unauthorized: You must be logged in' };
+    const ctx = await actionContext();
+    if (!ctx) return UNAUTHORIZED;
+    if (ctx.bakeryId !== data.bakeryId) {
+      return { success: false, error: 'Unauthorized: You can only create recipes for your bakery' };
     }
 
-    // Verify user belongs to the bakery
-    if (currentUser.bakeryId !== data.bakeryId) {
-      return {
-        success: false,
-        error: 'Unauthorized: You can only create recipes for your bakery',
-      };
-    }
-
-    // Validate input
-    const validatedData = createRecipeSchema.parse(data);
-
-    // Calculate total cost
-    const totalCost = await calculateRecipeCost(validatedData.sections);
-
-    // Create recipe with nested sections and ingredients
-    const recipe = await db.recipe.create({
-      data: {
-        bakeryId: validatedData.bakeryId,
-        name: validatedData.name,
-        description: validatedData.description || null,
-        yieldQty: validatedData.yieldQty,
-        yieldUnit: validatedData.yieldUnit,
-        totalCost: new Decimal(totalCost),
-        sections: {
-          create: validatedData.sections.map((section) => ({
-            name: section.name,
-            order: section.order,
-            instructions: section.instructions,
-            useBakersMath: section.useBakersMath,
-            bakersMathBaseIndices: section.bakersMathBaseIndices,
-            ingredients: {
-              create: section.ingredients.map((ing, ingIndex) => ({
-                ingredientId: ing.ingredientId,
-                quantity: new Decimal(ing.quantity),
-                unit: ing.unit,
-                preparation: ing.preparation || null,
-                order: ing.order ?? ingIndex,
-              })),
-            },
-          })),
-        },
-      },
-      include: {
-        sections: {
-          include: {
-            ingredients: {
-              include: {
-                ingredient: true,
-              },
-              orderBy: { order: 'asc' },
-            },
-          },
-        },
-      },
-    });
-
-    // Log activity
-    await createActivityLog({
-      userId: currentUser.id!,
-      action: 'CREATE',
-      entityType: 'recipe',
-      entityId: recipe.id,
-      entityName: recipe.name,
-      description: `Created recipe "${recipe.name}"`,
-      metadata: {
-        recipeId: recipe.id,
-        yield: `${recipe.yieldQty} ${recipe.yieldUnit}`,
-        sectionCount: recipe.sections.length,
-      },
-      bakeryId: recipe.bakeryId,
-    });
-
-    // Create snapshot for the new recipe
-    try {
-      const recipeEntity: RecipeEntity = {
-        id: recipe.id,
-        name: recipe.name,
-        description: recipe.description,
-        yieldQty: recipe.yieldQty,
-        yieldUnit: recipe.yieldUnit,
-        totalCost: recipe.totalCost,
-        sections: recipe.sections.map((section) => ({
-          id: section.id,
-          name: section.name,
-          order: section.order,
-          instructions: section.instructions,
-          ingredients: section.ingredients.map((ing) => ({
-            id: ing.id,
-            quantity: ing.quantity,
-            unit: ing.unit,
-            ingredient: {
-              id: ing.ingredient.id,
-              name: ing.ingredient.name,
-              unit: ing.ingredient.unit,
-            },
-          })),
-        })),
-      };
-
-      await recipeSnapshotService.createSnapshot(
-        recipeEntity,
-        recipe.bakeryId,
-        recipe.id,
-        recipe.name,
-        'SAVE',
-        currentUser.id
-      );
-    } catch (snapshotError) {
-      // Log but don't fail the recipe creation if snapshot fails
-      console.error('Failed to create recipe snapshot:', snapshotError);
-    }
+    await recipeService.createRecipe(ctx, data);
 
     revalidatePath('/dashboard/recipes');
     return { success: true };
   } catch (error) {
-    console.error('Failed to create recipe:', error);
-    if (error instanceof ZodError) {
-      return { success: false, error: formatZodError(error) };
-    }
-    return {
-      success: false,
-      error: 'Failed to create recipe. Please try again.',
-    };
+    return actionError(error, 'Failed to create recipe. Please try again.');
   }
 }
 
 /**
  * Update an existing recipe
  */
-export async function updateRecipe(data: UpdateRecipeInput) {
+export async function updateRecipe(data: UpdateRecipeInput): Promise<ActionResult> {
   try {
-    const currentUser = await getCurrentUser();
+    const ctx = await actionContext();
+    if (!ctx) return UNAUTHORIZED;
 
-    if (!currentUser) {
-      return { success: false, error: 'Unauthorized: You must be logged in' };
-    }
-
-    // Validate input
-    const validatedData = updateRecipeSchema.parse(data);
-
-    // Fetch existing recipe to verify ownership
-    const existingRecipe = await db.recipe.findUnique({
-      where: { id: validatedData.id },
-      select: { bakeryId: true, name: true },
-    });
-
-    if (!existingRecipe) {
-      return { success: false, error: 'Recipe not found' };
-    }
-
-    // Verify user belongs to the same bakery
-    if (currentUser.bakeryId !== existingRecipe.bakeryId) {
-      return {
-        success: false,
-        error: 'Unauthorized: You can only update recipes for your bakery',
-      };
-    }
-
-    // If sections are being updated, recalculate cost
-    let totalCost: number | undefined;
-    if (validatedData.sections) {
-      totalCost = await calculateRecipeCost(validatedData.sections);
-    }
-
-    // Use a transaction so delete + recreate is atomic
-    const recipe = await db.$transaction(async (tx) => {
-      if (validatedData.sections) {
-        // Delete existing sections (cascade will delete ingredients)
-        await tx.recipeSection.deleteMany({
-          where: { recipeId: validatedData.id },
-        });
-      }
-
-      // Update recipe
-      return tx.recipe.update({
-        where: { id: validatedData.id },
-        data: {
-          name: validatedData.name,
-          description: validatedData.description,
-          yieldQty: validatedData.yieldQty,
-          yieldUnit: validatedData.yieldUnit,
-          ...(totalCost !== undefined && { totalCost: new Decimal(totalCost) }),
-          ...(validatedData.sections && {
-            sections: {
-              create: validatedData.sections.map((section) => ({
-                name: section.name,
-                order: section.order,
-                instructions: section.instructions,
-                useBakersMath: section.useBakersMath,
-                bakersMathBaseIndices: section.bakersMathBaseIndices,
-                ingredients: {
-                  create: section.ingredients.map((ing, ingIndex) => ({
-                    ingredientId: ing.ingredientId,
-                    quantity: new Decimal(ing.quantity),
-                    unit: ing.unit,
-                    preparation: ing.preparation || null,
-                    order: ing.order ?? ingIndex,
-                  })),
-                },
-              })),
-            },
-          }),
-        },
-        include: {
-          sections: {
-            include: {
-              ingredients: {
-                include: {
-                  ingredient: true,
-                },
-                orderBy: { order: 'asc' },
-              },
-            },
-          },
-        },
-      });
-    });
-
-    // Log activity
-    await createActivityLog({
-      userId: currentUser.id!,
-      action: 'UPDATE',
-      entityType: 'recipe',
-      entityId: recipe.id,
-      entityName: recipe.name,
-      description: `Updated recipe "${recipe.name}"`,
-      metadata: {
-        recipeId: recipe.id,
-        changes: validatedData,
-      },
-      bakeryId: recipe.bakeryId,
-    });
-
-    // Create snapshot for the updated recipe
-    try {
-      const recipeEntity: RecipeEntity = {
-        id: recipe.id,
-        name: recipe.name,
-        description: recipe.description,
-        yieldQty: recipe.yieldQty,
-        yieldUnit: recipe.yieldUnit,
-        totalCost: recipe.totalCost,
-        sections: recipe.sections.map((section) => ({
-          id: section.id,
-          name: section.name,
-          order: section.order,
-          instructions: section.instructions,
-          ingredients: section.ingredients.map((ing) => ({
-            id: ing.id,
-            quantity: ing.quantity,
-            unit: ing.unit,
-            ingredient: {
-              id: ing.ingredient.id,
-              name: ing.ingredient.name,
-              unit: ing.ingredient.unit,
-            },
-          })),
-        })),
-      };
-
-      await recipeSnapshotService.createSnapshot(
-        recipeEntity,
-        recipe.bakeryId,
-        recipe.id,
-        recipe.name,
-        'SAVE',
-        currentUser.id
-      );
-    } catch (snapshotError) {
-      // Log but don't fail the recipe update if snapshot fails
-      console.error('Failed to create recipe snapshot:', snapshotError);
-    }
+    const recipe = await recipeService.updateRecipe(ctx, data.id, data);
 
     revalidatePath('/dashboard/recipes');
     revalidatePath(`/dashboard/recipes/${recipe.id}`);
     return { success: true };
   } catch (error) {
-    console.error('Failed to update recipe:', error);
-    if (error instanceof ZodError) {
-      return { success: false, error: formatZodError(error) };
-    }
-    return {
-      success: false,
-      error: 'Failed to update recipe. Please try again.',
-    };
+    return actionError(error, 'Failed to update recipe. Please try again.');
   }
 }
 
 /**
  * Delete a recipe
  */
-export async function deleteRecipe(id: string) {
+export async function deleteRecipe(id: string): Promise<ActionResult> {
   try {
-    const currentUser = await getCurrentUser();
+    const ctx = await actionContext();
+    if (!ctx) return UNAUTHORIZED;
 
-    if (!currentUser) {
-      return { success: false, error: 'Unauthorized: You must be logged in' };
-    }
-
-    // Fetch recipe with counts to verify ownership and check dependencies
-    const recipe = await db.recipe.findUnique({
-      where: { id },
-      include: {
-        _count: {
-          select: {
-            productionSheetRecipes: true,
-          },
-        },
-      },
-    });
-
-    if (!recipe) {
-      return { success: false, error: 'Recipe not found' };
-    }
-
-    // Verify user belongs to the same bakery
-    if (currentUser.bakeryId !== recipe.bakeryId) {
-      return {
-        success: false,
-        error: 'Unauthorized: You can only delete recipes for your bakery',
-      };
-    }
-
-    // Check if recipe is used in production sheets
-    if (recipe._count.productionSheetRecipes > 0) {
-      return {
-        success: false,
-        error: `Cannot delete recipe with ${recipe._count.productionSheetRecipes} production sheet(s). Please remove from production sheets first.`,
-      };
-    }
-
-    // Delete recipe (cascade will delete sections and ingredients)
-    await db.recipe.delete({
-      where: { id },
-    });
-
-    // Log activity
-    await createActivityLog({
-      userId: currentUser.id!,
-      action: 'DELETE',
-      entityType: 'recipe',
-      entityId: recipe.id,
-      entityName: recipe.name,
-      description: `Deleted recipe "${recipe.name}"`,
-      metadata: {
-        recipeId: recipe.id,
-      },
-      bakeryId: recipe.bakeryId,
-    });
+    await recipeService.deleteRecipe(ctx, id);
 
     revalidatePath('/dashboard/recipes');
     return { success: true };
   } catch (error) {
-    console.error('Failed to delete recipe:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to delete recipe',
-    };
+    return actionError(error, 'Failed to delete recipe');
   }
 }
 

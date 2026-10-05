@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 import { ZodSchema, ZodError } from 'zod';
+import { ServiceError, type ServiceContext } from '@/lib/services/context';
 import { db } from '@/lib/db';
 import { resolveApiAuth, hasScope, type ApiAuthContext } from './auth';
 import { parsePagination, paginationMeta } from './pagination';
@@ -19,10 +20,40 @@ export interface CrudRouteConfig {
   };
   readOnly?: boolean;
   adminOnly?: boolean;
-  beforeCreate?: (data: Record<string, unknown>, auth: ApiAuthContext) => Record<string, unknown> | Promise<Record<string, unknown>>;
-  beforeUpdate?: (id: string, data: Record<string, unknown>, auth: ApiAuthContext) => Record<string, unknown> | Promise<Record<string, unknown>>;
-  afterCreate?: (record: unknown, auth: ApiAuthContext) => void | Promise<void>;
-  beforeDelete?: (id: string, auth: ApiAuthContext) => void | Promise<void>;
+  /**
+   * Shared service functions (the same ones the dashboard's server actions
+   * call). When set they replace the generic Prisma write, and own
+   * validation, tenant checks, derived fields, guards and activity logging.
+   * `validators` are then used only for the OpenAPI spec.
+   */
+  service?: {
+    create?: (ctx: ServiceContext, body: Record<string, unknown>) => Promise<unknown>;
+    update?: (ctx: ServiceContext, id: string, body: Record<string, unknown>) => Promise<unknown>;
+    remove?: (ctx: ServiceContext, id: string) => Promise<unknown>;
+  };
+}
+
+export function serviceContext(auth: ApiAuthContext): ServiceContext {
+  return {
+    bakeryId: auth.bakeryId || null,
+    userId: auth.userId,
+    isPlatformAdmin: auth.isPlatformAdmin,
+  };
+}
+
+/**
+ * Map an error thrown by a handler to a response: expected service and
+ * validation failures keep their status; anything else is a logged 500.
+ */
+export function apiErrorResponse(error: unknown, label: string) {
+  if (error instanceof ServiceError) {
+    return apiError(error.message, error.status, error.details);
+  }
+  if (error instanceof ZodError) {
+    return api422(error.issues.map((i) => ({ field: i.path.join('.'), message: i.message })));
+  }
+  console.error(`API ${label} error:`, error);
+  return apiError('Internal server error', 500);
 }
 
 /**
@@ -70,6 +101,13 @@ function buildSearchWhere(search: string | null, fields: string[] | undefined) {
 }
 
 export function createCrudRoutes(config: CrudRouteConfig) {
+  /**
+   * Bakery-scoped routes must have a bakery to scope by. Without this, a
+   * signed-in user with no bakery would get an empty filter and see every
+   * tenant's rows.
+   */
+  const missingBakery = (auth: ApiAuthContext) => config.bakeryScoped && !auth.bakeryId;
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const prismaModel = (db as Record<string, any>)[config.model];
 
@@ -80,10 +118,11 @@ export function createCrudRoutes(config: CrudRouteConfig) {
     if (!auth) return api401();
     if (config.adminOnly && !auth.isPlatformAdmin) return api403();
     if (!hasScope(auth, 'read')) return api403('Insufficient scope');
+    if (missingBakery(auth)) return api403('No bakery is associated with this account');
 
     const pagination = parsePagination(req);
     const where = {
-      ...(config.bakeryScoped && auth.bakeryId ? { bakeryId: auth.bakeryId } : {}),
+      ...(config.bakeryScoped ? { bakeryId: auth.bakeryId } : {}),
       ...buildSearchWhere(pagination.search, config.searchFields),
     };
 
@@ -110,6 +149,7 @@ export function createCrudRoutes(config: CrudRouteConfig) {
     if (!auth) return api401();
     if (config.adminOnly && !auth.isPlatformAdmin) return api403();
     if (!hasScope(auth, 'write')) return api403('Insufficient scope');
+    if (missingBakery(auth)) return api403('No bakery is associated with this account');
 
     let body: Record<string, unknown>;
     try {
@@ -118,8 +158,12 @@ export function createCrudRoutes(config: CrudRouteConfig) {
       return apiError('Invalid JSON body', 400);
     }
 
+    if (config.service?.create) {
+      return apiSuccess(await config.service.create(serviceContext(auth), body));
+    }
+
     // Inject bakeryId for bakery-scoped models
-    if (config.bakeryScoped && auth.bakeryId) {
+    if (config.bakeryScoped) {
       body.bakeryId = auth.bakeryId;
     }
 
@@ -135,15 +179,7 @@ export function createCrudRoutes(config: CrudRouteConfig) {
       }
     }
 
-    if (config.beforeCreate) {
-      body = await config.beforeCreate(body, auth);
-    }
-
     const record = await prismaModel.create({ data: body });
-
-    if (config.afterCreate) {
-      await config.afterCreate(record, auth);
-    }
 
     return apiSuccess(record);
   }
@@ -155,12 +191,13 @@ export function createCrudRoutes(config: CrudRouteConfig) {
     if (!auth) return api401();
     if (config.adminOnly && !auth.isPlatformAdmin) return api403();
     if (!hasScope(auth, 'read')) return api403('Insufficient scope');
+    if (missingBakery(auth)) return api403('No bakery is associated with this account');
 
     const pagination = parsePagination(req);
     const include = buildInclude(pagination.include, config.allowedIncludes, config.defaultInclude);
 
     const where: Record<string, unknown> = { id };
-    if (config.bakeryScoped && auth.bakeryId) {
+    if (config.bakeryScoped) {
       where.bakeryId = auth.bakeryId;
     }
 
@@ -177,15 +214,7 @@ export function createCrudRoutes(config: CrudRouteConfig) {
     if (!auth) return api401();
     if (config.adminOnly && !auth.isPlatformAdmin) return api403();
     if (!hasScope(auth, 'write')) return api403('Insufficient scope');
-
-    // Verify record exists and belongs to bakery
-    const existing = await prismaModel.findFirst({
-      where: {
-        id,
-        ...(config.bakeryScoped && auth.bakeryId ? { bakeryId: auth.bakeryId } : {}),
-      },
-    });
-    if (!existing) return api404();
+    if (missingBakery(auth)) return api403('No bakery is associated with this account');
 
     let body: Record<string, unknown>;
     try {
@@ -193,6 +222,19 @@ export function createCrudRoutes(config: CrudRouteConfig) {
     } catch {
       return apiError('Invalid JSON body', 400);
     }
+
+    if (config.service?.update) {
+      return apiSuccess(await config.service.update(serviceContext(auth), id, body));
+    }
+
+    // Verify record exists and belongs to bakery
+    const existing = await prismaModel.findFirst({
+      where: {
+        id,
+        ...(config.bakeryScoped ? { bakeryId: auth.bakeryId } : {}),
+      },
+    });
+    if (!existing) return api404();
 
     body.id = id;
 
@@ -207,14 +249,10 @@ export function createCrudRoutes(config: CrudRouteConfig) {
       }
     }
 
-    // Remove id from update data
+    // Remove id from update data. Records never move between bakeries.
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { id: _id, ...rest } = body;
-    let updateData: Record<string, unknown> = rest;
-
-    if (config.beforeUpdate) {
-      updateData = await config.beforeUpdate(id, updateData, auth);
-    }
+    const { id: _id, ...updateData } = body;
+    if (config.bakeryScoped) delete updateData.bakeryId;
 
     const record = await prismaModel.update({ where: { id }, data: updateData });
 
@@ -228,18 +266,20 @@ export function createCrudRoutes(config: CrudRouteConfig) {
     if (!auth) return api401();
     if (config.adminOnly && !auth.isPlatformAdmin) return api403();
     if (!hasScope(auth, 'write')) return api403('Insufficient scope');
+    if (missingBakery(auth)) return api403('No bakery is associated with this account');
+
+    if (config.service?.remove) {
+      await config.service.remove(serviceContext(auth), id);
+      return apiSuccess({ deleted: true });
+    }
 
     const existing = await prismaModel.findFirst({
       where: {
         id,
-        ...(config.bakeryScoped && auth.bakeryId ? { bakeryId: auth.bakeryId } : {}),
+        ...(config.bakeryScoped ? { bakeryId: auth.bakeryId } : {}),
       },
     });
     if (!existing) return api404();
-
-    if (config.beforeDelete) {
-      await config.beforeDelete(id, auth);
-    }
 
     await prismaModel.delete({ where: { id } });
 
@@ -255,16 +295,14 @@ export function createCrudRoutes(config: CrudRouteConfig) {
         try {
           return await listHandler(req);
         } catch (error) {
-          console.error(`API GET /${config.model} error:`, error);
-          return apiError('Internal server error', 500);
+          return apiErrorResponse(error, `GET /${config.model}`);
         }
       },
       POST: async (req: NextRequest) => {
         try {
           return await createHandler(req);
         } catch (error) {
-          console.error(`API POST /${config.model} error:`, error);
-          return apiError('Internal server error', 500);
+          return apiErrorResponse(error, `POST /${config.model}`);
         }
       },
     },
@@ -275,8 +313,7 @@ export function createCrudRoutes(config: CrudRouteConfig) {
           const { id } = await params;
           return await getOneHandler(req, id);
         } catch (error) {
-          console.error(`API GET /${config.model}/:id error:`, error);
-          return apiError('Internal server error', 500);
+          return apiErrorResponse(error, `GET /${config.model}/:id`);
         }
       },
       PUT: async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
@@ -284,8 +321,7 @@ export function createCrudRoutes(config: CrudRouteConfig) {
           const { id } = await params;
           return await updateHandler(req, id);
         } catch (error) {
-          console.error(`API PUT /${config.model}/:id error:`, error);
-          return apiError('Internal server error', 500);
+          return apiErrorResponse(error, `PUT /${config.model}/:id`);
         }
       },
       DELETE: async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
@@ -293,8 +329,7 @@ export function createCrudRoutes(config: CrudRouteConfig) {
           const { id } = await params;
           return await deleteHandler(req, id);
         } catch (error) {
-          console.error(`API DELETE /${config.model}/:id error:`, error);
-          return apiError('Internal server error', 500);
+          return apiErrorResponse(error, `DELETE /${config.model}/:id`);
         }
       },
     },
