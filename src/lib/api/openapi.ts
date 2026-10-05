@@ -1,5 +1,10 @@
 import { toJSONSchema, type ZodType } from 'zod';
-import { routeRegistry, type RouteRegistryEntry } from './route-registry';
+import {
+  routeRegistry,
+  type ActionEndpoint,
+  type CrudMethod,
+  type RouteRegistryEntry,
+} from './route-registry';
 
 /* -------------------------------------------------------------------------- */
 /*  Helpers                                                                    */
@@ -30,6 +35,23 @@ function zodToOpenApiSchema(schema: ZodType): Record<string, unknown> {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { $schema, ...rest } = raw;
   return rest;
+}
+
+/**
+ * Request body schema with fields the server supplies removed: `bakeryId`
+ * comes from the caller's auth and ids come from the URL path.
+ */
+function requestBodySchema(schema: ZodType, pathParams: string[] = []) {
+  const json = zodToOpenApiSchema(schema);
+  const omit = new Set(['bakeryId', 'id', ...pathParams]);
+  const properties = json.properties as Record<string, unknown> | undefined;
+  if (properties) {
+    for (const key of omit) delete properties[key];
+  }
+  if (Array.isArray(json.required)) {
+    json.required = json.required.filter((key: string) => !omit.has(key));
+  }
+  return json;
 }
 
 function tag(entry: RouteRegistryEntry) {
@@ -168,6 +190,15 @@ const validationErrorResponse = {
   },
 };
 
+const conflictResponse = {
+  description: 'Conflict - blocked by a guard (e.g. the record is in use)',
+  content: {
+    'application/json': {
+      schema: { $ref: '#/components/schemas/ErrorResponse' },
+    },
+  },
+};
+
 const serverErrorResponse = {
   description: 'Internal server error',
   content: {
@@ -275,6 +306,7 @@ function buildCreatePath(entry: RouteRegistryEntry) {
       '200': successResponse,
       '401': unauthorizedResponse,
       '403': forbiddenResponse,
+      '409': conflictResponse,
       '422': validationErrorResponse,
       '500': serverErrorResponse,
     },
@@ -285,7 +317,7 @@ function buildCreatePath(entry: RouteRegistryEntry) {
       required: true,
       content: {
         'application/json': {
-          schema: zodToOpenApiSchema(entry.createSchema),
+          schema: requestBodySchema(entry.createSchema),
         },
       },
     };
@@ -347,6 +379,7 @@ function buildUpdatePath(entry: RouteRegistryEntry) {
       '401': unauthorizedResponse,
       '403': forbiddenResponse,
       '404': notFoundResponse,
+      '409': conflictResponse,
       '422': validationErrorResponse,
       '500': serverErrorResponse,
     },
@@ -357,7 +390,7 @@ function buildUpdatePath(entry: RouteRegistryEntry) {
       required: true,
       content: {
         'application/json': {
-          schema: zodToOpenApiSchema(entry.updateSchema),
+          schema: requestBodySchema(entry.updateSchema),
         },
       },
     };
@@ -394,9 +427,49 @@ function buildDeletePath(entry: RouteRegistryEntry) {
       '401': unauthorizedResponse,
       '403': forbiddenResponse,
       '404': notFoundResponse,
+      '409': conflictResponse,
       '500': serverErrorResponse,
     },
   };
+}
+
+function buildActionPath(entry: RouteRegistryEntry, action: ActionEndpoint) {
+  const pathParams = [...action.path.matchAll(/\{(\w+)\}/g)].map((m) => m[1]);
+  const op: Record<string, unknown> = {
+    tags: [tag(entry)],
+    summary: action.summary,
+    ...(action.description && { description: action.description }),
+    operationId: `${action.method}${action.path.replace(/[{}]/g, '').replace(/(^|[/-])(\w)/g, (_, __, c: string) => c.toUpperCase())}`,
+    parameters: pathParams.map((name) => ({
+      name,
+      in: 'path',
+      required: true,
+      schema: { type: 'string' },
+    })),
+    responses: {
+      '200': successResponse,
+      '401': unauthorizedResponse,
+      '403': forbiddenResponse,
+      '404': notFoundResponse,
+      '409': conflictResponse,
+      '422': validationErrorResponse,
+      '500': serverErrorResponse,
+    },
+  };
+  if (action.body) {
+    op.requestBody = {
+      required: true,
+      content: { 'application/json': { schema: requestBodySchema(action.body, pathParams) } },
+    };
+  }
+  return op;
+}
+
+function methodsFor(entry: RouteRegistryEntry): Set<CrudMethod> {
+  if (entry.methods) return new Set(entry.methods);
+  return new Set<CrudMethod>(
+    entry.readOnly ? ['list', 'get'] : ['list', 'create', 'get', 'update', 'delete']
+  );
 }
 
 /* -------------------------------------------------------------------------- */
@@ -410,24 +483,24 @@ export function generateOpenApiSpec() {
     const collectionPath = `/${entry.path}`;
     const singlePath = `/${entry.path}/{id}`;
 
-    // Collection operations (GET list + optional POST)
-    const collectionOps: Record<string, unknown> = {
-      get: buildListPath(entry),
-    };
-    if (!entry.readOnly) {
-      collectionOps.post = buildCreatePath(entry);
-    }
-    paths[collectionPath] = collectionOps;
+    const methods = methodsFor(entry);
 
-    // Single-record operations (GET one + optional PUT/DELETE)
-    const singleOps: Record<string, unknown> = {
-      get: buildGetOnePath(entry),
-    };
-    if (!entry.readOnly) {
-      singleOps.put = buildUpdatePath(entry);
-      singleOps.delete = buildDeletePath(entry);
+    // Collection operations (GET list, POST create)
+    const collectionOps: Record<string, unknown> = {};
+    if (methods.has('list')) collectionOps.get = buildListPath(entry);
+    if (methods.has('create')) collectionOps.post = buildCreatePath(entry);
+    if (Object.keys(collectionOps).length) paths[collectionPath] = collectionOps;
+
+    // Single-record operations (GET one, PUT, DELETE)
+    const singleOps: Record<string, unknown> = {};
+    if (methods.has('get')) singleOps.get = buildGetOnePath(entry);
+    if (methods.has('update')) singleOps.put = buildUpdatePath(entry);
+    if (methods.has('delete')) singleOps.delete = buildDeletePath(entry);
+    if (Object.keys(singleOps).length) paths[singlePath] = singleOps;
+
+    for (const action of entry.actions ?? []) {
+      paths[action.path] = { ...paths[action.path], [action.method]: buildActionPath(entry, action) };
     }
-    paths[singlePath] = singleOps;
   }
 
   return {
@@ -445,9 +518,12 @@ export function generateOpenApiSpec() {
     security: [{ BearerAuth: [] }],
     tags: routeRegistry.map((entry) => ({
       name: tag(entry),
-      description: entry.adminOnly
-        ? `${entry.name} management (platform admin only)`
-        : `${entry.name} management`,
+      description: [
+        entry.adminOnly ? `${entry.name} management (platform admin only).` : `${entry.name} management.`,
+        entry.note,
+      ]
+        .filter(Boolean)
+        .join(' '),
     })),
     paths,
     components: buildComponents(),
