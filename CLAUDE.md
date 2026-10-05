@@ -111,7 +111,7 @@ Public REST API for programmatic access to bakery data. All bakery-scoped endpoi
 
 **API key management UI**: `/dashboard/settings/api-keys/` — create keys (with name, scopes, optional expiration), copy on reveal, revoke. Component: `src/components/settings/ApiKeyManager.tsx`, server actions: `src/app/actions/apiKey.ts`.
 
-**Fetching the bakery ingredient list**: the REST API is the fast source — `curl -H 'Authorization: Bearer dbk_...' 'https://baker.dailygrains.co/api/v1/ingredients?limit=300'` returns all ~93 ingredients (name/unit). The default page limit is 100, so pass `limit` explicitly to get the full list in one call. This is faster than parsing `square_ingredients.csv`.
+**Fetching the bakery ingredient list**: the REST API is the fast source — `curl -H 'Authorization: Bearer dbk_...' 'https://baker.dailygrains.co/api/v1/ingredients?limit=100&page=1'` returns ingredients with name/unit. The default page limit is 25 and the max is 100 (`MAX_LIMIT` in `src/lib/api/pagination.ts`; larger values are silently clamped), so check `meta.totalPages` and fetch every page. There are 100+ ingredients, and the flours and grain berries land on page 2. This is faster than parsing `square_ingredients.csv`.
 
 ## Deployment (Vercel)
 - Project: `daily-baker` under `pbonnevilles-projects`
